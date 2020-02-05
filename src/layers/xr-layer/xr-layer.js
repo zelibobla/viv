@@ -5,8 +5,8 @@ import vs from './xr-layer-vertex';
 import fs from './xr-layer-fragment';
 
 const defaultProps = {
-  rgbData: null,
-}
+  rgbData: null
+};
 
 export class XRLayer extends Layer {
   getShaders() {
@@ -21,14 +21,17 @@ export class XRLayer extends Layer {
         size: 3,
         type: GL.DOUBLE,
         fp64: this.use64bitPositions(),
-        update: this.calculatePositions,
-        noAlloc: true,
-      },
+        update: attributes => {
+          // eslint-disable-next-line no-param-reassign
+          attributes.value = this.calculatePositions();
+        },
+        noAlloc: true
+      }
     });
 
     this.setState({
       numInstances: 1,
-      positions: new Float64Array(12),
+      positions: new Float64Array(12)
     });
 
     attributeManager.remove('instancePickingColors');
@@ -73,21 +76,21 @@ export class XRLayer extends Layer {
         |       |
        0,1 --- 1,1
      */
-    return new Model(
-      gl,
-      ({ ...this.getShaders(), id: this.props.id,
-        geometry: new Geometry({
-          drawMode: GL.TRIANGLE_FAN,
-          vertexCount: 4,
-          attributes: {
-            texCoords: new Float32Array([0, 1, 0, 0, 1, 0, 1, 1]),
-          },
-        }),
-        isInstanced: false,}),
-    );
+    return new Model(gl, {
+      ...this.getShaders(),
+      id: this.props.id,
+      geometry: new Geometry({
+        drawMode: GL.TRIANGLE_FAN,
+        vertexCount: 4,
+        attributes: {
+          texCoords: new Float32Array([0, 1, 0, 0, 1, 0, 1, 1])
+        }
+      }),
+      isInstanced: false
+    });
   }
 
-  calculatePositions(attributes) {
+  calculatePositions() {
     const { positions } = this.state;
     const { bounds } = this.props;
     // bounds as [minX, minY, maxX, maxY]
@@ -114,25 +117,26 @@ export class XRLayer extends Layer {
     positions[10] = bounds[1];
     positions[11] = 0;
 
-    attributes.value = positions;
+    return positions;
   }
 
   draw({ uniforms }) {
     const { textures, model } = this.state;
     if (textures && model) {
-      const {sliderValues} = this.props;
-      const {colorValues} = this.props;
+      const { sliderValues } = this.props;
+      const { colorValues } = this.props;
       model
-        .setUniforms(
-          { ...uniforms, colorValue0:colorValues[0],
-            colorValue1:colorValues[1],
-            colorValue2:colorValues[2],
-            colorValue3:colorValues[3],
-            colorValue4:colorValues[4],
-            colorValue5:colorValues[5],
-            sliderValues,
-            ...textures},
-        )
+        .setUniforms({
+          ...uniforms,
+          colorValue0: colorValues[0],
+          colorValue1: colorValues[1],
+          colorValue2: colorValues[2],
+          colorValue3: colorValues[3],
+          colorValue4: colorValues[4],
+          colorValue5: colorValues[5],
+          sliderValues,
+          ...textures
+        })
         .draw();
     }
   }
@@ -143,20 +147,21 @@ export class XRLayer extends Layer {
       channel2: null,
       channel3: null,
       channel4: null,
-      channel5: null,
-    }
-    if(this.state.textures) {
+      channel5: null
+    };
+    if (this.state.textures) {
       Object.values(this.state.textures).forEach(tex => tex && tex.delete());
     }
     if (data instanceof Promise) {
-      data.then((dataResolved) => {
-        dataResolved.forEach((d, i) => textures[`channel${i}`] = this.dataToTexture(d))
-      }).then(() =>
-        this.setState({ textures })
-      );
-    }
-    else if (data instanceof Object) {
-      data.forEach((d, i) => textures[`channel${i}`] = this.dataToTexture(d))
+      data
+        .then(dataResolved => {
+          dataResolved.forEach(
+            (d, i) => (textures[`channel${i}`] = this.dataToTexture(d))
+          );
+        })
+        .then(() => this.setState({ textures }));
+    } else if (data instanceof Object) {
+      data.forEach((d, i) => (textures[`channel${i}`] = this.dataToTexture(d)));
       this.setState({ textures });
     }
   }
@@ -167,13 +172,13 @@ export class XRLayer extends Layer {
     const isInt16 = data instanceof Uint16Array;
     const isInt32 = data instanceof Uint32Array;
     const formats = {
-    format: (isInt8 && GL.R8UI)
-         || (isInt16 && GL.R16UI)
-         || (isInt32 && GL.R32UI),
-    dataFormat: GL.RED_INTEGER,
-    type: (isInt8 && GL.UNSIGNED_BYTE)
-          || (isInt16 && GL.UNSIGNED_SHORT)
-          || (isInt32 && GL.UNSIGNED_INT),
+      format:
+        (isInt8 && GL.R8UI) || (isInt16 && GL.R16UI) || (isInt32 && GL.R32UI),
+      dataFormat: GL.RED_INTEGER,
+      type:
+        (isInt8 && GL.UNSIGNED_BYTE) ||
+        (isInt16 && GL.UNSIGNED_SHORT) ||
+        (isInt32 && GL.UNSIGNED_INT)
     };
     const texture = new Texture2D(this.context.gl, {
       width: this.props.tileSize,
@@ -184,9 +189,9 @@ export class XRLayer extends Layer {
       parameters: {
         // NEAREST for integer data
         [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-        [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
+        [GL.TEXTURE_MAG_FILTER]: GL.NEAREST
       },
-      ...formats,
+      ...formats
     });
     return texture;
   }
