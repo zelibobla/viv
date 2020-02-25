@@ -3,15 +3,15 @@ import { COORDINATE_SYSTEM } from 'deck.gl';
 import { XRLayer } from '../xr-layer';
 import { tileToScreen, getRasterTileIndices } from './tiling-utils';
 
-import { loadZarr, loadTiff } from './data-utils';
 import {
+  loadZarr,
+  loadTiff,
   padWithDefault,
   setOrderedValues,
   DEFAULT_COLOR_OFF,
-  DEFAULT_SLIDER_OFF
-} from './utils';
-
-const MAX_SLIDERS_AND_CHANNELS = 6;
+  DEFAULT_SLIDER_OFF,
+  MAX_SLIDERS_AND_CHANNELS
+} from '../utils';
 
 const defaultProps = {
   ...BaseTileLayer.defaultProps,

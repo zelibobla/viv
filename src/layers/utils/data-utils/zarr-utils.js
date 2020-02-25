@@ -1,5 +1,5 @@
 import { openArray } from 'zarr';
-import { range } from '../utils';
+import { range } from '../layer-utils';
 
 function decodeChannels({ data, shape }) {
   const offset = data.length / shape[0];
@@ -15,9 +15,8 @@ export async function loadZarr({ connections, x, y, z }) {
   return tiles;
 }
 
-export async function initZarr({ sourceChannels, minZoom }) {
+export async function initZarr({ sourceChannels, minZoom, type }) {
   const rootZarrUrl = Object.values(sourceChannels)[0]; // all are the same so get first
-
   // Known issue with how zarr.js does string concatenation for urls
   // The prefix gets chunked off for some reason and must be repeating in the config.
   // https://github.com/gzuidhof/zarr.js/issues/36
@@ -25,7 +24,6 @@ export async function initZarr({ sourceChannels, minZoom }) {
 
   // Not necessary but this is something we should be parsing from metadata
   const maxLevel = -minZoom;
-
   const zarrStores = range(maxLevel).map(i => {
     const config = {
       store: rootZarrUrl,
@@ -45,6 +43,24 @@ export async function initZarr({ sourceChannels, minZoom }) {
   // chunks are [4, 512, 512], grab last dimentsion. Maybe add check for if last two are the same?
   const tileSize = baseLayer.chunks.slice(-1)[0];
 
+  connections, imageHeight, imageWidth, tileSize, minZoom;
+
   // Ideally we will also have metadata here about the minZoom so it's not a parameter supplied in App.js
   return { connections, imageHeight, imageWidth, tileSize, minZoom };
+}
+
+export async function getStaticZarrImage({ sourceChannels }) {
+  const rootZarrUrl = Object.values(sourceChannels)[0]; // all are the same so get first
+  const zarrStore = rootZarrUrl.split('/').slice(-1)[0]; // xyz_image.zarr
+  const urlPrefx = rootZarrUrl.replace(zarrStore, '');
+  const config = {
+    store: urlPrefx,
+    path: zarrStore,
+    mode: 'r'
+  };
+  const arr = await openArray(config);
+  const [imageHeight, imageWidth] = arr.shape.slice(1);
+  const rawData = await arr.getRawChunk([0, 0, 0]);
+  const data = decodeChannels(rawData);
+  return { data, imageHeight, imageWidth };
 }

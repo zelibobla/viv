@@ -151,6 +151,7 @@ export default class App extends PureComponent {
             useTiff: source.isTiff,
             useZarr: source.isZarr,
             sourceChannels: source.channels,
+            type: source.type,
             minZoom: -8,
             viewHeight,
             viewWidth,

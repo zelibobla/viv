@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import DeckGL from '@deck.gl/react';
 import { OrthographicView } from 'deck.gl';
-import { MicroscopyViewerLayer } from './layers';
+import { MicroscopyViewerLayer, StaticImageLayer } from './layers';
 
 export class MicroscopyViewer extends PureComponent {
   constructor(props) {
@@ -13,11 +13,19 @@ export class MicroscopyViewer extends PureComponent {
   }
 
   _renderLayers() {
-    const { useTiff } = this.props;
-    return new MicroscopyViewerLayer({
-      id: `MicroscopyViewerLayer-${useTiff ? 'tiff' : 'zarr'}`,
-      ...this.props
-    });
+    const { useTiff, type } = this.props;
+    if (type == 'tiled') {
+      return new MicroscopyViewerLayer({
+        id: `MicroscopyViewerLayer-${useTiff ? 'tiff' : 'zarr'}`,
+        ...this.props
+      });
+    }
+    if (type == 'static') {
+      return new StaticImageLayer({
+        id: 'StaticImageLayer',
+        ...this.props
+      });
+    }
   }
 
   _onWebGLInitialized(gl) {

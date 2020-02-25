@@ -20,6 +20,7 @@ const rootZarrUrl =
 const zarrInfo = {
   isTiff: false,
   isZarr: true,
+  type: 'tiled',
   channels: {
     'Cy3 - Synaptopodin (glomerular)': rootZarrUrl,
     'Cy5 - THP (thick limb)': rootZarrUrl,
@@ -27,8 +28,27 @@ const zarrInfo = {
     'FITC - Laminin (basement membrane)': rootZarrUrl
   }
 };
+const rootStaticZarrUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex/codex_r001_x003_y003.zarr';
+
+const staticInfo = {
+  isTiff: false,
+  isZarr: true,
+  type: 'static',
+  initialViewState: {
+    zoom: -1,
+    target: [-500, -500]
+  },
+  channels: {
+    'Cy3 - Synaptopodin (glomerular)': rootStaticZarrUrl,
+    'Cy5 - THP (thick limb)': rootStaticZarrUrl,
+    'DAPI - Hoescht (nuclei)': rootStaticZarrUrl,
+    'FITC - Laminin (basement membrane)': rootStaticZarrUrl
+  }
+};
 
 export default {
   zarr: zarrInfo,
-  tiff: tiffInfo
+  tiff: tiffInfo,
+  static: staticInfo
 };

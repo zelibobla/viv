@@ -185,8 +185,8 @@ export class XRLayer extends Layer {
         (isInt32 && GL.UNSIGNED_INT)
     };
     const texture = new Texture2D(this.context.gl, {
-      width: this.props.tileSize,
-      height: this.props.tileSize,
+      width: this.props.staticWidth || this.props.tileSize,
+      height: this.props.staticHeight || this.props.tileSize,
       data,
       // we don't want or need mimaps
       mipmaps: false,

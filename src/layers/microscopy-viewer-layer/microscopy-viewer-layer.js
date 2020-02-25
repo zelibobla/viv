@@ -2,7 +2,7 @@ import { CompositeLayer } from '@deck.gl/core';
 // eslint-disable-next-line import/extensions
 import { Pool } from 'geotiff/dist/geotiff.bundle.min.js';
 import { MicroscopyViewerLayerBase } from './microscopy-viewer-layer-base';
-import { initTiff, initZarr } from './data-utils';
+import { initTiff, initZarr } from '../utils';
 
 export class MicroscopyViewerLayer extends CompositeLayer {
   initializeState() {

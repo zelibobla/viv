@@ -3,6 +3,7 @@ const MAX_COLOR_INTENSITY = 255;
 
 export const DEFAULT_SLIDER_OFF = [MAX_SLIDER_VALUE, MAX_SLIDER_VALUE];
 export const DEFAULT_COLOR_OFF = [0, 0, 0];
+export const MAX_SLIDERS_AND_CHANNELS = 6;
 
 export function range(len) {
   return [...Array(len).keys()];
