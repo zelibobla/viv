@@ -8,7 +8,7 @@ import { VivViewer } from '../../src';
 import sources from './source-info';
 import './App.css';
 
-const initSourceName = 'zarr';
+const initSourceName = 'static';
 
 export default class App extends PureComponent {
   constructor(props) {
@@ -23,7 +23,9 @@ export default class App extends PureComponent {
       [255, 0, 0],
       [0, 255, 0],
       [0, 0, 255],
-      [255, 128, 0]
+      [255, 128, 0],
+      [255, 0, 255],
+      [0, 255, 255]
     ];
     Object.keys(sources[initSourceName].channels).forEach((channel, i) => {
       sliderValues[channel] = [0, 20000];

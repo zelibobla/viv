@@ -5,7 +5,7 @@ function decodeChannels({ data, shape }) {
   const offset = data.length / shape[0];
   const tileData = range(shape[0]).map(i =>
     data.subarray(offset * i, offset * i + offset)
-  );
+  )
   return tileData;
 }
 

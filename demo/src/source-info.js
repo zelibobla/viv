@@ -29,7 +29,7 @@ const zarrInfo = {
   }
 };
 const rootStaticZarrUrl =
-  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex/codex_r001_x003_y003.zarr';
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex/codex_z001_r001_x003_y004.zarr';
 
 const staticInfo = {
   isTiff: false,
@@ -40,15 +40,17 @@ const staticInfo = {
     target: [-500, -500]
   },
   channels: {
-    'Cy3 - Synaptopodin (glomerular)': rootStaticZarrUrl,
-    'Cy5 - THP (thick limb)': rootStaticZarrUrl,
-    'DAPI - Hoescht (nuclei)': rootStaticZarrUrl,
-    'FITC - Laminin (basement membrane)': rootStaticZarrUrl
+    'Actin': rootStaticZarrUrl,
+    'CD107a': rootStaticZarrUrl,
+    'CD11c': rootStaticZarrUrl,
+    'CD20': rootStaticZarrUrl,
+    'CD21': rootStaticZarrUrl,
+    'CD31': rootStaticZarrUrl
   }
 };
 
 export default {
+  static: staticInfo,
   zarr: zarrInfo,
   tiff: tiffInfo,
-  static: staticInfo
 };
