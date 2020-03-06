@@ -47,11 +47,11 @@ export default class StaticImageLayer extends CompositeLayer {
         [2 ** 32, 2 ** 32],
         5
       ).flat(),
-      colorValues,
+      colorValues: padWithDefault([128, 128, 0], [0, 0, 0], 5).flat(),
       staticImageHeight: imageHeight,
       staticImageWidth: imageWidth,
       id: `XR-Static-Layer-${0}-${imageHeight}-${imageWidth}-${0}`,
-      opacity
+      opacity: 0.7
     });
   }
 }
