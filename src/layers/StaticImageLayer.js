@@ -34,7 +34,7 @@ export default class StaticImageLayer extends CompositeLayer {
   }
 
   renderLayers() {
-    const { loader, visible } = this.props;
+    const { loader, visible, opacity } = this.props;
     const { imageWidth, imageHeight } = loader.vivMetadata;
     const { sliderValues, colorValues } = overrideChannelProps(this.props);
     const { data } = this.state;
@@ -51,7 +51,7 @@ export default class StaticImageLayer extends CompositeLayer {
       staticImageHeight: imageHeight,
       staticImageWidth: imageWidth,
       id: `XR-Static-Layer-${0}-${imageHeight}-${imageWidth}-${0}`,
-      visible
+      opacity
     });
   }
 }
