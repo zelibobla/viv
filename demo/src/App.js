@@ -52,8 +52,8 @@ function App() {
   const [sourceName, setSourceName] = useState(initSourceName);
   const [viewWidth, setViewWidth] = useState(window.innerWidth * 0.7);
   const [viewHeight, setViewHeight] = useState(window.innerHeight * 0.9);
-  const [loader, setLoader] = useState(null);
-
+  const [zarrLoader, setZarrLoader] = useState(null);
+  const [staticLoader, setStaticLoader] = useState(null);
   useEffect(() => {
     const handleResize = () => {
       setViewWidth(window.innerWidth * 0.7);
@@ -67,18 +67,31 @@ function App() {
 
   useEffect(() => {
     async function initLoader() {
-      const config = {
-        channelNames: sources[sourceName].channelNames,
-        url: sources[sourceName].url,
+      const zarrConfig = {
+        channelNames: sources.zarr.channelNames,
+        url: sources.zarr.url,
         minZoom:
-          typeof sources[sourceName].minZoom === 'number'
-            ? sources[sourceName].minZoom
+          typeof sources.zarr.minZoom === 'number'
+            ? sources.zarr.minZoom
             : MIN_ZOOM
       };
       // Need to do this to clear last loader... probably a better way.
-      setLoader(null);
-      const newLoader = await initPyramidLoader(sourceName, config);
-      setLoader(newLoader);
+      setZarrLoader(null);
+      const zarrLoader = await initPyramidLoader('zarr', zarrConfig);
+      setZarrLoader(zarrLoader);
+
+      const staticConfig = {
+        channelNames: sources.static.channelNames,
+        url: sources.static.url,
+        minZoom:
+          typeof sources.static.minZoom === 'number'
+            ? sources.static.minZoom
+            : MIN_ZOOM
+      };
+      // Need to do this to clear last loader... probably a better way.
+      setStaticLoader(null);
+      const staticLoader = await initPyramidLoader('zarr', staticConfig);
+      setStaticLoader(staticLoader);
     }
     initLoader();
   }, [sourceName]);
@@ -141,9 +154,10 @@ function App() {
     sources[sourceName].initialViewState || DEFAULT_VIEW_STATE;
   return (
     <div>
-      {loader ? (
+      {zarrLoader && staticLoader ? (
         <VivViewer
-          loader={loader}
+          zarrLoader={zarrLoader}
+          staticLoader={staticLoader}
           minZoom={MIN_ZOOM}
           viewHeight={viewHeight}
           viewWidth={viewWidth}

@@ -17,12 +17,7 @@ uniform usampler2D channel5;
 uniform vec2 sliderValues[6];
 
 // color
-uniform vec3 colorValue0;
-uniform vec3 colorValue1;
-uniform vec3 colorValue2;
-uniform vec3 colorValue3;
-uniform vec3 colorValue4;
-uniform vec3 colorValue5;
+uniform vec3 colorValues[6];
 
 in vec2 vTexCoord;
 
@@ -70,7 +65,6 @@ void main() {
   vec3 rgbCombo = vec3(0.0);
   vec3 hsvCombo = vec3(0.0);
   float channelArray[6] = float[6](channel0Color, channel1Color, channel2Color, channel3Color, channel4Color, channel5Color);
-  vec3 colorValues[6] = vec3[6](colorValue0, colorValue1, colorValue2, colorValue3, colorValue4, colorValue5);
 
   for(int i = 0; i < 6; i++) {
     hsvCombo = rgb2hsv(vec3(colorValues[i]));

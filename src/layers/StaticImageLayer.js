@@ -1,7 +1,7 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
+import { Matrix4 } from 'math.gl';
 import XRLayer from './XRLayer';
-
-import { overrideChannelProps } from './utils';
+import { overrideChannelProps, padWithDefault } from './utils';
 
 const defaultProps = {
   pickable: false,
@@ -19,6 +19,14 @@ const defaultProps = {
   }
 };
 
+function scaleBounds({ imageWidth, imageHeight }) {
+  const left = 951 * 20;
+  const top = 601 * 20;
+  const right = imageWidth * 20 + left;
+  const bottom = imageHeight * 20 + top;
+  return [left, bottom, right, top];
+}
+
 export default class StaticImageLayer extends CompositeLayer {
   initializeState() {
     const { loader } = this.props;
@@ -30,16 +38,19 @@ export default class StaticImageLayer extends CompositeLayer {
     const { imageWidth, imageHeight } = loader.vivMetadata;
     const { sliderValues, colorValues } = overrideChannelProps(this.props);
     const { data } = this.state;
+    const bounds = scaleBounds({ imageWidth, imageHeight });
     return new XRLayer({
       channelData: data,
-      bounds: [0, imageHeight, imageWidth, 0],
-      sliderValues,
+      bounds,
+      sliderValues: padWithDefault(
+        [sliderValues[0], sliderValues[1]],
+        [2 ** 32, 2 ** 32],
+        5
+      ).flat(),
       colorValues,
       staticImageHeight: imageHeight,
       staticImageWidth: imageWidth,
       id: `XR-Static-Layer-${0}-${imageHeight}-${imageWidth}-${0}`,
-      pickable: false,
-      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
       visible
     });
   }

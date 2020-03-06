@@ -5,16 +5,18 @@ import { VivViewerLayer, StaticImageLayer } from './layers';
 
 export default class VivViewer extends PureComponent {
   _renderLayers() {
-    const { loader } = this.props;
-    return loader.isPyramid
-      ? new VivViewerLayer({
-          id: `VivViewerLayer-${loader.type}}`,
-          ...this.props
-        })
-      : new StaticImageLayer({
-          id: `StaticImageLayer-${loader.type}}`,
-          ...this.props
-        });
+    return [
+      new VivViewerLayer({
+        id: `VivViewerLayer`,
+        ...this.props,
+        loader: this.props.zarrLoader
+      }),
+      new StaticImageLayer({
+        id: `StaticImageLayer`,
+        ...this.props,
+        loader: this.props.staticLoader
+      })
+    ];
   }
 
   render() {
