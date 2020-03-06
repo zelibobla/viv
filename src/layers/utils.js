@@ -45,7 +45,7 @@ export function overrideChannelProps(props) {
   const overrideValuesProps = {
     ...props,
     sliderValues: paddedSliderValues.flat(), // flatten for use on shaders
-    colorValues: paddedColorValues
+    colorValues: paddedColorValues.flat()
   };
   return overrideValuesProps;
 }
