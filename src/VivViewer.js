@@ -24,11 +24,21 @@ export default class VivViewer extends PureComponent {
     const { initialViewState } = props;
     this.state = {};
     this.state.viewState = initialViewState;
-    this.state.flyToX = 0;
-    this.state.flyToY = 0;
-    this._goTo = this._goTo.bind(this);
+    this.state.flyToX1 = 8000;
+    this.state.flyToY1 = 8000;
+    this.state.flyToX2 = 10000;
+    this.state.flyToY2 = 10000;
+
+    this.state.flyToX = 8000;
+    this.state.flyToY = 10000;
+    this._flyToBox = this._flyToBox.bind(this);
+    this._flyToCenter = this._flyToCenter.bind(this);
     this._interruptionStyle = TRANSITION_EVENTS.IGNORE;
     this._onViewStateChange = this._onViewStateChange.bind(this);
+    this.handleChangeX1 = this.handleChangeX1.bind(this);
+    this.handleChangeY1 = this.handleChangeY1.bind(this);
+    this.handleChangeX2 = this.handleChangeX2.bind(this);
+    this.handleChangeY2 = this.handleChangeY2.bind(this);
     this.handleChangeX = this.handleChangeX.bind(this);
     this.handleChangeY = this.handleChangeY.bind(this);
   }
@@ -50,20 +60,53 @@ export default class VivViewer extends PureComponent {
         });
   }
 
-  _goTo(event) {
+  _flyToCenter(event) {
     const { flyToX, flyToY } = this.state;
+    const center = [flyToX, flyToY];
+
     this.setState({
       viewState: {
         ...this.state.viewState,
-        target: [flyToX, flyToY],
+        target: center,
         zoom: 0,
         pitch: 0,
         bearing: 0,
         transitionDuration: 10000,
+        transitionInterpolator: new FlyToInterpolatorViv(),
         transitionInterruption: this._interruptionStyle
-      },
-      flyToX: 0,
-      flyToY: 0
+      }
+    });
+    event.preventDefault();
+  }
+
+  _flyToBox(event) {
+    const { flyToX1, flyToY1, flyToX2, flyToY2 } = this.state;
+    const { viewHeight, viewWidth } = this.props;
+    const center = [
+      flyToX1 + (flyToX2 - flyToX1) / 2,
+      flyToY1 + (flyToY2 - flyToY1) / 2
+    ];
+    const zoom =
+      flyToY2 - flyToY1 > viewHeight && flyToX2 - flyToX1 > viewWidth
+        ? Math.min(
+            -1 * Math.log2((flyToY2 - flyToY1) / viewHeight),
+            -1 * Math.log2((flyToX2 - flyToX1) / viewWidth)
+          )
+        : Math.min(
+            Math.log2((flyToY2 - flyToY1) / viewHeight),
+            Math.log2((flyToX2 - flyToX1) / viewWidth)
+          );
+    this.setState({
+      viewState: {
+        ...this.state.viewState,
+        target: center,
+        zoom,
+        pitch: 0,
+        bearing: 0,
+        transitionDuration: 10000,
+        transitionInterpolator: new FlyToInterpolatorViv(),
+        transitionInterruption: this._interruptionStyle
+      }
     });
     event.preventDefault();
   }
@@ -72,12 +115,28 @@ export default class VivViewer extends PureComponent {
     this.setState({ viewState });
   }
 
-  handleChangeX(event) {
-    this.setState({ flyToX: Number.parseInt(event.target.value) });
+  handleChangeX1(event) {
+    this.setState({ flyToX1: Number.parseInt(event.target.value) });
+  }
+
+  handleChangeY1(event) {
+    this.setState({ flyToY1: Number.parseInt(event.target.value) });
+  }
+
+  handleChangeX2(event) {
+    this.setState({ flyToX2: Number.parseInt(event.target.value) });
+  }
+
+  handleChangeY2(event) {
+    this.setState({ flyToY2: Number.parseInt(event.target.value) });
   }
 
   handleChangeY(event) {
     this.setState({ flyToY: Number.parseInt(event.target.value) });
+  }
+
+  handleChangeX(event) {
+    this.setState({ flyToX: Number.parseInt(event.target.value) });
   }
 
   render() {
@@ -100,16 +159,63 @@ export default class VivViewer extends PureComponent {
         controller
         views={views}
       >
-        <form onSubmit={this._goTo}>
+        <form onSubmit={this._flyToBox}>
+          <label>
+            {' '}
+            x1:
+            <input
+              type="text"
+              value={this.state.flyToX1}
+              onChange={this.handleChangeX1}
+            />
+          </label>
+          <label>
+            {' '}
+            y1:
+            <input
+              type="text"
+              value={this.state.flyToY1}
+              onChange={this.handleChangeY1}
+            />
+          </label>
+          <label>
+            {' '}
+            x2:
+            <input
+              type="text"
+              value={this.state.flyToX2}
+              onChange={this.handleChangeX2}
+            />
+          </label>
+          <label>
+            {' '}
+            y2:
+            <input
+              type="text"
+              value={this.state.flyToY2}
+              onChange={this.handleChangeY2}
+            />
+          </label>
+          <input type="submit" value="Submit" />
+        </form>
+        <form onSubmit={this._flyToCenter}>
           <label>
             {' '}
             x:
-            <input type="text" onChange={this.handleChangeX} />
+            <input
+              type="text"
+              value={this.state.flyToX}
+              onChange={this.handleChangeX}
+            />
           </label>
           <label>
             {' '}
             y:
-            <input type="text" onChange={this.handleChangeY} />
+            <input
+              type="text"
+              value={this.state.flyToY}
+              onChange={this.handleChangeY}
+            />
           </label>
           <input type="submit" value="Submit" />
         </form>

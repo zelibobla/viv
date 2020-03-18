@@ -63,7 +63,6 @@ export function flyToViewport(startProps, endProps, t, opts = {}) {
 
   viewport.target = [newCenterWorld[0], newCenterWorld[1]];
   viewport.zoom = newZoom;
-  console.log(viewport);
   return viewport;
 }
 
