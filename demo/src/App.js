@@ -5,6 +5,7 @@ import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import AddIcon from '@material-ui/icons/Add';
+import * as tf from '@tensorflow/tfjs';
 
 import { SideBySideViewer, PictureInPictureViewer } from '../../src';
 import sources from './source-info';
@@ -43,6 +44,8 @@ function App() {
   const [zoomLock, toggleZoomLock] = useReducer(v => !v, true);
   const [panLock, togglePanLock] = useReducer(v => !v, true);
   const [isLoading, setIsLoading] = useState(true);
+  const [model, setModel] = useState({});
+  const [useModel, toggleUseModel] = useReducer(v => !v, true);
 
   useEffect(() => {
     async function changeLoader() {
@@ -62,6 +65,15 @@ function App() {
         const names = sourceInfo.dimensions[0].values;
         dispatch({ type: 'RESET_CHANNELS', value: { names } });
       }
+
+      const newModel = await tf.loadGraphModel(
+        'https://vitessce-vanderbilt-data.storage.googleapis.com/tfjs_model/model.json'
+      );
+      tf.tidy(() => {
+        newModel.predict(tf.zeros([1, 512, 512, 1]));
+      });
+
+      setModel(newModel);
       setLoader(nextLoader);
       setIsLoading(false);
     }
@@ -103,6 +115,7 @@ function App() {
 
   const { initialViewState, isPyramid, dimensions } = sources[sourceName];
   const { names, colors, sliders, isOn, ids, selections } = channels;
+
   const channelControllers = ids.map((id, i) => {
     return (
       <Grid key={`channel-controller-${names[i]}-${id}`} item>
@@ -125,9 +138,9 @@ function App() {
         (useLinkedView && isPyramid ? (
           <SideBySideViewer
             loader={loader}
-            sliderValues={sliders}
-            colorValues={colors}
-            channelIsOn={isOn}
+            sliderValues={sliders + [[0, 0]]}
+            colorValues={colors + [[255, 192, 203]]}
+            channelIsOn={isOn + [useModel]}
             loaderSelection={selections}
             initialViewState={{
               ...(initialViewState || DEFAULT_VIEW_STATE),
@@ -137,13 +150,14 @@ function App() {
             colormap={colormap.length > 0 && colormap}
             zoomLock={zoomLock}
             panLock={panLock}
+            model={model}
           />
         ) : (
           <PictureInPictureViewer
             loader={loader}
-            sliderValues={sliders}
-            colorValues={colors}
-            channelIsOn={isOn}
+            sliderValues={sliders.concat([[0, 0]])}
+            colorValues={colors.concat([[255, 192, 203]])}
+            channelIsOn={isOn.concat([useModel])}
             loaderSelection={selections}
             initialViewState={{
               ...(initialViewState || DEFAULT_VIEW_STATE),
@@ -153,6 +167,7 @@ function App() {
             colormap={colormap.length > 0 && colormap}
             overview={DEFAULT_OVERVIEW}
             overviewOn={overviewOn && isPyramid}
+            model={model}
           />
         ))}
       {controllerOn && (
@@ -180,6 +195,14 @@ function App() {
               <CircularProgress />
             </Grid>
           )}
+          <Button
+            onClick={toggleUseModel}
+            variant="outlined"
+            size="small"
+            fullWidth
+          >
+            {useModel ? 'Hide' : 'Show'} Segment
+          </Button>
           <Button
             disabled={
               ids.length === MAX_CHANNELS || sourceName === 'tiff' || isLoading

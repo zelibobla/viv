@@ -2,6 +2,7 @@ import { CompositeLayer } from '@deck.gl/core';
 import VivViewerLayerBase from './VivViewerLayerBase';
 import StaticImageLayer from '../StaticImageLayer';
 import { padColorsAndSliders } from '../utils';
+import * as tf from '@tensorflow/tfjs';
 
 /**
  * This layer generates a VivViewerLayer (tiled) and a StaticImageLayer (background for the tiled layer)
@@ -32,6 +33,7 @@ export default class VivViewerLayer extends CompositeLayer {
       colormap,
       viewportId,
       onTileError,
+      // model,
       id
     } = this.props;
     const { tileSize, numLevels, dtype } = loader;
@@ -54,6 +56,23 @@ export default class VivViewerLayer extends CompositeLayer {
           `Tile data  { width: ${width}, height: ${height} } does not match tilesize: ${tileSize}`
         );
       }
+      // if (z === 0) {
+      //   const maskTensor = tf.tidy(() => {
+      //     const input = tf
+      //       .tensor(
+      //         new Float32Array(loader.type === 'zarr' ? data[0] : data[2])
+      //       )
+      //       .reshape([-1, 512, 512, 1]);
+      //     const pred = model
+      //       .predict(input)
+      //       .squeeze()
+      //       .flatten();
+      //     return tf.greater(pred, 0.5);
+      //   });
+      //   const mask = await maskTensor.data();
+      //   maskTensor.dispose();
+      //   data.push(new Uint16Array(mask));
+      // }
       return data;
     };
     const tiledLayer = new VivViewerLayerBase({

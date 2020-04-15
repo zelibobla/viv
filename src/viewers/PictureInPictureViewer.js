@@ -26,7 +26,8 @@ const PictureInPictureViewer = props => {
     colormap,
     overview,
     overviewOn,
-    loaderSelection
+    loaderSelection,
+    model
   } = props;
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new DetailView({ initialViewState: detailViewState });
@@ -36,7 +37,8 @@ const PictureInPictureViewer = props => {
     colorValues,
     channelIsOn,
     loaderSelection,
-    colormap
+    colormap,
+    model
   };
   const views = [detailView];
   const layerProps = [layerConfig];
