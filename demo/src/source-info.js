@@ -211,6 +211,7 @@ const remoteTiff2 = {
   description: 'VAN0003-LK-32-21 Donor Image'
 };
 
+// Originally from http://cellimagelibrary.org/images/13384
 const rootStatic3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/3d_zStack.zarr/3d_zStack.zarr/';
 
