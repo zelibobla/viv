@@ -6,7 +6,11 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import AddIcon from '@material-ui/icons/Add';
 
-import { SideBySideViewer, PictureInPictureViewer } from '../../src';
+import {
+  SideBySideViewer,
+  PictureInPictureViewer,
+  Static3dViewer
+} from '../../src';
 import sources from './source-info';
 import { createLoader, channelsReducer, useWindowSize } from './utils';
 
@@ -110,11 +114,11 @@ function App() {
     });
   };
 
-  const { initialViewState, isPyramid, dimensions } = sources[sourceName];
+  const { initialViewState, isPyramid, dimensions, is3d } = sources[sourceName];
   const { names, colors, sliders, isOn, ids, selections } = channels;
   const channelControllers = ids.map((id, i) => {
     return (
-      <Grid key={`channel-controller-${names[i]}-${id}`} item>
+      <Grid key={`channel-controller-${names[i]}-${id}`} item xs={12}>
         <ChannelController
           name={names[i]}
           channelOptions={dimensions[0].values}
@@ -129,7 +133,23 @@ function App() {
   });
   return (
     <>
+      {is3d && (
+        <Static3dViewer
+          loader={loader}
+          sliderValues={sliders}
+          colorValues={colors}
+          channelIsOn={isOn}
+          loaderSelection={selections}
+          initialViewState={{
+            ...(initialViewState || DEFAULT_VIEW_STATE),
+            height: viewSize.height,
+            width: viewSize.width
+          }}
+          colormap={colormap.length > 0 && colormap}
+        />
+      )}
       {!isLoading &&
+        isPyramid &&
         (useLinkedView && isPyramid ? (
           <SideBySideViewer
             loader={loader}
@@ -182,7 +202,14 @@ function App() {
             </Grid>
           </Grid>
           {!isLoading ? (
-            <Grid container>{channelControllers}</Grid>
+            <Grid
+              container
+              direction="column"
+              justify="flex-start"
+              alignItems="center"
+            >
+              {channelControllers}
+            </Grid>
           ) : (
             <Grid container justify="center">
               <CircularProgress />

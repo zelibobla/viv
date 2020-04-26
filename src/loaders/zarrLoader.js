@@ -8,6 +8,7 @@ export default class ZarrLoader {
     data,
     dimensions,
     isRgb,
+    is3d,
     scale = 1,
     translate = { x: 0, y: 0 }
   }) {
@@ -19,6 +20,7 @@ export default class ZarrLoader {
       base = data;
       this.numLevels = 1;
     }
+    this.is3d = is3d;
     this.type = 'zarr';
     this.scale = scale;
     this.translate = translate;
@@ -33,6 +35,7 @@ export default class ZarrLoader {
     } else {
       this._xIndex = base.shape.length - 1;
       this._yIndex = base.shape.length - 2;
+      this._zIndex = base.shape.length - 3;
     }
 
     const { dtype, chunks } = base;
@@ -83,6 +86,9 @@ export default class ZarrLoader {
       const chunkKey = [...key];
       chunkKey[this._yIndex] = null;
       chunkKey[this._xIndex] = null;
+      if (this.is3d) {
+        chunkKey[this._zIndex] = null;
+      }
       if (this.isRgb) chunkKey[chunkKey.length - 1] = null;
       const { data } = await source.getRaw(chunkKey);
       return data;

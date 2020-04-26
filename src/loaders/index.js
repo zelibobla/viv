@@ -10,7 +10,8 @@ export async function createZarrLoader({
   isPyramid,
   isRgb,
   scale,
-  translate
+  translate,
+  is3d
 }) {
   let data;
   if (isPyramid) {
@@ -29,7 +30,8 @@ export async function createZarrLoader({
     dimensions,
     scale,
     translate,
-    isRgb
+    isRgb,
+    is3d
   });
 }
 

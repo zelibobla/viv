@@ -211,11 +211,48 @@ const remoteTiff2 = {
   description: 'VAN0003-LK-32-21 Donor Image'
 };
 
+const rootStatic3DUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/3d_zStack.zarr/3d_zStack.zarr/';
+
+const rootStatic3DInfo = {
+  url: rootStatic3DUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: [
+        'PTEN gene loci Channel Selection',
+        'VEGF loci Channel Selection',
+        'Nuclei? Channel Selection'
+      ]
+    },
+    { field: 'z', type: 'quantitative', values: null },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null }
+  ],
+  initialViewState: {
+    zoom: 10,
+    target: [512, 512, 50]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: [
+    'PTEN gene loci Channel Selection',
+    'VEGF loci Channel Selection',
+    'Nuclei? Channel Selection'
+  ].map(channel => {
+    return { channel };
+  }),
+  description: '3d Stack'
+};
+
 export default {
   zarr: zarrInfo,
   tiff: tiffInfo,
   static: staticInfo,
   'static tiff': staticTiffInfo,
   'bf tiff': remoteBFTiff,
-  'tiff 2': remoteTiff2
+  'tiff 2': remoteTiff2,
+  '3d zarr': rootStatic3DInfo
 };

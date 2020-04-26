@@ -5,7 +5,8 @@ import { COLOR_PALLETE, INITIAL_SLIDER_VALUE } from './constants';
 
 export async function createLoader(type, infoObj) {
   switch (type) {
-    case 'zarr': {
+    case 'zarr':
+    case '3d zarr': {
       const loader = await createZarrLoader(infoObj);
       return loader;
     }
