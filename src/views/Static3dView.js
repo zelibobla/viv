@@ -13,7 +13,8 @@ export default class Static3dView extends VivView {
       height,
       width,
       x,
-      y
+      y,
+      orbitAxis: 'Y'
     });
   }
 
