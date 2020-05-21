@@ -6,6 +6,8 @@ import { COLOR_PALLETE, INITIAL_SLIDER_VALUE } from './constants';
 export async function createLoader(type, infoObj) {
   switch (type) {
     case 'zarr':
+    case 'static tiff':
+    case 'seqFish':
     case '3d zarr': {
       const loader = await createZarrLoader(infoObj);
       return loader;
@@ -15,7 +17,6 @@ export async function createLoader(type, infoObj) {
       return loader;
     }
     // These all resolve to the 'tiff' case.
-    case 'static tiff':
     case 'bf tiff':
     case 'tiff 2':
     case 'tiff': {

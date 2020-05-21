@@ -27,4 +27,4 @@ export const COLOR_PALLETE = [
   [0, 255, 255],
   [255, 255, 255]
 ];
-export const INITIAL_SLIDER_VALUE = [500, 1500];
+export const INITIAL_SLIDER_VALUE = [500, 2000];

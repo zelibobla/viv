@@ -99,7 +99,7 @@ const staticInfo = {
 };
 
 const rootStaticTiffUrl =
-  'https://vitessce-demo-data.storage.googleapis.com/test-data/antigen_exprs.ome.tiff';
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex_3d/3d_codex_zStack.zarr/';
 
 const staticTiffInfo = {
   url: rootStaticTiffUrl,
@@ -130,19 +130,19 @@ const staticTiffInfo = {
     },
     { field: 'y', type: 'quantitative', values: null },
     { field: 'x', type: 'quantitative', values: null },
-    { field: 'time', type: 'number', values: null },
     { field: 'z', type: 'number', values: null }
   ],
   initialViewState: {
-    zoom: -1,
-    target: [1000, 500]
+    zoom: 8,
+    target: [0, 0, 0]
   },
   isPublic: false,
   isPyramid: false,
-  selections: ['DAPI_2', 'E_CAD', 'Histone_H3', 'Ki67'].map(channel => {
-    return { channel, time: 0, z: 0 };
+  is3d: true,
+  selections: ['DAPI_2', 'E_CAD', 'Histone_H3'].map(channel => {
+    return { channel };
   }),
-  description: 'CODEX Tile'
+  description: 'CODEX 3d Tile'
 };
 
 const remoteBFTiffUrl =
@@ -248,10 +248,39 @@ const rootStatic3DInfo = {
   description: '3d Stack'
 };
 
+const rootSeqFISH3DUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/seqfish_3d/3d_seqfish_zStack.zarr/';
+
+const rootSeqFISH3DInfo = {
+  url: rootSeqFISH3DUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: ['635', '561', '488', '405']
+    },
+    { field: 'z', type: 'quantitative', values: null },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null }
+  ],
+  initialViewState: {
+    zoom: 10,
+    target: [512, 512, 50]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: ['635', '561', '488', '405'].map(channel => {
+    return { channel };
+  }),
+  description: 'seqFish Stack'
+};
+
 export default {
   zarr: zarrInfo,
   tiff: tiffInfo,
   static: staticInfo,
+  seqFish: rootSeqFISH3DInfo,
   'static tiff': staticTiffInfo,
   'bf tiff': remoteBFTiff,
   'tiff 2': remoteTiff2,

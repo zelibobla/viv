@@ -209,7 +209,8 @@ export default class XR3DLayer extends Layer {
           sliderValues,
           colorValues,
           volume_dims: new Float32Array(volDims),
-          volume_scale: new Float32Array(volScale)
+          volume_scale: new Float32Array(volScale),
+          dimensions: new Float32Array(volDims)
         })
         .draw();
     }

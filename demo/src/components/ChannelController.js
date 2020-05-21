@@ -10,7 +10,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ChannelOptions from './ChannelOptions';
 
 const MIN_SLIDER_VALUE = 0;
-const MAX_SLIDER_VALUE = 2000;
+const MAX_SLIDER_VALUE = 65535;
 const COLORMAP_SLIDER_CHECKBOX_COLOR = [220, 220, 220];
 
 const toRgb = (on, arr) => {
