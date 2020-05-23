@@ -5,14 +5,15 @@ in vec3 positions;
 
 
 uniform vec3 volume_scale;
-
+uniform vec3 dimensions;
 
 out vec3 vray_dir;
 flat out vec3 transformed_eye;
 
 void main() {
+  vec3 coords = project_position(positions * dimensions + (vec3(0.0) - dimensions * 0.5));
   vec3 volume_translation = vec3(0.0) - volume_scale * 0.5;
-  gl_Position = project_common_position_to_clipspace(vec4(positions * volume_scale + volume_translation, 1.0));
+  gl_Position = project_common_position_to_clipspace(vec4(coords, 1.0));
   transformed_eye = (project_uCameraPosition - volume_translation) / volume_scale;
 	vray_dir = positions - transformed_eye;
 }`;

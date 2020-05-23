@@ -133,7 +133,7 @@ const staticTiffInfo = {
     { field: 'z', type: 'number', values: null }
   ],
   initialViewState: {
-    zoom: 8,
+    zoom: -2,
     target: [0, 0, 0]
   },
   isPublic: false,

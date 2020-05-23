@@ -8,7 +8,7 @@ uniform highp usampler3D volume1;
 uniform highp usampler3D volume2;
 
 uniform highp sampler2D colormap;
-uniform ivec3 dimensions;
+uniform vec3 dimensions;
 uniform float dt_scale;
 
 // range
