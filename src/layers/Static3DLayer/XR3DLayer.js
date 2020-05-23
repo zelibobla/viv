@@ -208,8 +208,8 @@ export default class XR3DLayer extends Layer {
           volume2,
           sliderValues,
           colorValues,
-          volume_dims: new Float32Array(volDims),
           volume_scale: new Float32Array(volScale),
+          instanceCenter: new Float32Array(volDims).map(i => i / 2),
           dimensions: new Float32Array(volDims)
         })
         .draw();
@@ -282,7 +282,7 @@ export default class XR3DLayer extends Layer {
       volume0,
       volume1,
       volume2,
-      volDims: [height, width, zSize]
+      volDims: [width, height, zSize]
     });
   }
 }

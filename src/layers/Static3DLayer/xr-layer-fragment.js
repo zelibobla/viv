@@ -8,7 +8,7 @@ uniform highp usampler3D volume1;
 uniform highp usampler3D volume2;
 
 uniform highp sampler2D colormap;
-uniform ivec3 volume_dims;
+uniform ivec3 dimensions;
 uniform float dt_scale;
 
 // range
@@ -92,7 +92,7 @@ void main(void) {
     discard;
   }
   t_hit.x = max(t_hit.x, 0.0);
-  vec3 dt_vec = 1.0 / (vec3(volume_dims) * abs(ray_dir));
+  vec3 dt_vec = 1.0 / (vec3(dimensions) * abs(ray_dir));
   float dt = dt_scale * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
