@@ -6,6 +6,9 @@ precision highp usampler3D;
 uniform highp usampler3D volume0;
 uniform highp usampler3D volume1;
 uniform highp usampler3D volume2;
+uniform highp usampler3D volume3;
+uniform highp usampler3D volume4;
+uniform highp usampler3D volume5;
 
 uniform highp sampler2D colormap;
 uniform vec3 dimensions;
@@ -97,14 +100,28 @@ void main(void) {
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
-    float val0 = max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
-    float val1 = max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
-    float val2 = max((float(texture(volume2, p).r) - sliderValues[2][0]) / sliderValues[2][1], 0.0);
-    vec3 hsvColors[3] = vec3[3](rgb2hsv(colorValues[0]), rgb2hsv(colorValues[1]), rgb2hsv(colorValues[2]));
-    float val = val0 + val1 + val2;
-    vec3 rgb = hsv2rgb(vec3(hsvColors[0].xy, val0)) + hsv2rgb(vec3(hsvColors[1].xy, val1)) + hsv2rgb(vec3(hsvColors[2].xy, val2));
-    float o = val;
-		vec4 val_color = vec4(rgb, o);
+    float intensityValue0 = max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
+    float intensityValue1 = max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
+		float intensityValue2 = max((float(texture(volume2, p).r) - sliderValues[2][0]) / sliderValues[2][1], 0.0);
+		float intensityValue3 = max((float(texture(volume3, p).r) - sliderValues[3][0]) / sliderValues[3][1], 0.0);
+    float intensityValue4 = max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
+		float intensityValue5 = max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
+
+		vec3 rgbCombo = vec3(0.0);
+  	vec3 hsvCombo = vec3(0.0);
+		float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+		float total = 0.0;
+
+		for(int i = 0; i < 6; i++) {
+			float intensityValue = intensityArray[i];
+			hsvCombo = rgb2hsv(vec3(colorValues[i]));
+			hsvCombo = vec3(hsvCombo.xy, intensityValue);
+			rgbCombo += hsv2rgb(hsvCombo);
+			total += intensityValue;
+		}
+
+		vec4 val_color = vec4(rgbCombo, total);
+
 		// Opacity correction
 		val_color.a = 1.0 - pow(1.0 - val_color.a, dt_scale);
 		color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
@@ -117,5 +134,4 @@ void main(void) {
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);
-  // color = vec4(1.0,1.0,0.0,1.0);
 }`;

@@ -3,7 +3,6 @@ export const vs = `#version 300 es
 
 in vec3 positions;
 
-
 uniform vec3 volume_scale;
 uniform vec3 dimensions;
 

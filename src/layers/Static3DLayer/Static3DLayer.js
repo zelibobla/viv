@@ -42,7 +42,7 @@ export default class Static3DLayer extends CompositeLayer {
   initializeState() {
     const { loader, z, loaderSelection } = this.props;
     loader.getRaster({ z, loaderSelection }).then(({ data, width, height }) => {
-      this.setState({ data, width, height, zSize: 12 });
+      this.setState({ data, width, height, depth: 12 });
     });
   }
 
@@ -57,7 +57,7 @@ export default class Static3DLayer extends CompositeLayer {
       loader
         .getRaster({ z, loaderSelection })
         .then(({ data, width, height }) => {
-          this.setState({ data, width, height, zSize: 12 });
+          this.setState({ data, width, height, depth: 12 });
         });
     }
   }
@@ -83,10 +83,10 @@ export default class Static3DLayer extends CompositeLayer {
       domain,
       dtype
     });
-    const { data, width, height, zSize } = this.state;
+    const { data, width, height, depth } = this.state;
     if (!(width && height)) return null;
     return new XR3DLayer({
-      channelData: Promise.resolve({ data, width, height, zSize }),
+      channelData: Promise.resolve({ data, width, height, depth }),
       sliderValues: paddedSliderValues,
       colorValues: paddedColorValues,
       id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,

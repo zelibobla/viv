@@ -6,43 +6,7 @@ import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
 import { Model, Geometry, Texture3D } from '@luma.gl/core';
 import { vs } from './xr-layer-vertex';
 import { fs } from './xr-layer-fragment';
-
-export const MAX_COLOR_INTENSITY = 255;
-
-export const DEFAULT_COLOR_OFF = [0, 0, 0];
-
-export const MAX_SLIDERS_AND_CHANNELS = 6;
-
-export const DTYPE_VALUES = {
-  '<u1': {
-    format: GL.R8UI,
-    dataFormat: GL.RED_INTEGER,
-    type: GL.UNSIGNED_BYTE,
-    max: 2 ** 8 - 1,
-    TypedArray: Uint8Array
-  },
-  '<u2': {
-    format: GL.R16UI,
-    dataFormat: GL.RED_INTEGER,
-    type: GL.UNSIGNED_SHORT,
-    max: 2 ** 16 - 1,
-    TypedArray: Uint16Array
-  },
-  '<u4': {
-    format: GL.R32UI,
-    dataFormat: GL.RED_INTEGER,
-    type: GL.UNSIGNED_INT,
-    max: 2 ** 32 - 1,
-    TypedArray: Uint32Array
-  },
-  '<f4': {
-    format: GL.R32F,
-    dataFormat: GL.RED,
-    type: GL.FLOAT,
-    max: 2 ** 31 - 1,
-    TypedArray: Float32Array
-  }
-};
+import { DTYPE_VALUES } from '../../constants';
 
 const defaultProps = {
   pickable: false,
@@ -56,7 +20,6 @@ const defaultProps = {
   dtype: { type: 'string', value: '<u2', compare: true },
   colormapImage: { type: 'object', value: {}, async: true }
 };
-
 /**
  * This layer serves as the workhorse of the project, handling all the rendering.  Much of it is
  * adapted from BitmapLayer in DeckGL.
@@ -117,12 +80,6 @@ export default class XR3DLayer extends Layer {
     if (!gl) {
       return null;
     }
-    const { cameraPosition, viewProjectionMatrix } = this.context.viewport;
-    /*
-       0,0 --- 1,0
-        |       |
-       0,1 --- 1,1
-     */
     return new Model(gl, {
       vs,
       fs,
@@ -175,10 +132,9 @@ export default class XR3DLayer extends Layer {
           ])
         }
       }),
+      // this in theory can be coupled with sampling rate to make interaction smoother.
       uniforms: {
-        eye_pos: new Float32Array(cameraPosition),
-        dt_scale: 1.0,
-        uMVP: viewProjectionMatrix
+        dt_scale: 1.0
       }
     });
   }
@@ -187,9 +143,9 @@ export default class XR3DLayer extends Layer {
    * This function runs the shaders and draws to the canvas
    */
   draw({ uniforms }) {
-    const { volume0, volume1, volume2, model, volDims } = this.state;
+    const { textures, model, volDims } = this.state;
     const { sliderValues, colorValues } = this.props;
-    if (volume0 && model) {
+    if (textures && model) {
       const longestAxis = Math.max(
         volDims[0],
         Math.max(volDims[1], volDims[2])
@@ -203,9 +159,7 @@ export default class XR3DLayer extends Layer {
       model
         .setUniforms({
           ...uniforms,
-          volume0,
-          volume1,
-          volume2,
+          ...textures,
           sliderValues,
           colorValues,
           volume_scale: new Float32Array(volScale),
@@ -220,15 +174,44 @@ export default class XR3DLayer extends Layer {
    * This function loads all textures from incoming resolved promises/data from the loaders by calling `dataToTexture`
    */
   loadTexture(channelData) {
-    const { data, height, width, zSize } = channelData;
-    const volume0 = new Texture3D(this.context.gl, {
+    const textures = {
+      volume0: null,
+      volume1: null,
+      volume2: null,
+      volume3: null,
+      volume4: null,
+      volume5: null
+    };
+    if (this.state.textures) {
+      Object.values(this.state.textures).forEach(tex => tex && tex.delete());
+    }
+    if (
+      channelData &&
+      Object.keys(channelData).length > 0 &&
+      channelData.data
+    ) {
+      const { height, width, depth } = channelData;
+      channelData.data.forEach((d, i) => {
+        textures[`volume${i}`] = this.dataToTexture(d, width, height, depth);
+      }, this);
+      this.setState({ textures, volDims: [width, height, depth] });
+    }
+  }
+
+  /**
+   * This function creates textures from the data
+   */
+  dataToTexture(data, width, height, depth) {
+    const { dtype } = this.props;
+    const { format, dataFormat, type } = DTYPE_VALUES[dtype];
+    const texture = new Texture3D(this.context.gl, {
       width,
       height,
-      depth: zSize,
-      data: data[0],
-      format: GL.RED_INTEGER,
-      dataFormat: GL.R16UI,
-      type: GL.UNSIGNED_SHORT,
+      depth,
+      data,
+      format: dataFormat,
+      dataFormat: format,
+      type,
       mmipmaps: false,
       parameters: {
         // NEAREST for integer data
@@ -240,50 +223,7 @@ export default class XR3DLayer extends Layer {
         [GL.TEXTURE_WRAP_R]: GL.CLAMP_TO_EDGE
       }
     });
-    const volume1 = new Texture3D(this.context.gl, {
-      width,
-      height,
-      depth: zSize,
-      data: data[1],
-      format: GL.RED_INTEGER,
-      dataFormat: GL.R16UI,
-      type: GL.UNSIGNED_SHORT,
-      mmipmaps: false,
-      parameters: {
-        // NEAREST for integer data
-        [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-        [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
-        // CLAMP_TO_EDGE to remove tile artifacts
-        [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
-        [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE,
-        [GL.TEXTURE_WRAP_R]: GL.CLAMP_TO_EDGE
-      }
-    });
-    const volume2 = new Texture3D(this.context.gl, {
-      width,
-      height,
-      depth: zSize,
-      data: data[2],
-      format: GL.RED_INTEGER,
-      dataFormat: GL.R16UI,
-      type: GL.UNSIGNED_SHORT,
-      mmipmaps: false,
-      parameters: {
-        // NEAREST for integer data
-        [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-        [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
-        // CLAMP_TO_EDGE to remove tile artifacts
-        [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
-        [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE,
-        [GL.TEXTURE_WRAP_R]: GL.CLAMP_TO_EDGE
-      }
-    });
-    this.setState({
-      volume0,
-      volume1,
-      volume2,
-      volDims: [width, height, zSize]
-    });
+    return texture;
   }
 }
 
