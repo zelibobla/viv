@@ -146,24 +146,12 @@ export default class XR3DLayer extends Layer {
     const { textures, model, volDims } = this.state;
     const { sliderValues, colorValues } = this.props;
     if (textures && model) {
-      const longestAxis = Math.max(
-        volDims[0],
-        Math.max(volDims[1], volDims[2])
-      );
-
-      const volScale = [
-        volDims[0] / longestAxis,
-        volDims[1] / longestAxis,
-        volDims[2] / longestAxis
-      ];
       model
         .setUniforms({
           ...uniforms,
           ...textures,
           sliderValues,
           colorValues,
-          volume_scale: new Float32Array(volScale),
-          instanceCenter: new Float32Array(volDims).map(i => i / 2),
           dimensions: new Float32Array(volDims)
         })
         .draw();
