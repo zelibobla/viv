@@ -97,7 +97,8 @@ export default class ZarrLoader {
     const { shape } = source;
     const width = shape[this._xIndex];
     const height = shape[this._yIndex];
-    return { data, width, height };
+    const depth = shape[this._zIndex];
+    return { data, width, height, depth };
   }
 
   /**

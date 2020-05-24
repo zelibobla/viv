@@ -98,11 +98,11 @@ const staticInfo = {
   description: 'Kidney IMS (zarr)'
 };
 
-const rootStaticTiffUrl =
+const root3DCodexUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/codex_3d/3d_codex_zStack.zarr/';
 
-const staticTiffInfo = {
-  url: rootStaticTiffUrl,
+const codex3DInfo = {
+  url: root3DCodexUrl,
   dimensions: [
     {
       field: 'channel',
@@ -139,10 +139,57 @@ const staticTiffInfo = {
   isPublic: false,
   isPyramid: false,
   is3d: true,
-  selections: ['DAPI_2', 'E_CAD', 'Histone_H3'].map(channel => {
+  selections: ['DAPI_2', 'E_CAD', 'CD107a'].map(channel => {
     return { channel };
   }),
   description: 'CODEX 3d Tile'
+};
+
+const rootStaticTiffUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/antigen_exprs.ome.tiff';
+
+const staticTiffInfo = {
+  url: rootStaticTiffUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: [
+        'Actin',
+        'CD107a',
+        'CD11c',
+        'CD20',
+        'CD21',
+        'CD31',
+        'CD3e',
+        'CD4',
+        'CD45',
+        'CD45RO',
+        'CD68',
+        'CD8',
+        'DAPI_2',
+        'E_CAD',
+        'Histone_H3',
+        'Ki67',
+        'Pan_CK',
+        'Podoplanin'
+      ]
+    },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null },
+    { field: 'time', type: 'number', values: null },
+    { field: 'z', type: 'number', values: null }
+  ],
+  initialViewState: {
+    zoom: -1,
+    target: [1000, 500]
+  },
+  isPublic: false,
+  isPyramid: false,
+  selections: ['DAPI_2', 'E_CAD', 'Histone_H3', 'Ki67'].map(channel => {
+    return { channel, time: 0, z: 0 };
+  }),
+  description: 'CODEX Tile'
 };
 
 const remoteBFTiffUrl =
@@ -264,8 +311,8 @@ const rootSeqFISH3DInfo = {
     { field: 'x', type: 'quantitative', values: null }
   ],
   initialViewState: {
-    zoom: 10,
-    target: [512, 512, 50]
+    zoom: -3,
+    target: [1024, 1024, 50]
   },
   isPublic: false,
   isPyramid: false,
@@ -280,8 +327,9 @@ export default {
   zarr: zarrInfo,
   tiff: tiffInfo,
   static: staticInfo,
-  seqFish: rootSeqFISH3DInfo,
   'static tiff': staticTiffInfo,
+  seqFish: rootSeqFISH3DInfo,
+  '3d codex': codex3DInfo,
   'bf tiff': remoteBFTiff,
   'tiff 2': remoteTiff2,
   '3d zarr': rootStatic3DInfo

@@ -41,9 +41,11 @@ const defaultProps = {
 export default class Static3DLayer extends CompositeLayer {
   initializeState() {
     const { loader, z, loaderSelection } = this.props;
-    loader.getRaster({ z, loaderSelection }).then(({ data, width, height }) => {
-      this.setState({ data, width, height, depth: 12 });
-    });
+    loader
+      .getRaster({ z, loaderSelection })
+      .then(({ data, width, height, depth }) => {
+        this.setState({ data, width, height, depth });
+      });
   }
 
   updateState({ changeFlags }) {
@@ -56,8 +58,8 @@ export default class Static3DLayer extends CompositeLayer {
       const { loader, z, loaderSelection } = this.props;
       loader
         .getRaster({ z, loaderSelection })
-        .then(({ data, width, height }) => {
-          this.setState({ data, width, height, depth: 12 });
+        .then(({ data, width, height, depth }) => {
+          this.setState({ data, width, height, depth });
         });
     }
   }

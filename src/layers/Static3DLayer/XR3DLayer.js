@@ -1,12 +1,55 @@
 /* eslint-disable prefer-destructuring */
-// A lot of this codes inherits paradigms form DeckGL that
-// we live in place for now, hence some of the not-destructuring
+
+/* This is largely an adaptation of Will Usher's excellent blog post/code:
+https://github.com/Twinklebear/webgl-volume-raycaster
+
+The major changes are:
+
+- Code has been adapted to the luma.gl/deck.gl framework instead of more-or-less pure WebGL.
+
+- We use a coordinate system that will allow overlays/other figures on our vertex shader/javascript.  
+Will implements everything in the unit cube.
+
+- We use an OrbitView which is a similar camera to what Will has, but stops gimbal lock from happening
+by stopping full rotations whereas Will implements a camera that allows for full rotations without gimbal lock.
+We could probably implement a similar camera in deck.gl but that is for another time.
+
+- We have a multi-channel use case and have a few tweaks in the fragment shader to handle that.
+
+- We need to handle different texture datatypes (Will uses R8 data?).
+
+- Will implements a sampling rate calculation on the fragment shader 
+that we do not to improve performance as the frame rate drops.
+
+- Will uses a colormap via a sampled texture, which is not a bad idea, but is not the direction we have gone in so far.
+So, if we want 3d colormaps, we'll need another shader.
+
+- 
+*/
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
 import { Model, Geometry, Texture3D } from '@luma.gl/core';
 import { vs } from './xr-layer-vertex';
 import { fs } from './xr-layer-fragment';
 import { DTYPE_VALUES } from '../../constants';
+
+// prettier-ignore
+const CUBE_STRIP = [
+	1, 1, 0,
+	0, 1, 0,
+	1, 1, 1,
+	0, 1, 1,
+	0, 0, 1,
+	0, 1, 0,
+	0, 0, 0,
+	1, 1, 0,
+	1, 0, 0,
+	1, 1, 1,
+	1, 0, 1,
+	0, 0, 1,
+	1, 0, 0,
+	0, 0, 0
+];
 
 const defaultProps = {
   pickable: false,
@@ -21,8 +64,7 @@ const defaultProps = {
   colormapImage: { type: 'object', value: {}, async: true }
 };
 /**
- * This layer serves as the workhorse of the project, handling all the rendering.  Much of it is
- * adapted from BitmapLayer in DeckGL.
+ * This is the 3D rendering layer.
  */
 export default class XR3DLayer extends Layer {
   initializeState() {
@@ -33,8 +75,7 @@ export default class XR3DLayer extends Layer {
   }
 
   /**
-   * This function chooses a shader (colormapping or not) and
-   * replaces `usampler` with `sampler` if the data is not an unsigned integer
+   * This function compiles the shaders and the projection module.
    */
   getShaders() {
     return super.getShaders({
@@ -76,6 +117,7 @@ export default class XR3DLayer extends Layer {
   /**
    * This function creates the luma.gl model.
    */
+  // eslint-disable-next-line class-methods-use-this
   _getModel(gl) {
     if (!gl) {
       return null;
@@ -86,53 +128,10 @@ export default class XR3DLayer extends Layer {
       geometry: new Geometry({
         drawMode: gl.TRIANGLE_STRIP,
         attributes: {
-          positions: new Float32Array([
-            1,
-            1,
-            0,
-            0,
-            1,
-            0,
-            1,
-            1,
-            1,
-            0,
-            1,
-            1,
-            0,
-            0,
-            1,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-            1,
-            0,
-            1,
-            0,
-            0,
-            1,
-            1,
-            1,
-            1,
-            0,
-            1,
-            0,
-            0,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0
-          ])
+          positions: new Float32Array(CUBE_STRIP)
         }
       }),
-      // this in theory can be coupled with sampling rate to make interaction smoother.
+      // This in theory can be coupled with sampling rate to make interaction smoother.
       uniforms: {
         dt_scale: 1.0
       }
@@ -197,6 +196,7 @@ export default class XR3DLayer extends Layer {
       height,
       depth,
       data,
+      // ? Seems to be a luma.gl bug.  Looks like Texture2D is wrong but these are flipped somewhere.
       format: dataFormat,
       dataFormat: format,
       type,

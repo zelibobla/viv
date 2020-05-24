@@ -39,7 +39,7 @@ function App() {
   const [channels, dispatch] = useReducer(channelsReducer, initialChannels);
   const viewSize = useWindowSize();
   const [loader, setLoader] = useState(null);
-  const [sourceName, setSourceName] = useState('static tiff');
+  const [sourceName, setSourceName] = useState('tiff');
   const [colormap, setColormap] = useState('');
   const [useLinkedView, toggleLinkedView] = useReducer(v => !v, false);
   const [overviewOn, toggleOverview] = useReducer(v => !v, false);
@@ -118,7 +118,7 @@ function App() {
   const { names, colors, sliders, isOn, ids, selections } = channels;
   const channelControllers = ids.map((id, i) => {
     return (
-      <Grid key={`channel-controller-${names[i]}-${id}`} item xs={12}>
+      <Grid key={`channel-controller-${names[i]}-${id}`} item>
         <ChannelController
           name={names[i]}
           channelOptions={dimensions[0].values}
@@ -149,7 +149,6 @@ function App() {
         />
       )}
       {!isLoading &&
-        isPyramid &&
         (useLinkedView && isPyramid ? (
           <SideBySideViewer
             loader={loader}
@@ -202,14 +201,7 @@ function App() {
             </Grid>
           </Grid>
           {!isLoading ? (
-            <Grid
-              container
-              direction="column"
-              justify="flex-start"
-              alignItems="center"
-            >
-              {channelControllers}
-            </Grid>
+            <Grid container>{channelControllers}</Grid>
           ) : (
             <Grid container justify="center">
               <CircularProgress />

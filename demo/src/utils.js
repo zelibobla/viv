@@ -6,19 +6,17 @@ import { COLOR_PALLETE, INITIAL_SLIDER_VALUE } from './constants';
 export async function createLoader(type, infoObj) {
   switch (type) {
     case 'zarr':
-    case 'static tiff':
+    case '3d codex':
     case 'seqFish':
+    case 'static':
     case '3d zarr': {
-      const loader = await createZarrLoader(infoObj);
-      return loader;
-    }
-    case 'static': {
       const loader = await createZarrLoader(infoObj);
       return loader;
     }
     // These all resolve to the 'tiff' case.
     case 'bf tiff':
     case 'tiff 2':
+    case 'static tiff':
     case 'tiff': {
       const { url } = infoObj;
       const res = await fetch(url.replace(/ome.tif(f?)/gi, 'offsets.json'));

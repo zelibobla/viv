@@ -10,7 +10,6 @@ uniform highp usampler3D volume3;
 uniform highp usampler3D volume4;
 uniform highp usampler3D volume5;
 
-uniform highp sampler2D colormap;
 uniform vec3 dimensions;
 uniform float dt_scale;
 
@@ -99,6 +98,7 @@ void main(void) {
   float dt = dt_scale * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
+	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
     float intensityValue0 = max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
     float intensityValue1 = max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
@@ -119,6 +119,8 @@ void main(void) {
 			rgbCombo += hsv2rgb(hsvCombo);
 			total += intensityValue;
 		}
+		// Do not go past 1 in opacity.
+		total = min(total, 1.0);
 
 		vec4 val_color = vec4(rgbCombo, total);
 
