@@ -134,7 +134,7 @@ const codex3DInfo = {
   ],
   initialViewState: {
     zoom: -2,
-    target: [0, 0, 0]
+    target: [1344 / 2, 1007 / 2, 12 / 2]
   },
   isPublic: false,
   isPyramid: false,

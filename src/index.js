@@ -8,7 +8,7 @@ import {
   VivViewer,
   PictureInPictureViewer,
   SideBySideViewer,
-  Static3dViewer
+  Static3DViewer
 } from './viewers';
 import { VivView, OverviewView, DetailView, SideBySideView } from './views';
 import {
@@ -28,7 +28,7 @@ export {
   PictureInPictureViewer,
   SideBySideView,
   SideBySideViewer,
-  Static3dViewer,
+  Static3DViewer,
   DetailView,
   StaticImageLayer,
   ZarrLoader,

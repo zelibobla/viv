@@ -4,7 +4,10 @@ import { Static3DLayer } from '../layers';
 import { getVivId } from './utils';
 import VivView from './VivView';
 
-export default class Static3dView extends VivView {
+/**
+ * This class generates a Static3DLayer and a view for use in the VivViewer as volumetric rendering.
+ * */
+export default class Static3DView extends VivView {
   getDeckGlView() {
     const { height, width, id, x, y } = this;
     return new OrbitView({

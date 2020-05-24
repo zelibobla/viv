@@ -9,7 +9,7 @@ import AddIcon from '@material-ui/icons/Add';
 import {
   SideBySideViewer,
   PictureInPictureViewer,
-  Static3dViewer
+  Static3DViewer
 } from '../../src';
 import sources from './source-info';
 import { createLoader, channelsReducer, useWindowSize } from './utils';
@@ -133,8 +133,8 @@ function App() {
   });
   return (
     <>
-      {is3d && (
-        <Static3dViewer
+      {is3d && !isLoading && (
+        <Static3DViewer
           loader={loader}
           sliderValues={sliders}
           colorValues={colors}
@@ -149,6 +149,7 @@ function App() {
         />
       )}
       {!isLoading &&
+        !is3d &&
         (useLinkedView && isPyramid ? (
           <SideBySideViewer
             loader={loader}

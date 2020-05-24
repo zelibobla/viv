@@ -8,11 +8,13 @@ toc:
 - name: Viewers (React Components)
 - PictureInPictureViewer
 - SideBySideViewer
+- Static3DViewer
 - VivViewer
 - name: Views
 - VivView
 - OverviewView
 - DetailView
+- Static3DView
 - SideBySideView
 - name: Utility Methods
 - makeBoundingBox
@@ -20,11 +22,13 @@ toc:
 - VivViewerLayer
 - StaticImageLayer
 - ScaleBarLayer
+- Static3DLayer
 - name: Loaders
 - ZarrLoader
 - OMETiffLoader
 - name: Layers (Internal)
 - XRLayer
+- XR3DLayer
 - OverviewLayer
 - VivViewerLayerBase
 - name: Overview Of Viv Image Rendering

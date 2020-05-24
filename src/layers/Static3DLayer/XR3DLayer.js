@@ -8,7 +8,8 @@ The major changes are:
 - Code has been adapted to the luma.gl/deck.gl framework instead of more-or-less pure WebGL.
 
 - We use a coordinate system that will allow overlays/other figures on our vertex shader/javascript.  
-Will implements everything in the unit cube.
+Will implements everything in a unit cube (?) centered at the origin.  Our center is at the midpoint of
+the dimensions of the volume which will allow for pixel-space overlays.
 
 - We use an OrbitView which is a similar camera to what Will has, but stops gimbal lock from happening
 by stopping full rotations whereas Will implements a camera that allows for full rotations without gimbal lock.
@@ -55,13 +56,10 @@ const defaultProps = {
   pickable: false,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   channelData: { type: 'object', value: {}, async: true },
-  bounds: { type: 'array', value: [0, 0, 1, 1], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
   sliderValues: { type: 'array', value: [], compare: true },
-  tileSize: { type: 'number', value: 0, compare: true },
   opacity: { type: 'number', value: 1, compare: true },
-  dtype: { type: 'string', value: '<u2', compare: true },
-  colormapImage: { type: 'object', value: {}, async: true }
+  dtype: { type: 'string', value: '<u2', compare: true }
 };
 /**
  * This is the 3D rendering layer.
