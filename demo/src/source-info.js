@@ -258,7 +258,6 @@ const remoteTiff2 = {
   description: 'VAN0003-LK-32-21 Donor Image'
 };
 
-// Originally from http://cellimagelibrary.org/images/13384
 const rootStatic3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/3d_zStack.zarr/3d_zStack.zarr/';
 
@@ -292,7 +291,36 @@ const rootStatic3DInfo = {
   ].map(channel => {
     return { channel };
   }),
-  description: '3d Stack'
+  description: '3d Stack (UFlorida HuBMAP)'
+};
+
+// Originally from http://cellimagelibrary.org/images/13384
+const rootFlorida3DUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/561.czi.florida.zarr/';
+
+const rootFlorida3DInfo = {
+  url: rootFlorida3DUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: ['561']
+    },
+    { field: 'z', type: 'quantitative', values: null },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null }
+  ],
+  initialViewState: {
+    zoom: -0.5,
+    target: [240, 240, 111.5]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: ['561'].map(channel => {
+    return { channel };
+  }),
+  description: '3d Stack (Cell Image Library)'
 };
 
 const rootSeqFISH3DUrl =
@@ -332,5 +360,6 @@ export default {
   '3d codex': codex3DInfo,
   'bf tiff': remoteBFTiff,
   'tiff 2': remoteTiff2,
+  '3d florida zarr': rootFlorida3DInfo,
   '3d zarr': rootStatic3DInfo
 };
