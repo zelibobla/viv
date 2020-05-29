@@ -278,8 +278,8 @@ const rootStatic3DInfo = {
     { field: 'x', type: 'quantitative', values: null }
   ],
   initialViewState: {
-    zoom: 10,
-    target: [512, 512, 50]
+    zoom: -1,
+    target: [512, 512, 26]
   },
   isPublic: false,
   isPyramid: false,
@@ -291,7 +291,7 @@ const rootStatic3DInfo = {
   ].map(channel => {
     return { channel };
   }),
-  description: '3d Stack (UFlorida HuBMAP)'
+  description: '3d Stack (Cell Image Library)'
 };
 
 // Originally from http://cellimagelibrary.org/images/13384
@@ -320,7 +320,7 @@ const rootFlorida3DInfo = {
   selections: ['561'].map(channel => {
     return { channel };
   }),
-  description: '3d Stack (Cell Image Library)'
+  description: '3d Stack (UFlorida HuBMAP)'
 };
 
 const rootSeqFISH3DUrl =
