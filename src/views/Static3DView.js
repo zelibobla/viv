@@ -21,6 +21,19 @@ export default class Static3DView extends VivView {
     });
   }
 
+  filterViewState({ viewState }) {
+    // Scale the view as the overviewScale changes with screen resizing - basically, do not react to any view state changes.
+    const {
+      initialViewState, id
+    } = this;
+    return viewState.id === id
+      ? {
+          ...viewState,
+          target: initialViewState.target
+        }
+      : null;
+  }
+
   getLayers({ props }) {
     const { loader } = props;
     const { id } = this;
