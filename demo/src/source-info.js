@@ -296,7 +296,7 @@ const rootStatic3DInfo = {
 
 // Originally from http://cellimagelibrary.org/images/13384
 const rootFlorida3DUrl =
-  'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/561.czi.florida.zarr/';
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/florida_downsample/561.czi.florida.zarr';
 
 const rootFlorida3DInfo = {
   url: rootFlorida3DUrl,
@@ -312,7 +312,7 @@ const rootFlorida3DInfo = {
   ],
   initialViewState: {
     zoom: -0.5,
-    target: [240, 240, 111.5]
+    target: [240, 240, 55.5]
   },
   isPublic: false,
   isPyramid: false,
@@ -339,8 +339,8 @@ const rootSeqFISH3DInfo = {
     { field: 'x', type: 'quantitative', values: null }
   ],
   initialViewState: {
-    zoom: -3,
-    target: [1024, 1024, 50]
+    zoom: -2,
+    target: [1024, 1024, 10]
   },
   isPublic: false,
   isPyramid: false,
