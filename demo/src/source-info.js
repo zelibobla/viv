@@ -238,9 +238,10 @@ const rootStatic3DInfo = {
   isPyramid: false,
   is3d: true,
   selections: [
+    'Nuclei? Channel Selection',
+
     'PTEN gene loci Channel Selection',
-    'VEGF loci Channel Selection',
-    'Nuclei? Channel Selection'
+    'VEGF loci Channel Selection'
   ].map(channel => {
     return { channel };
   }),
