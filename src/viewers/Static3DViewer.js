@@ -19,7 +19,8 @@ const Static3DViewer = props => {
     colorValues,
     channelIsOn,
     initialViewState,
-    loaderSelection
+    loaderSelection,
+    colormap
   } = props;
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new Static3DView({ initialViewState: detailViewState });
@@ -28,7 +29,8 @@ const Static3DViewer = props => {
     sliderValues,
     colorValues,
     channelIsOn,
-    loaderSelection
+    loaderSelection,
+    colormap
   };
   const views = [detailView];
   const layerProps = [layerConfig];

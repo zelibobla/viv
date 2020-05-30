@@ -98,53 +98,6 @@ const staticInfo = {
   description: 'Kidney IMS (zarr)'
 };
 
-const root3DCodexUrl =
-  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex_3d/3d_codex_zStack.zarr/';
-
-const codex3DInfo = {
-  url: root3DCodexUrl,
-  dimensions: [
-    {
-      field: 'channel',
-      type: 'nominal',
-      values: [
-        'Actin',
-        'CD107a',
-        'CD11c',
-        'CD20',
-        'CD21',
-        'CD31',
-        'CD3e',
-        'CD4',
-        'CD45',
-        'CD45RO',
-        'CD68',
-        'CD8',
-        'DAPI_2',
-        'E_CAD',
-        'Histone_H3',
-        'Ki67',
-        'Pan_CK',
-        'Podoplanin'
-      ]
-    },
-    { field: 'y', type: 'quantitative', values: null },
-    { field: 'x', type: 'quantitative', values: null },
-    { field: 'z', type: 'number', values: null }
-  ],
-  initialViewState: {
-    zoom: -2,
-    target: [1344 / 2, 1007 / 2, 12 / 2]
-  },
-  isPublic: false,
-  isPyramid: false,
-  is3d: true,
-  selections: ['DAPI_2', 'E_CAD', 'CD107a'].map(channel => {
-    return { channel };
-  }),
-  description: 'CODEX 3d Tile'
-};
-
 const rootStaticTiffUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/antigen_exprs.ome.tiff';
 
@@ -257,7 +210,7 @@ const remoteTiff2 = {
   }),
   description: 'VAN0003-LK-32-21 Donor Image'
 };
-
+// Originally from http://cellimagelibrary.org/images/13384
 const rootStatic3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/3d_zStack.zarr/3d_zStack.zarr/';
 
@@ -291,10 +244,9 @@ const rootStatic3DInfo = {
   ].map(channel => {
     return { channel };
   }),
-  description: '3d Stack (Cell Image Library)'
+  description: '3D Confocal FISH Stack (Cell Image Library)'
 };
 
-// Originally from http://cellimagelibrary.org/images/13384
 const rootFlorida3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/florida_downsample/561.czi.florida.zarr';
 
@@ -320,7 +272,7 @@ const rootFlorida3DInfo = {
   selections: ['561'].map(channel => {
     return { channel };
   }),
-  description: '3d Stack (UFlorida HuBMAP)'
+  description: '3D LSFM Stack (UFlorida HuBMAP)'
 };
 
 const rootSeqFISH3DUrl =
@@ -348,7 +300,54 @@ const rootSeqFISH3DInfo = {
   selections: ['635', '561', '488', '405'].map(channel => {
     return { channel };
   }),
-  description: 'seqFish Stack'
+  description: '3D Sliced seqFish Stack (CalTech HuBMAP)'
+};
+
+const root3DCodexUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/codex_3d/3d_codex_zStack.zarr/';
+
+const codex3DInfo = {
+  url: root3DCodexUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: [
+        'Actin',
+        'CD107a',
+        'CD11c',
+        'CD20',
+        'CD21',
+        'CD31',
+        'CD3e',
+        'CD4',
+        'CD45',
+        'CD45RO',
+        'CD68',
+        'CD8',
+        'DAPI_2',
+        'E_CAD',
+        'Histone_H3',
+        'Ki67',
+        'Pan_CK',
+        'Podoplanin'
+      ]
+    },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null },
+    { field: 'z', type: 'number', values: null }
+  ],
+  initialViewState: {
+    zoom: -2,
+    target: [1344 / 2, 1007 / 2, 12 / 2]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: ['DAPI_2', 'E_CAD', 'CD107a'].map(channel => {
+    return { channel };
+  }),
+  description: '3D Confocal CODEX Stack (Stanford HuBMAP)'
 };
 
 export default {
@@ -356,10 +355,10 @@ export default {
   tiff: tiffInfo,
   static: staticInfo,
   'static tiff': staticTiffInfo,
-  seqFish: rootSeqFISH3DInfo,
-  '3d codex': codex3DInfo,
   'bf tiff': remoteBFTiff,
   'tiff 2': remoteTiff2,
+  seqFish: rootSeqFISH3DInfo,
+  '3d codex': codex3DInfo,
   '3d florida zarr': rootFlorida3DInfo,
   '3d zarr': rootStatic3DInfo
 };

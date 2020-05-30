@@ -30,8 +30,9 @@ So, if we want 3d colormaps, we'll need another shader.
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
 import { Model, Geometry, Texture3D } from '@luma.gl/core';
-import { vs } from './xr-layer-vertex';
-import { fs } from './xr-layer-fragment';
+import vs from './xr-layer-vertex.glsl';
+import fsColormap from './xr-layer-fragment-colormap.glsl';
+import fs from './xr-layer-fragment.glsl';
 import { DTYPE_VALUES } from '../../constants';
 
 // prettier-ignore
@@ -59,7 +60,8 @@ const defaultProps = {
   colorValues: { type: 'array', value: [], compare: true },
   sliderValues: { type: 'array', value: [], compare: true },
   opacity: { type: 'number', value: 1, compare: true },
-  dtype: { type: 'string', value: '<u2', compare: true }
+  dtype: { type: 'string', value: '<u2', compare: true },
+  colormap: { type: 'string', value: '', compare: true }
 };
 /**
  * This is the 3D rendering layer.
@@ -76,9 +78,13 @@ export default class XR3DLayer extends Layer {
    * This function compiles the shaders and the projection module.
    */
   getShaders() {
+    const { colormap } = this.props;
+    const fragmentShaderColormap = colormap
+      ? fsColormap.replace('colormapFunction', colormap)
+      : fs;
     return super.getShaders({
       vs,
-      fs,
+      fs: fragmentShaderColormap,
       modules: [project32]
     });
   }
@@ -121,8 +127,7 @@ export default class XR3DLayer extends Layer {
       return null;
     }
     return new Model(gl, {
-      vs,
-      fs,
+      ...this.getShaders(),
       geometry: new Geometry({
         drawMode: gl.TRIANGLE_STRIP,
         attributes: {

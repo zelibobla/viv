@@ -8,6 +8,7 @@ const defaultProps = {
   sliderValues: { type: 'array', value: [], compare: true },
   channelIsOn: { type: 'array', value: [], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
+  colormap: { type: 'string', value: '', compare: true },
   loaderSelection: { type: 'array', value: undefined, compare: true },
   domain: { type: 'array', value: [], compare: true },
   loader: {
@@ -66,6 +67,7 @@ export default class Static3DLayer extends CompositeLayer {
       colorValues,
       channelIsOn,
       domain,
+      colormap,
       z,
       id
     } = this.props;
@@ -88,6 +90,7 @@ export default class Static3DLayer extends CompositeLayer {
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
       opacity,
       visible,
+      colormap,
       dtype
     });
   }

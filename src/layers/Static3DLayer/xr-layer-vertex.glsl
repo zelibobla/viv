@@ -1,4 +1,4 @@
-export const vs = `#version 300 es
+#version 300 es
 #define SHADER_NAME xr-layer-vertex-shader
 
 in vec3 positions;
@@ -16,4 +16,4 @@ void main() {
   gl_Position = project_common_position_to_clipspace(vec4(coords, 1.0));
   transformed_eye = (project_uCameraPosition - volume_translation) / volume_scale;
 	vray_dir = positions - transformed_eye;
-}`;
+}

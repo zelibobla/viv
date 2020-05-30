@@ -1,4 +1,4 @@
-export const fs = `#version 300 es
+#version 300 es
 precision highp int;
 precision highp float;
 precision highp usampler3D;
@@ -136,4 +136,4 @@ void main(void) {
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);
-}`;
+}
