@@ -118,7 +118,7 @@ function App() {
   const { names, colors, sliders, isOn, ids, selections } = channels;
   const channelControllers = ids.map((id, i) => {
     return (
-      <Grid key={`channel-controller-${names[i]}-${id}`} item>
+      <Grid key={`channel-controller-${names[i]}-${id}`} item xs={11}>
         <ChannelController
           name={names[i]}
           channelOptions={dimensions[0].values}
