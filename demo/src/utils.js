@@ -10,7 +10,8 @@ export async function createLoader(type, infoObj) {
     case 'seqFish':
     case 'static':
     case '3d florida zarr':
-    case '3d zarr': {
+    case '3d zarr':
+    case '3d zarr2': {
       const loader = await createZarrLoader(infoObj);
       return loader;
     }

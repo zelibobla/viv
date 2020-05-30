@@ -248,6 +248,35 @@ const rootStatic3DInfo = {
   description: '3D Confocal FISH Stack (Cell Image Library)'
 };
 
+// Originally from http://cellimagelibrary.org/images/12247
+const rootStatic3DUrl2 =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/CIL_data/12247.zarr';
+
+const rootStatic3DInfo2 = {
+  url: rootStatic3DUrl2,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: ['FITC', 'TexasRed', 'DAPI']
+    },
+    { field: 'z', type: 'quantitative', values: null },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null }
+  ],
+  initialViewState: {
+    zoom: -1,
+    target: [256, 256, 21]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: ['DAPI', 'TexasRed', 'FITC'].map(channel => {
+    return { channel };
+  }),
+  description: '3D Confocal IF Stack Gallus Mitosis (Cell Image Library)'
+};
+
 const rootFlorida3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/florida_downsample/561.czi.florida.zarr';
 
@@ -361,5 +390,6 @@ export default {
   seqFish: rootSeqFISH3DInfo,
   '3d codex': codex3DInfo,
   '3d florida zarr': rootFlorida3DInfo,
-  '3d zarr': rootStatic3DInfo
+  '3d zarr': rootStatic3DInfo,
+  '3d zarr2': rootStatic3DInfo2
 };
