@@ -277,6 +277,43 @@ const rootStatic3DInfo2 = {
   description: '3D Confocal IF Stack Gallus Mitosis (Cell Image Library)'
 };
 
+// Originally from https://data.4dnucleome.org/files-microscopy/4DNFIRT1WPCH/
+const rootStatic4DNUrl =
+  'https://vitessce-demo-data.storage.googleapis.com/test-data/4DNFIRT1WPCH.zarr';
+
+const rootStatic4DNInfo = {
+  url: rootStatic4DNUrl,
+  dimensions: [
+    {
+      field: 'channel',
+      type: 'nominal',
+      values: [
+        'Nucleolus targeted by Alexa A594-labeled Anti-Rabbit Secondary Antibody (with Rabbit Anti-Fibrillarin Antibody)',
+        'GRCm38:11:16745166-16937185 mouse region targeted by Alexa 488-labeled Streptavidin (with Biotin)',
+        'Chromosomes targeted by DAPI'
+      ]
+    },
+    { field: 'z', type: 'quantitative', values: null },
+    { field: 'y', type: 'quantitative', values: null },
+    { field: 'x', type: 'quantitative', values: null }
+  ],
+  initialViewState: {
+    zoom: -1,
+    target: [512, 512, 11]
+  },
+  isPublic: false,
+  isPyramid: false,
+  is3d: true,
+  selections: [
+    'Chromosomes targeted by DAPI',
+    'GRCm38:11:16745166-16937185 mouse region targeted by Alexa 488-labeled Streptavidin (with Biotin)',
+    'Nucleolus targeted by Alexa A594-labeled Anti-Rabbit Secondary Antibody (with Rabbit Anti-Fibrillarin Antibody)'
+  ].map(channel => {
+    return { channel };
+  }),
+  description: '4DN DNA-FISH with probe pPK999'
+};
+
 const rootFlorida3DUrl =
   'https://vitessce-demo-data.storage.googleapis.com/test-data/florida_3d/florida_downsample/561.czi.florida.zarr';
 
@@ -390,6 +427,6 @@ export default {
   seqFish: rootSeqFISH3DInfo,
   '3d codex': codex3DInfo,
   '3d florida zarr': rootFlorida3DInfo,
-  '3d zarr': rootStatic3DInfo,
+  '3d zarr': rootStatic4DNInfo,
   '3d zarr2': rootStatic3DInfo2
 };
