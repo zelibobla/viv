@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { createZarrLoader, createOMETiffLoader } from '../../src';
+import {
+  createZarrLoader,
+  createOMETiffLoader,
+  OMEZarrReader
+} from '../../src';
 
 import { COLOR_PALLETE, INITIAL_SLIDER_VALUE } from './constants';
 
@@ -15,10 +19,15 @@ export async function createLoader(type, infoObj) {
       const loader = await createZarrLoader(infoObj);
       return loader;
     }
-    // These all resolve to the 'tiff' case.
+    case 'ome-zarr': {
+      const reader = await OMEZarrReader.fromUrl(infoObj.url);
+      const { loader } = await reader.loadOMEZarr();
+      return loader;
+    }
+    case 'static tiff': // These all resolve to the 'tiff' case.
     case 'bf tiff':
     case 'tiff 2':
-    case 'static tiff':
+    case 'covid tiff':
     case 'tiff': {
       const { url } = infoObj;
       const res = await fetch(url.replace(/ome.tif(f?)/gi, 'offsets.json'));
@@ -113,13 +122,14 @@ export function channelsReducer(state, { index, value, type }) {
     }
     case 'RESET_CHANNELS': {
       // Clears current channels and sets with new defaults
-      const { names, selections = [] } = value;
+      const { names, selections } = value;
       const n = names.length;
       return {
         names,
         selections,
         sliders: Array(n).fill(INITIAL_SLIDER_VALUE),
-        colors: range(n).map(i => COLOR_PALLETE[i]),
+        colors:
+          n === 1 ? [[255, 255, 255]] : range(n).map(i => COLOR_PALLETE[i]),
         isOn: Array(n).fill(true),
         ids: range(n).map(() => String(Math.random()))
       };

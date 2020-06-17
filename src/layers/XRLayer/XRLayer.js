@@ -2,21 +2,25 @@
 // A lot of this codes inherits paradigms form DeckGL that
 // we live in place for now, hence some of the not-destructuring
 import GL from '@luma.gl/constants';
-import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
+import { COORDINATE_SYSTEM, Layer, project32, picking } from '@deck.gl/core';
 import { Model, Geometry, Texture2D } from '@luma.gl/core';
-import vs from './xr-layer-vertex.glsl';
-import fsColormap from './xr-layer-fragment-colormap.glsl';
-import fs from './xr-layer-fragment.glsl';
-import { DTYPE_VALUES } from '../../constants';
+import fsColormap1 from './xr-layer-fragment-colormap.webgl1.glsl';
+import fsColormap2 from './xr-layer-fragment-colormap.webgl2.glsl';
+import fs1 from './xr-layer-fragment.webgl1.glsl';
+import fs2 from './xr-layer-fragment.webgl2.glsl';
+import vs1 from './xr-layer-vertex.webgl1.glsl';
+import vs2 from './xr-layer-vertex.webgl2.glsl';
+import { DTYPE_VALUES, NO_WEBGL2 } from '../../constants';
+import { padColorsAndSliders } from '../utils';
 
 const defaultProps = {
-  pickable: false,
+  pickable: true,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   channelData: { type: 'array', value: {}, async: true },
   bounds: { type: 'array', value: [0, 0, 1, 1], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
   sliderValues: { type: 'array', value: [], compare: true },
-  tileSize: { type: 'number', value: 0, compare: true },
+  channelIsOn: { type: 'array', value: [], compare: true },
   opacity: { type: 'number', value: 1, compare: true },
   dtype: { type: 'string', value: '<u2', compare: true },
   colormap: { type: 'string', value: '', compare: true }
@@ -25,6 +29,8 @@ const defaultProps = {
 /**
  * This layer serves as the workhorse of the project, handling all the rendering.  Much of it is
  * adapted from BitmapLayer in DeckGL.
+ * XR = eXtended Range i.e more than the standard 8-bit RGBA data format
+ * (16/32 bit floats/ints/uints with more than 3/4 channels).
  */
 export default class XRLayer extends Layer {
   /**
@@ -33,17 +39,17 @@ export default class XRLayer extends Layer {
    */
   getShaders() {
     const { colormap, dtype } = this.props;
-    const fragmentShaderColormap = colormap
-      ? fsColormap.replace('colormapFunction', colormap)
-      : fs;
-    const fragmentShaderDtype =
-      dtype === '<f4'
-        ? fragmentShaderColormap.replace(/usampler/g, 'sampler')
-        : fragmentShaderColormap;
+    const fragShaderNoColormap = NO_WEBGL2 ? fs1 : fs2;
+    const fragShaderColoramp = NO_WEBGL2 ? fsColormap1 : fsColormap2;
+    const fragShader = colormap
+      ? fragShaderColoramp.replace('colormapFunction', colormap)
+      : fragShaderNoColormap;
+    const fragShaderDtype =
+      dtype === '<f4' ? fragShader.replace(/usampler/g, 'sampler') : fragShader;
     return super.getShaders({
-      vs,
-      fs: fragmentShaderDtype,
-      modules: [project32]
+      vs: NO_WEBGL2 ? vs1 : vs2,
+      fs: fragShaderDtype,
+      modules: [project32, picking]
     });
   }
 
@@ -65,8 +71,6 @@ export default class XRLayer extends Layer {
       numInstances: 1,
       positions: new Float64Array(12)
     });
-
-    attributeManager.remove('instancePickingColors');
   }
 
   /**
@@ -171,12 +175,30 @@ export default class XRLayer extends Layer {
   draw({ uniforms }) {
     const { textures, model } = this.state;
     if (textures && model) {
-      const { sliderValues, colorValues, opacity } = this.props;
+      const {
+        sliderValues,
+        colorValues,
+        opacity,
+        domain,
+        dtype,
+        channelIsOn
+      } = this.props;
+      // Check number of textures not null.
+      const numTextures = Object.values(textures).filter(t => t).length;
+      // Slider values and color values can come in before textures since their data is async.
+      // Thus we pad based on the number of textures bound.
+      const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
+        sliderValues: sliderValues.slice(0, numTextures),
+        colorValues: colorValues.slice(0, numTextures),
+        channelIsOn: channelIsOn.slice(0, numTextures),
+        domain,
+        dtype
+      });
       model
         .setUniforms({
           ...uniforms,
-          colorValues,
-          sliderValues,
+          colorValues: paddedColorValues,
+          sliderValues: paddedSliderValues,
           opacity,
           ...textures
         })
@@ -235,9 +257,9 @@ export default class XRLayer extends Layer {
         [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
         [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE
       },
-      format,
-      dataFormat,
-      type
+      format: NO_WEBGL2 ? GL.LUMINANCE : format,
+      dataFormat: NO_WEBGL2 ? GL.LUMINANCE : dataFormat,
+      type: NO_WEBGL2 ? GL.FLOAT : type
     });
     return texture;
   }

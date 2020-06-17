@@ -23,7 +23,8 @@ import SourceSelect from './components/SourceSelect';
 import {
   MAX_CHANNELS,
   DEFAULT_VIEW_STATE,
-  DEFAULT_OVERVIEW
+  DEFAULT_OVERVIEW,
+  FILL_PIXEL_VALUE
 } from './constants';
 
 const initialChannels = {
@@ -41,40 +42,29 @@ function App() {
   const [loader, setLoader] = useState(null);
   const [sourceName, setSourceName] = useState('tiff');
   const [colormap, setColormap] = useState('');
+
   const [useLinkedView, toggleLinkedView] = useReducer(v => !v, false);
-  const [overviewOn, toggleOverview] = useReducer(v => !v, false);
+  const [overviewOn, setOverviewOn] = useReducer(v => !v, false);
   const [controllerOn, toggleController] = useReducer(v => !v, true);
   const [zoomLock, toggleZoomLock] = useReducer(v => !v, true);
   const [panLock, togglePanLock] = useReducer(v => !v, true);
-  const [isLoading, setIsLoading] = useState(true);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [pixelValues, setPixelValues] = useState(
+    new Array(sources[sourceName].selections.length).fill(FILL_PIXEL_VALUE)
+  );
   useEffect(() => {
     async function changeLoader() {
       setIsLoading(true);
       const sourceInfo = sources[sourceName];
+      const { selections, dimensions } = sourceInfo;
       const nextLoader = await createLoader(sourceName, sourceInfo);
-      if (typeof nextLoader.serializeSelection === 'function') {
-        // TODO: Once tiff loader is ready, we won't need this if block.
-        const { selections, dimensions } = sourceInfo;
-        const serialized = nextLoader.serializeSelection(selections);
-        const names = selections.map(sel => sel[dimensions[0].field]);
-        dispatch({
-          type: 'RESET_CHANNELS',
-          value: { names, selections: serialized }
-        });
-      } else {
-        const names = sourceInfo.dimensions[0].values;
-        dispatch({ type: 'RESET_CHANNELS', value: { names } });
-      }
+      const names = selections.map(sel => sel[dimensions[0].field]);
+      dispatch({ type: 'RESET_CHANNELS', value: { names, selections } });
       setLoader(nextLoader);
       setIsLoading(false);
-      // Bioformats pyramid has a broken getRaster call.
-      if (sourceName === 'bf tiff' && overviewOn) {
-        toggleOverview();
-      }
     }
     changeLoader();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceName]);
 
   /*
@@ -89,13 +79,11 @@ function App() {
       const [channelDim] = sources[sourceName].dimensions;
       const { field, values } = channelDim;
       const dimIndex = values.indexOf(value);
-      const [serialized] = loader.serializeSelection({
-        [field]: value
-      });
+      const selection = { [field]: value };
       dispatch({
         type,
         index,
-        value: { name: values[dimIndex], selection: serialized }
+        value: { name: values[dimIndex], selection }
       });
     } else {
       dispatch({ type, index, value });
@@ -109,7 +97,7 @@ function App() {
       type: 'ADD_CHANNEL',
       value: {
         name: channelDim.values[0],
-        selection: loader.serializeSelection([selections[0]])
+        selection: selections[0]
       }
     });
   };
@@ -118,7 +106,11 @@ function App() {
   const { names, colors, sliders, isOn, ids, selections } = channels;
   const channelControllers = ids.map((id, i) => {
     return (
-      <Grid key={`channel-controller-${names[i]}-${id}`} item xs={11}>
+      <Grid
+        key={`channel-controller-${names[i]}-${id}`}
+        style={{ width: '100%' }}
+        item
+      >
         <ChannelController
           name={names[i]}
           channelOptions={dimensions[0].values}
@@ -127,6 +119,8 @@ function App() {
           colorValue={colors[i]}
           handleChange={(type, value) => handleControllerChange(i, type, value)}
           colormapOn={colormap.length > 0}
+          pixelValue={pixelValues[i]}
+          shouldShowPixelValue={!useLinkedView}
         />
       </Grid>
     );
@@ -165,6 +159,7 @@ function App() {
             colormap={colormap.length > 0 && colormap}
             zoomLock={zoomLock}
             panLock={panLock}
+            hoverHooks={{ handleValue: setPixelValues }}
           />
         ) : (
           <PictureInPictureViewer
@@ -181,6 +176,7 @@ function App() {
             colormap={colormap.length > 0 && colormap}
             overview={DEFAULT_OVERVIEW}
             overviewOn={overviewOn && isPyramid}
+            hoverHooks={{ handleValue: setPixelValues }}
           />
         ))}
       {controllerOn && (
@@ -220,15 +216,8 @@ function App() {
             Add Channel
           </Button>
           <Button
-            disabled={
-              !isPyramid ||
-              isLoading ||
-              useLinkedView ||
-              // Bioformats getRaster calls are a bit sketchy.
-              // see: https://github.com/hubmapconsortium/vitessce-image-viewer/issues/144
-              sourceName === 'bf tiff'
-            }
-            onClick={toggleOverview}
+            disabled={!isPyramid || isLoading || useLinkedView}
+            onClick={() => setOverviewOn(prev => !prev)}
             variant="outlined"
             size="small"
             fullWidth

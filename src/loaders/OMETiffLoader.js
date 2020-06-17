@@ -1,72 +1,23 @@
 import OMEXML from './omeXML';
-import { isInTileBounds } from './utils';
+import { isInTileBounds, byteSwapInplace, padTileWithZeros } from './utils';
 import { DTYPE_VALUES } from '../constants';
-// Credit to https://github.com/zbjornson/node-bswap/blob/master/bswap.js for the implementation.
-// I could not get this to import, and it doesn't appear anyone else can judging by the "Used by" on github.
-// We need this for handling the endianness returned by geotiff since it only returns bytes.
-function flip16(info) {
-  const flipper = new Uint8Array(info.buffer, info.byteOffset, info.length * 2);
-  const len = flipper.length;
-  for (let i = 0; i < len; i += 2) {
-    const t = flipper[i];
-    flipper[i] = flipper[i + 1];
-    flipper[i + 1] = t;
-  }
-}
+import { range } from '../layers/utils';
 
-function flip32(info) {
-  const flipper = new Uint8Array(info.buffer, info.byteOffset, info.length * 4);
-  const len = flipper.length;
-  for (let i = 0; i < len; i += 4) {
-    let t = flipper[i];
-    flipper[i] = flipper[i + 3];
-    flipper[i + 3] = t;
-    t = flipper[i + 1];
-    flipper[i + 1] = flipper[i + 2];
-    flipper[i + 2] = t;
-  }
-}
-
-function flip64(info) {
-  const flipper = new Uint8Array(info.buffer, info.byteOffset, info.length * 8);
-  const len = flipper.length;
-  for (let i = 0; i < len; i += 8) {
-    let t = flipper[i];
-    flipper[i] = flipper[i + 7];
-    flipper[i + 7] = t;
-    t = flipper[i + 1];
-    flipper[i + 1] = flipper[i + 6];
-    flipper[i + 6] = t;
-    t = flipper[i + 2];
-    flipper[i + 2] = flipper[i + 5];
-    flipper[i + 5] = t;
-    t = flipper[i + 3];
-    flipper[i + 3] = flipper[i + 4];
-    flipper[i + 4] = t;
-  }
-}
-
-function flipEndianness(arr) {
-  switch (arr.BYTES_PER_ELEMENT) {
-    case 1:
-      // no op
-      return;
-    case 2:
-      flip16(arr);
-      break;
-    case 4:
-      flip32(arr);
-      break;
-    case 8:
-      flip64(arr);
-      break;
-    default:
-      throw new Error('Invalid input');
-  }
-}
+const DTYPE_LOOKUP = {
+  uint8: '<u1',
+  uint16: '<u2',
+  uint32: '<u4',
+  float32: '<f4'
+};
 
 /**
  * This class serves as a wrapper for fetching tiff data from a file server.
+ * @param {Object} args
+ * @param {Object} args.tiff geotiffjs tiff object.
+ * @param {Object} args.pool Pool that implements a `decode` function.
+ * @param {Object} args.firstImage First image (geotiff Image object) in the tiff (containing base-resolution data).
+ * @param {String} args.omexmlString Raw OMEXML as a string.
+ * @param {Array} args.offsets The offsets of each IFD in the tiff.
  * */
 export default class OMETiffLoader {
   constructor({ tiff, pool, firstImage, omexmlString, offsets }) {
@@ -85,32 +36,43 @@ export default class OMETiffLoader {
         unit: this.omexml.PhysicalSizeYUnit
       }
     };
+    this.software = firstImage.fileDirectory.Software;
     this.offsets = offsets || [];
     this.channelNames = this.omexml.getChannelNames();
     this.width = this.omexml.SizeX;
     this.height = this.omexml.SizeY;
     this.tileSize = firstImage.getTileWidth();
     const { SubIFDs } = firstImage.fileDirectory;
-    this.numLevels =
-      this.omexml.getNumberOfImages() || (SubIFDs && SubIFDs.length);
+    // These subIFDs are going to take some tuning to get right.
+    // This works with the current bioformats6 pipeline.
+    // Related to: https://github.com/hubmapconsortium/vitessce-image-viewer/issues/144
+    this.numLevels = this.omexml.getNumberOfImages() || SubIFDs?.length;
     this.isBioFormats6Pyramid = SubIFDs;
     this.isPyramid = this.numLevels > 1;
-
-    const type = this.omexml.Type;
+    // The omexml specification only allows for these - zarr is more flexible so this
+    // is for unifying the two loaders in upstream applications.
+    this.dimensions = [
+      {
+        field: 'channel',
+        type: 'nominal',
+        values: this.channelNames
+      },
+      {
+        field: 'z',
+        type: 'ordinal',
+        values: range(this.omexml.SizeZ)
+      },
+      {
+        field: 'time',
+        type: 'ordinal',
+        values: range(this.omexml.SizeT)
+      },
+      { field: 'x', type: 'quantitative', values: null },
+      { field: 'y', type: 'quantitative', values: null }
+    ];
     // We use zarr's internal format.  It encodes endiannes, but we leave it little for now
     // since javascript is little endian.
-    if (type === 'uint8') {
-      this.dtype = '<u1';
-    }
-    if (type === 'uint16') {
-      this.dtype = '<u2';
-    }
-    if (type === 'uint32') {
-      this.dtype = '<u4';
-    }
-    if (type === 'float32') {
-      this.dtype = '<f4';
-    }
+    this.dtype = DTYPE_LOOKUP[this.omexml.Type];
   }
 
   /**
@@ -122,14 +84,18 @@ export default class OMETiffLoader {
    */
   _getIFDIndex({ z = 0, channel, time = 0 }) {
     let channelIndex;
+    // Without names, enforce a numeric channel indexing scheme
     if (this.channelNames.every(v => !v)) {
-      // Without names, enforce a numeric channel indexing scheme
       console.warn(
-        'There are no channel names in the OMEXML.  Please use numeric indexing'
+        'No channel names found in OMEXML.  Please be sure to use numeric indexing.'
       );
       channelIndex = channel;
-    } else {
+    } else if (typeof channel === 'string') {
       channelIndex = this.channelNames.indexOf(channel);
+    } else if (typeof channel === 'number') {
+      channelIndex = channel;
+    } else {
+      throw new Error('Channel selection must be numeric index or string');
     }
     const { SizeZ, SizeT, SizeC, DimensionOrder } = this.omexml;
     switch (DimensionOrder) {
@@ -172,27 +138,28 @@ export default class OMETiffLoader {
    * @param {number} y positive integer
    * @param {number} z positive integer (0 === highest zoom level)
    * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
-   * @returns {Object} data: TypedArray[], width: number (tileSize), height: number (tileSize)
+   * @returns {Object} data: TypedArray[], width: number (tileSize), height: number (tileSize).
+   * Default is `{data: [], width: tileSize, height: tileSize}`.
    */
-  async getTile({ x, y, z, loaderSelection }) {
+  async getTile({ x, y, z, loaderSelection = [] }) {
     if (!this._tileInBounds({ x, y, z })) {
       return null;
     }
-    const { tiff, offsets, isBioFormats6Pyramid, omexml, tileSize } = this;
+    const { tiff, isBioFormats6Pyramid, omexml, tileSize } = this;
     const { SizeZ, SizeT, SizeC } = omexml;
     const pyramidOffset = z * SizeZ * SizeT * SizeC;
     let image;
-    const tileRequests = loaderSelection.map(async index => {
+    const tileRequests = loaderSelection.map(async sel => {
+      const index = this._getIFDIndex(sel);
       const pyramidIndex = pyramidOffset + index;
       // We need to put the request for parsing the file directory into this array.
       // This allows us to get tiff pages directly based on offset without parsing everything.
       if (!isBioFormats6Pyramid) {
-        if (offsets) {
-          tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
-            offsets[pyramidIndex]
-          );
-        }
+        this._parseIFD(pyramidIndex);
       } else {
+        // Pyramids with large z-stacks + large numbers of channels could get slow
+        // so we allow for offsets for the lowest-resolution images ("parentImage").
+        this._parseIFD(index);
         const parentImage = await tiff.getImage(index);
         if (z !== 0) {
           tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
@@ -203,15 +170,12 @@ export default class OMETiffLoader {
       image = await tiff.getImage(pyramidIndex);
       return this._getChannel({ image, x, y });
     });
+
     const tiles = await Promise.all(tileRequests);
-    const { ImageLength } = image.fileDirectory;
     return {
       data: tiles,
       width: tileSize,
-      height:
-        tiles[0].length === tileSize ** 2
-          ? tileSize
-          : Math.min(tileSize, ImageLength - y * tileSize)
+      height: tileSize
     };
   }
 
@@ -220,22 +184,24 @@ export default class OMETiffLoader {
    * @param {number} z positive integer (0 === highest zoom level)
    * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
    * @returns {Object} data: TypedArray[], width: number, height: number
+    * Default is `{data: [], width, height}`.
+
    */
   async getRaster({ z, loaderSelection }) {
-    const { tiff, offsets, omexml, isBioFormats6Pyramid, pool } = this;
+    const { tiff, omexml, isBioFormats6Pyramid, pool } = this;
     const { SizeZ, SizeT, SizeC } = omexml;
     const rasters = await Promise.all(
-      loaderSelection.map(async index => {
+      loaderSelection.map(async sel => {
+        const index = this._getIFDIndex(sel);
         const pyramidIndex = z * SizeZ * SizeT * SizeC + index;
         // We need to put the request for parsing the file directory into this array.
         // This allows us to get tiff pages directly based on offset without parsing everything.
         if (!isBioFormats6Pyramid) {
-          if (offsets) {
-            tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
-              offsets[pyramidIndex]
-            );
-          }
+          this._parseIFD(pyramidIndex);
         } else {
+          // Pyramids with large z-stacks + large numbers of channels could get slow
+          // so we allow for offsets for the initial images ("parentImage").
+          this._parseIFD(index);
           const parentImage = await tiff.getImage(index);
           if (z !== 0) {
             tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
@@ -249,13 +215,20 @@ export default class OMETiffLoader {
         return raster[0];
       })
     );
-    // Get first selectioz * SizeZ * SizeT * SizeC + loaderSelection[0]n size as proxy for image size.
+    // Get first selection * SizeZ * SizeT * SizeC + loaderSelection[0] size as proxy for image size.
+    if (!loaderSelection || loaderSelection.length === 0) {
+      return { data: [], ...this.getRasterSize({ z }) };
+    }
     const image = await tiff.getImage(
-      z * SizeZ * SizeT * SizeC + loaderSelection[0]
+      z * SizeZ * SizeT * SizeC + this._getIFDIndex(loaderSelection[0])
     );
     const width = image.getWidth();
     const height = image.getHeight();
-    return { data: rasters, width, height };
+    return {
+      data: rasters,
+      width,
+      height
+    };
   }
 
   /**
@@ -277,46 +250,92 @@ export default class OMETiffLoader {
     /* eslint-disable no-bitwise */
   }
 
+  /**
+   * Get the metadata associated with an OMETiff image layer, in a human-readable format.
+   * @returns {Object} Metadata keys mapped to values.
+   */
+  getMetadata() {
+    const { omexml } = this;
+    const {
+      metadataOMEXML: {
+        Image: { AcquisitionDate },
+        StructuredAnnotations
+      },
+      SizeX,
+      SizeY,
+      SizeZ,
+      SizeT,
+      SizeC,
+      Type,
+      PhysicalSizeX,
+      PhysicalSizeXUnit,
+      PhysicalSizeY,
+      PhysicalSizeYUnit,
+      PhysicalSizeZ,
+      PhysicalSizeZUnit
+    } = omexml;
+
+    const physicalSizeAndUnitX =
+      PhysicalSizeX && PhysicalSizeXUnit
+        ? `${PhysicalSizeX} (${PhysicalSizeXUnit})`
+        : '-';
+    const physicalSizeAndUnitY =
+      PhysicalSizeY && PhysicalSizeYUnit
+        ? `${PhysicalSizeY} (${PhysicalSizeYUnit})`
+        : '-';
+    const physicalSizeAndUnitZ =
+      PhysicalSizeZ && PhysicalSizeZUnit
+        ? `${PhysicalSizeZ} (${PhysicalSizeZUnit})`
+        : '-';
+    let roiCount;
+    if (StructuredAnnotations) {
+      const { MapAnnotation } = StructuredAnnotations;
+      roiCount =
+        MapAnnotation && MapAnnotation.Value
+          ? Object.entries(MapAnnotation.Value).length
+          : 0;
+    }
+    return {
+      'Acquisition Date': AcquisitionDate,
+      'Dimensions (XY)': `${SizeX} x ${SizeY}`,
+      'Pixels Type': Type,
+      'Pixels Size (XYZ)': `${physicalSizeAndUnitX} x ${physicalSizeAndUnitY} x ${physicalSizeAndUnitZ}`,
+      'Z-sections/Timepoints': `${SizeZ} x ${SizeT}`,
+      Channels: SizeC,
+      'ROI Count': roiCount
+    };
+  }
+
   async _getChannel({ image, x, y }) {
     const { dtype } = this;
     const { TypedArray } = DTYPE_VALUES[dtype];
     const tile = await image.getTileOrStrip(x, y, 0, this.pool);
     const data = new TypedArray(tile.data);
-    // Javascript needs little endian byteorder, so we flip if the data is not.
-    // eslint-disable-next-line no-unused-expressions
+    /*
+     * The endianness of JavaScript TypedArrays are determined by the endianness
+     * of the end-users' hardware. Nearly all desktop computers are x86 (little endian),
+     * so we flip bytes in place for big-endian buffers. This is substantially faster than using
+     * the DataView API.
+     */
     if (!image.littleEndian) {
-      flipEndianness(data);
+      byteSwapInplace(data);
     }
+
+    // If the tile data is not (tileSize x tileSize), pad the data with zeros
+    if (data.length < this.tileSize * this.tileSize) {
+      const width = Math.min(
+        this.tileSize,
+        image.getWidth() - x * this.tileSize
+      );
+      const height = data.length / width;
+      return padTileWithZeros(
+        { data, width, height },
+        this.tileSize,
+        this.tileSize
+      );
+    }
+
     return data;
-  }
-
-  /**
-   * Converts Array of loader selection objects into an IFD index.
-   *
-   * Ex.
-   *  const loaderSelectionObj = [
-   *     { time: 1, channel: 'a', z: 0 },
-   *     { time: 1, channel: 'b', z: 0 }
-   *  ];
-   *  const serialized = loader.serializeSelection(loaderSelectionObj);
-   *  console.log(serialized);
-   *  // 4, 5
-   *
-   * @param {Array || Object} loaderSelectionObjs Human-interpretable array of desired selection objects
-   * @returns {Array} number[][], IFD indices for selecting an image of the tiff.
-   */
-  serializeSelection(loaderSelectionObjs) {
-    // Wrap selection in array if only one is provided
-    const selectionObjs = Array.isArray(loaderSelectionObjs)
-      ? loaderSelectionObjs
-      : [loaderSelectionObjs];
-    const serialized = selectionObjs.map(obj => this._serialize(obj));
-    return serialized;
-  }
-
-  _serialize(selectionObj) {
-    const serializedSelection = this._getIFDIndex(selectionObj);
-    return serializedSelection;
   }
 
   _tileInBounds({ x, y, z }) {
@@ -330,5 +349,12 @@ export default class OMETiffLoader {
       tileSize,
       numLevels
     });
+  }
+
+  _parseIFD(index) {
+    const { tiff, offsets } = this;
+    if (offsets.length > 0) {
+      tiff.ifdRequests[index] = tiff.parseFileDirectoryAt(offsets[index]);
+    }
   }
 }

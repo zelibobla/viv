@@ -28,3 +28,4 @@ export const COLOR_PALLETE = [
   [0, 255, 255]
 ];
 export const INITIAL_SLIDER_VALUE = [275, 475];
+export const FILL_PIXEL_VALUE = '----';

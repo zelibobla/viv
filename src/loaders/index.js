@@ -3,6 +3,8 @@ import { fromUrl } from 'geotiff';
 import Pool from './Pool';
 import ZarrLoader from './zarrLoader';
 import OMETiffLoader from './OMETiffLoader';
+import { getChannelStats } from './utils';
+import OMEZarrReader from './omeZarrReader';
 
 export async function createZarrLoader({
   url,
@@ -35,8 +37,15 @@ export async function createZarrLoader({
   });
 }
 
-export async function createOMETiffLoader({ url, offsets }) {
-  const tiff = await fromUrl(url);
+/**
+ * This function wraps creating a ome-tiff loader.
+ * @param {Object} args
+ * @param {String} args.url URL from which to fetch the tiff.
+ * @param {Array} args.offsets List of IFD offsets.
+ * @param {Object} args.headers Object containing headers to be passed to all fetch requests.
+ */
+export async function createOMETiffLoader({ url, offsets = [], headers = {} }) {
+  const tiff = await fromUrl(url, headers);
   const firstImage = await tiff.getImage(0);
   const pool = new Pool();
   const omexmlString = firstImage.fileDirectory.ImageDescription;
@@ -49,4 +58,4 @@ export async function createOMETiffLoader({ url, offsets }) {
   });
 }
 
-export { ZarrLoader, OMETiffLoader };
+export { ZarrLoader, OMETiffLoader, OMEZarrReader, getChannelStats };

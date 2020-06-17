@@ -1,7 +1,14 @@
 import { CompositeLayer } from '@deck.gl/core';
+import { isWebGL2 } from '@luma.gl/core';
+
 import VivViewerLayerBase from './VivViewerLayerBase';
 import StaticImageLayer from '../StaticImageLayer';
-import { padColorsAndSliders } from '../utils';
+import { to32BitFloat } from '../utils';
+
+const defaultProps = {
+  pickable: true,
+  onHover: { type: 'function', value: null, compare: false }
+};
 
 /**
  * This layer generates a VivViewerLayer (tiled) and a StaticImageLayer (background for the tiled layer)
@@ -17,6 +24,7 @@ import { padColorsAndSliders } from '../utils';
  * @param {Array} props.loaderSelection Selection to be used for fetching data.
  * @param {String} props.id Unique identifier for this layer.
  * @param {String} props.onTileError Custom override for handle tile fetching errors.
+ * @param {String} props.onHover Hook function from deck.gl to handle hover objects.
  */
 
 export default class VivViewerLayer extends CompositeLayer {
@@ -32,23 +40,12 @@ export default class VivViewerLayer extends CompositeLayer {
       colormap,
       viewportId,
       onTileError,
+      onHover,
+      pickable,
       id
     } = this.props;
-    const {
-      tileSize,
-      numLevels,
-      dtype,
-      width,
-      height,
-      isBioFormats6Pyramid
-    } = loader;
-    const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      dtype
-    });
+    const { tileSize, numLevels, dtype } = loader;
+    const noWebGl2 = !isWebGL2(this.context.gl);
     const getTileData = async ({ x, y, z }) => {
       const tile = await loader.getTile({
         x,
@@ -57,6 +54,7 @@ export default class VivViewerLayer extends CompositeLayer {
         loaderSelection
       });
       if (tile) {
+        tile.data = noWebGl2 ? to32BitFloat(tile.data) : tile.data;
         if (tile.width !== tileSize || tile.height !== tileSize) {
           console.warn(
             `Tile data  { width: ${tile.width}, height: ${tile.height} } does not match tilesize: ${tileSize}`
@@ -67,12 +65,14 @@ export default class VivViewerLayer extends CompositeLayer {
     };
     const tiledLayer = new VivViewerLayerBase({
       id: `Tiled-Image-${id}`,
-      tileSize,
       getTileData,
       dtype,
+      tileSize,
       minZoom: -(numLevels - 1),
-      colorValues: paddedColorValues,
-      sliderValues: paddedSliderValues,
+      colorValues,
+      sliderValues,
+      channelIsOn,
+      domain,
       // We want a no-overlap caching strategy with an opacity < 1 to prevent
       // multiple rendered sublayers (some of which have been cached) from overlapping
       refinementStrategy: opacity === 1 ? 'best-available' : 'no-overlap',
@@ -84,13 +84,10 @@ export default class VivViewerLayer extends CompositeLayer {
       },
       onTileError: onTileError || loader.onTileError,
       opacity,
-      domain,
       colormap,
       viewportId,
-      width,
-      height,
-      // Needed for misreported metadata.
-      isBioFormats6Pyramid
+      onHover,
+      pickable
     });
     // This gives us a background image and also solves the current
     // minZoom funny business.  We don't use it for the background if we have an opacity
@@ -106,7 +103,9 @@ export default class VivViewerLayer extends CompositeLayer {
           opacity === 1 ||
           (-numLevels > this.context.viewport.zoom &&
             (!viewportId || this.context.viewport.id === viewportId)),
-        z: numLevels - 1
+        z: numLevels - 1,
+        pickable: true,
+        onHover
       });
     const layers = [baseLayer, tiledLayer];
     return layers;
@@ -114,3 +113,4 @@ export default class VivViewerLayer extends CompositeLayer {
 }
 
 VivViewerLayer.layerName = 'VivViewerLayer';
+VivViewerLayer.defaultProps = defaultProps;

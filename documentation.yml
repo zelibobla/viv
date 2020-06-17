@@ -18,14 +18,18 @@ toc:
 - SideBySideView
 - name: Utility Methods
 - makeBoundingBox
+- getChannelStats
+- Pool
 - name: Layers
 - VivViewerLayer
 - StaticImageLayer
 - ScaleBarLayer
 - Static3DLayer
 - name: Loaders
-- ZarrLoader
+- createOMETiffLoader
 - OMETiffLoader
+- ZarrLoader
+- OMEZarrReader
 - name: Layers (Internal)
 - XRLayer
 - XR3DLayer

@@ -4,9 +4,101 @@
 
 ### Added
 
-- Remove threads.js and use WebWorkers for tiff decompression.
+- Support Safari in 2D raster imagery.
+- Support height as primary dimension for sizing OverviewView.
 
 ### Changed
+
+- Project overview boundary sizes instead of hardcoding.
+
+## 0.2.8
+
+### Added
+
+- Export constants for loader type and max channels.
+
+### Changed
+
+## 0.2.7
+
+### Added
+
+- Min/max, mean, standard deviation, median, IQR calculations directly from loaders.
+
+### Changed
+
+## 0.2.6
+
+### Added
+
+### Changed
+
+- Don't minify es bundle.
+- Remove bioformats hack and update docs for container version.
+- Update zarr with new decoders.
+- Add tile-padding utility function for consistently sized tiles from `Loader.getTile`.
+- Fix #144 by padding uneven length tiles in `StaticImageLayer`.
+
+## 0.2.5
+
+### Added
+
+### Changed
+
+- Address OMEXML discrepancy on StructuredAnnotations.
+
+## 0.2.4
+
+### Added
+
+### Changed
+
+- Clean up dependencies.
+
+## 0.2.3
+
+### Added
+
+### Changed
+
+- Add OME-TIFF to Covid-19 data description.
+- Clean up the docs.
+- Allow numeric indexing on OME-TIFF loader.
+
+## 0.2.2
+
+### Added
+
+- Allow for headers with OME-TIFF.
+- Add COVID-19 Image to public demo.
+- Added `getMetadata` function to `ZarrLoader` and `OMETiffLoader` classes to enable Vitessce to obtain human-readable image layer metadata.
+
+### Changed
+
+- Change bioformats padding check.
+- Pad based on textures and not channel props.
+
+## 0.2.1
+
+### Added
+
+### Changed
+
+- Allow for offsets in OMETiffLoader for `bioformats6` pyramids.
+- Update geotiff off from Ilan's for to the official release.
+
+## 0.2.0
+
+### Added
+
+- Remove threads.js and use WebWorkers for tiff decompression.
+- Add a dimension builder onto the tiff loader.
+- Add hover values for PictureInPictureViewer
+
+### Changed
+
+- Removed `loader.serializeSelection` and standardized `loaderSelection` for `getTile` and `getRaster`
+- Fix loaderSelection fetching on `StaticImageLayer`
 
 ## 0.1.7
 

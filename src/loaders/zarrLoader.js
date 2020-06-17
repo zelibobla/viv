@@ -1,5 +1,6 @@
-import { guessRgb } from './utils';
+import { BoundsCheckError } from 'zarr';
 
+import { guessRgb, padTileWithZeros } from './utils';
 /**
  * This class serves as a wrapper for fetching zarr data from a file server.
  * */
@@ -26,21 +27,22 @@ export default class ZarrLoader {
     this.translate = translate;
     this.isRgb = isRgb || guessRgb(base.shape);
     this.dimensions = dimensions;
-    this._defaultSelection = [Array(dimensions.legnth).fill(0)];
 
     this._data = data;
-    if (this.isRgb) {
-      this._xIndex = base.shape.length - 2;
-      this._yIndex = base.shape.length - 3;
-    } else {
-      this._xIndex = base.shape.length - 1;
-      this._yIndex = base.shape.length - 2;
-      this._zIndex = base.shape.length - 3;
-    }
+    this._dimIndices = new Map();
+    dimensions.forEach(({ field }, i) => this._dimIndices.set(field, i));
 
     const { dtype, chunks } = base;
-    this.dtype = dtype;
-    this.tileSize = chunks[this._xIndex];
+    /* TODO: Use better dtype convention in DTYPE_LOOKUP.
+     *
+     * This convension should probably _not_ describe endianness,
+     * since endianness is resolved when decoding the source arrayBuffers
+     * into TypedArrays. The dtype of the zarr array describes the dtype of the
+     * source but this is different from how the bytes end up being represented in
+     * memory client-side.
+     */
+    this.dtype = dtype.includes('>') ? `<${dtype.slice(1)}` : dtype;
+    this.tileSize = chunks[this._dimIndices.get('x')];
   }
 
   get isPyramid() {
@@ -56,48 +58,72 @@ export default class ZarrLoader {
    * @param {number} x positive integer
    * @param {number} y positive integer
    * @param {number} z positive integer (0 === highest zoom level)
-   * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
+   * @param {Array} loaderSelection, Array of valid dimension selections
    * @returns {Object} data: TypedArray[], width: number (tileSize), height: number (tileSize)
    */
-  async getTile({ x, y, z, loaderSelection }) {
+  async getTile({ x, y, z, loaderSelection = [] }) {
     const source = this._getSource(z);
-    const selections = loaderSelection || this._defaultSelection;
-    const dataRequests = selections.map(async key => {
-      const chunkKey = [...key];
-      chunkKey[this._yIndex] = y;
-      chunkKey[this._xIndex] = x;
-      const { data } = await source.getRawChunk(chunkKey);
+    const [xIndex, yIndex] = ['x', 'y'].map(k => this._dimIndices.get(k));
+
+    const dataRequests = loaderSelection.map(async sel => {
+      const chunkKey = this._serializeSelection(sel);
+      chunkKey[yIndex] = y;
+      chunkKey[xIndex] = x;
+      const {
+        data,
+        shape: [height, width]
+      } = await source.getRawChunk(chunkKey);
+      if (height < this.tileSize || width < this.tileSize) {
+        return padTileWithZeros(
+          { data, width, height },
+          this.tileSize,
+          this.tileSize
+        );
+      }
       return data;
     });
+
     const data = await Promise.all(dataRequests);
-    return { data, width: this.tileSize, height: this.tileSize };
+    return {
+      data,
+      width: this.tileSize,
+      height: this.tileSize
+    };
   }
 
   /**
    * Returns full image panes (at level z if pyramid)
    * @param {number} z positive integer (0 === highest zoom level)
-   * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
+   * @param {Array} loaderSelection, Array of valid dimension selections
    * @returns {Object} data: TypedArray[], width: number, height: number
    */
-  async getRaster({ z, loaderSelection }) {
+  async getRaster({ z, loaderSelection = [] }) {
     const source = this._getSource(z);
-    const selections = loaderSelection || this._defaultSelection;
-    const dataRequests = selections.map(async key => {
-      const chunkKey = [...key];
-      chunkKey[this._yIndex] = null;
-      chunkKey[this._xIndex] = null;
-      if (this.is3d) {
-        chunkKey[this._zIndex] = null;
+    const [xIndex, yIndex, zIndex] = ['x', 'y', 'z'].map(k =>
+      this._dimIndices.get(k)
+    );
+
+    const dataRequests = loaderSelection.map(async sel => {
+      const chunkKey = this._serializeSelection(sel);
+      chunkKey[yIndex] = null;
+      chunkKey[xIndex] = null;
+      if (this.isRgb) {
+        chunkKey[chunkKey.length - 1] = null;
       }
-      if (this.isRgb) chunkKey[chunkKey.length - 1] = null;
+      if (this.is3d) {
+        chunkKey[zIndex] = null;
+      }
       const { data } = await source.getRaw(chunkKey);
       return data;
     });
+
     const data = await Promise.all(dataRequests);
     const { shape } = source;
-    const width = shape[this._xIndex];
-    const height = shape[this._yIndex];
-    const depth = shape[this._zIndex];
+    const width = shape[xIndex];
+    const height = shape[yIndex];
+    const depth = shape[zIndex];
+    console.log({ data, width, height, depth });
+
     return { data, width, height, depth };
   }
 
@@ -107,10 +133,7 @@ export default class ZarrLoader {
    */
   // eslint-disable-next-line class-methods-use-this
   onTileError(err) {
-    // Handle zarr-specific tile Errors
-    // Will check with `err instanceof BoundCheckError` when merged
-    // https://github.com/gzuidhof/zarr.js/issues/47
-    if (!err.message.includes('RangeError')) {
+    if (!(err instanceof BoundsCheckError)) {
       // Rethrow error if something other than tile being requested is out of bounds.
       throw err;
     }
@@ -122,77 +145,72 @@ export default class ZarrLoader {
    * @returns {Object} width: number, height: number
    */
   getRasterSize({ z }) {
-    const source = this._getSource(z);
-    const height = source.shape[this._yIndex];
-    const width = source.shape[this._xIndex];
+    const { shape } = this._getSource(z);
+    const [height, width] = ['y', 'x'].map(k => shape[this._dimIndices.get(k)]);
     return { height, width };
   }
 
   /**
-   * Converts Array of loader selection objects into zarr-specific selection
-   *
-   * Ex.
-   *  const loaderSelectionObj = [
-   *     { time: 1, channel: 'a' },
-   *     { time: 1, channel: 'b' }
-   *  ];
-   *  const serialized = loader.serializeSelection(loaderSelectionObj);
-   *  console.log(serialized);
-   *  // [[1, 0, 0, 0], [1, 1, 0, 0]]
-   *
-   * @param {Array || Object} loaderSelectionObjs Human-interpretable array of desired selection objects
-   * @returns {Array} number[][], zarr-specific selections to be passed to to viv as loaderSelections
+   * Get the metadata associated with a Zarr image layer, in a human-readable format.
+   * @returns {Object} Metadata keys mapped to values.
    */
-  serializeSelection(loaderSelectionObjs) {
-    // Wrap selection in array if only one is provided
-    const selectionObjs = Array.isArray(loaderSelectionObjs)
-      ? loaderSelectionObjs
-      : [loaderSelectionObjs];
-
-    const serialized = selectionObjs.map(obj => this._serialize(obj));
-    return serialized;
+  // eslint-disable-next-line class-methods-use-this
+  getMetadata() {
+    return {};
   }
 
   _getSource(z) {
     return typeof z === 'number' && this.isPyramid ? this._data[z] : this._data;
   }
 
-  _serialize(selectionObj) {
-    const serializedSelection = Array(this.dimensions.length).fill(0);
-    const dimFields = this.dimensions.map(d => d.field);
-    Object.entries(selectionObj).forEach(([key, val]) => {
-      // Get index of named dimension in zarr array
-      const dimIndex = dimFields.indexOf(key);
-      if (dimIndex === undefined) {
+  /**
+   * Returns valid zarr.js selection for ZarrArray.getRaw or ZarrArray.getRawChunk
+   * @param {Object} selection valid dimension selection
+   * @returns {Array} Array of indicies
+   *
+   * Valid dimension selections include:
+   *   - Direct zarr.js selection: [1, 0, 0, 0]
+   *   - Named selection object: { channel: 0, time: 2 } or { channel: "DAPI", time: 2 }
+   */
+  _serializeSelection(selection) {
+    // Just return copy if array-like zarr.js selection
+    if (Array.isArray(selection)) return [...selection];
+
+    const serialized = Array(this.dimensions.length).fill(0);
+    Object.entries(selection).forEach(([dimName, value]) => {
+      if (!this._dimIndices.has(dimName)) {
         throw Error(
-          `Dimension '${key}' does not exist on array with dimensions :
-          ${dimFields}`
+          `Dimension "${dimName}" does not exist on loader.
+           Must be one of "${this.dimensions.map(d => d.field)}."`
         );
       }
-      // Get position of index along dimension axis
-      let valueIndex;
-      const { field, type, values } = this.dimensions[dimIndex];
-      if (typeof val === 'number') {
-        // Assign index directly, regardless of dimension type
-        valueIndex = val;
-      } else if (type === 'ordinal' || type === 'nominal') {
-        // Lookup index if categorical dimension type.
-        // This is slower if dimension is large; setting directly is preferred.
-        valueIndex = values.indexOf(val);
-      } else {
-        // Cannot use string value for dimension that is 'quantitative' or 'temporal', must set directly.
-        throw Error(
-          `The value '${val}' is invalid for dimension of type ${type}`
-        );
+      const dimIndex = this._dimIndices.get(dimName);
+      switch (typeof value) {
+        case 'number': {
+          // ex. { channel: 0 }
+          serialized[dimIndex] = value;
+          break;
+        }
+        case 'string': {
+          const { values, type } = this.dimensions[dimIndex];
+          if (type === 'nominal' || type === 'ordinal') {
+            // ex. { channel: 'DAPI' }
+            serialized[dimIndex] = values.indexOf(value);
+            break;
+          } else {
+            // { z: 'DAPI' }
+            throw Error(
+              `Cannot use selection "${value}" for dimension "${dimName}" with type "${type}".`
+            );
+          }
+        }
+        default: {
+          throw Error(
+            `Named selection must be a string or number. Got ${value} for ${dimName}.`
+          );
+        }
       }
-
-      if (valueIndex < 0 || valueIndex > this.base.shape[dimIndex]) {
-        // Ensure desired index is within the bounds of the dimension
-        throw Error(`Dimension ${field} does not contain index ${valueIndex}.`);
-      }
-
-      serializedSelection[dimIndex] = valueIndex;
     });
-    return serializedSelection;
+    return serialized;
   }
 }

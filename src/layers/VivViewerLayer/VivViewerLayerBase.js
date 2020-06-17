@@ -4,11 +4,11 @@ import { renderSubLayers } from './utils';
 
 const defaultProps = {
   ...TileLayer.defaultProps,
-  pickable: false,
+  pickable: true,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   sliderValues: { type: 'array', value: [], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
-  tileSize: { type: 'number', value: 512, compare: true },
+  channelIsOn: { type: 'array', value: [], compare: true },
   minZoom: { type: 'number', value: 0, compare: true },
   maxZoom: { type: 'number', value: 0, compare: true },
   renderSubLayers: { type: 'function', value: renderSubLayers, compare: false },

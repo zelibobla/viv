@@ -1,6 +1,6 @@
 {
   "name": "@hubmap/vitessce-image-viewer",
-  "version": "0.1.7",
+  "version": "0.2.8",
   "main": "dist/bundle.umd.js",
   "module": "dist/bundle.es.js",
   "files": [
@@ -13,7 +13,7 @@
     "build-site": "mkdir dist || rm -r dist && node_modules/.bin/webpack --config webpack.config.site.js --mode production",
     "start": "node_modules/.bin/webpack-dev-server --config webpack.config.site.js --mode development --open --hot",
     "test:layers_views": "mkdir test_dist || rm -r test_dist && node_modules/.bin/webpack --config webpack.config.test.layers.views.js --mode development",
-    "test:loaders": "mocha --require @babel/register tests/loaders/*.spec.js",
+    "test:loaders": "mocha --require @babel/register tests/loaders/*.spec.js --require jsdom-global/register",
     "test": "npm run-script test:loaders && npm run-script test:layers_views",
     "version": "./version.sh",
     "postversion": "git push && git push --tags",
@@ -33,15 +33,23 @@
     "url": "https://github.com/hubmapconsortium/vitessce-image-viewer/issues"
   },
   "homepage": "https://github.com/hubmapconsortium/vitessce-image-viewer#readme",
+  "peerDependencies": {
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
+  },
   "devDependencies": {
-    "@babel/core": "^7.7.4",
+    "@babel/core": "^7.9.0",
     "@babel/plugin-transform-regenerator": "^7.8.7",
     "@babel/plugin-transform-runtime": "^7.9.0",
-    "@babel/preset-env": "^7.8.3",
-    "@babel/preset-react": "^7.8.3",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-react": "^7.9.0",
     "@babel/register": "^7.9.0",
+    "@deck.gl/mesh-layers": "^8.1.0",
     "@deck.gl/test-utils": "^8.1.0",
-    "@luma.gl/test-utils": "^8.1.0-alpha",
+    "@loaders.gl/core": "^2.0.2",
+    "@loaders.gl/loader-utils": "^2.0.2",
+    "@luma.gl/test-utils": "^8.1.0",
+    "@mapbox/vector-tile": "^1.3.1",
     "@material-ui/core": "^4.9.9",
     "@material-ui/icons": "^4.9.1",
     "@probe.gl/test-utils": "^3.2.1",
@@ -65,6 +73,8 @@
     "glslify": "^7.0.0",
     "glslify-loader": "^2.0.0",
     "html-webpack-plugin": "^3.2.0",
+    "jsdom": "^16.2.2",
+    "jsdom-global": "^3.0.2",
     "math.gl": "^3.1.3",
     "mini-css-extract-plugin": "^0.9.0",
     "mocha": "^7.1.1",
@@ -92,21 +102,13 @@
     "@deck.gl/core": "^8.1.0",
     "@deck.gl/geo-layers": "^8.1.0",
     "@deck.gl/layers": "^8.1.0",
-    "@deck.gl/mesh-layers": "^8.1.0",
     "@deck.gl/react": "^8.1.0",
-    "@loaders.gl/core": "^2.0.2",
-    "@loaders.gl/loader-utils": "^2.0.2",
     "@luma.gl/constants": "^8.1.0",
     "@luma.gl/core": "^8.1.0",
     "@luma.gl/shadertools": "^8.1.0",
-    "@mapbox/vector-tile": "^1.3.1",
     "fast-xml-parser": "^3.16.0",
-    "geotiff": "git+https://github.com/ilan-gold/geotiff.js.git#master",
-    "math.gl": "^3.1.3",
-    "nebula.gl": "^0.17.1",
-    "pbf": "^3.2.1",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
-    "zarr": "^0.3.0-beta.0"
+    "geotiff": "github:ilan-gold/geotiff.js#ilan-gold/rangetop_bug",
+    "quickselect": "^2.0.0",
+    "zarr": "^0.3.0"
   }
 }

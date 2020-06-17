@@ -1,15 +1,17 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
-import XRLayer from './XRLayer';
+import { isWebGL2 } from '@luma.gl/core';
 
-import { padColorsAndSliders } from './utils';
+import XRLayer from './XRLayer';
+import { padTileWithZeros } from '../loaders/utils';
+import { to32BitFloat } from './utils';
 
 const defaultProps = {
-  pickable: false,
+  pickable: true,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   sliderValues: { type: 'array', value: [], compare: true },
   channelIsOn: { type: 'array', value: [], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
-  loaderSelection: { type: 'array', value: undefined, compare: true },
+  loaderSelection: { type: 'array', value: [], compare: true },
   colormap: { type: 'string', value: '', compare: true },
   domain: { type: 'array', value: [], compare: true },
   translate: { type: 'array', value: [0, 0], compare: true },
@@ -32,6 +34,20 @@ function scaleBounds({ width, height, translate, scale }) {
   return [left, bottom, right, top];
 }
 
+/*
+ * For some reason data of uneven length fails to be converted to a texture (Issue #144).
+ * Here we pad the width of tile by one if the data is uneven in length, which seemingly
+ * fixes the rendering. This is not ideal since padding the tile makes a copy of underlying
+ * buffer, but without digging deeper into the WebGL it is a reasonable fix.
+ */
+function padEven(data, width, height) {
+  const targetWidth = (width * height) % 2 === 0 ? width : width + 1;
+  const padded = data.map(d =>
+    padTileWithZeros({ data: d, width, height }, targetWidth, height)
+  );
+  return { data: padded, width: targetWidth, height };
+}
+
 /**
  * This layer wraps XRLayer and generates a static image
  * @param {Object} props
@@ -45,29 +61,52 @@ function scaleBounds({ width, height, translate, scale }) {
  * @param {Array} props.translate Translate transformation to be applied to the bounds after scaling.
  * @param {number} props.scale Scaling factor for this layer to be used against the dimensions of the loader's `getRaster`.
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
+ * @param {String} props.onHover Hook function from deck.gl to handle hover objects.
  */
 export default class StaticImageLayer extends CompositeLayer {
   initializeState() {
     const { loader, z, loaderSelection } = this.props;
     loader.getRaster({ z, loaderSelection }).then(({ data, width, height }) => {
-      this.setState({ data, width, height });
+      this.setState(
+        padEven(
+          !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
+          width,
+          height
+        )
+      );
     });
   }
 
-  updateState({ changeFlags }) {
+  updateState({ changeFlags, props, oldProps }) {
     const { propsChanged } = changeFlags;
-    if (
-      typeof propsChanged === 'string' &&
-      propsChanged.includes('props.loader')
-    ) {
+    const loaderChanged =
+      typeof propsChanged === 'string' && propsChanged.includes('props.loader');
+    const loaderSelectionChanged =
+      props.loaderSelection !== oldProps.loaderSelection;
+    if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
       const { loader, z, loaderSelection } = this.props;
       loader
         .getRaster({ z, loaderSelection })
         .then(({ data, width, height }) => {
-          this.setState({ data, width, height });
+          this.setState(
+            padEven(
+              !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
+              width,
+              height
+            )
+          );
         });
     }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getPickingInfo({ info, sourceLayer }) {
+    // eslint-disable-next-line no-param-reassign
+    info.sourceLayer = sourceLayer;
+    // eslint-disable-next-line no-param-reassign
+    info.tile = sourceLayer.props.tile;
+    return info;
   }
 
   renderLayers() {
@@ -81,18 +120,12 @@ export default class StaticImageLayer extends CompositeLayer {
       channelIsOn,
       translate,
       scale,
-      domain,
       z,
+      domain,
+      pickable,
       id
     } = this.props;
     const { dtype } = loader;
-    const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      dtype
-    });
     const { data, width, height } = this.state;
     if (!(width && height)) return null;
     const bounds = scaleBounds({
@@ -103,11 +136,13 @@ export default class StaticImageLayer extends CompositeLayer {
     });
     return new XRLayer({
       channelData: Promise.resolve({ data, width, height }),
+      pickable,
       bounds,
-      sliderValues: paddedSliderValues,
-      colorValues: paddedColorValues,
+      sliderValues,
+      colorValues,
+      channelIsOn,
+      domain,
       id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,
-      pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
       opacity,
       visible,
