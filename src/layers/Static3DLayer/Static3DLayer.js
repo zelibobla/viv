@@ -36,7 +36,7 @@ export default class Static3DLayer extends CompositeLayer {
   initializeState() {
     const { loader, z, loaderSelection } = this.props;
     loader
-      .getRaster({ z, loaderSelection })
+      .getVolume({ z, loaderSelection })
       .then(({ data, width, height, depth }) => {
         this.setState({ data, width, height, depth });
       });
@@ -51,7 +51,7 @@ export default class Static3DLayer extends CompositeLayer {
       // Only fetch new data to render if loader has changed
       const { loader, z, loaderSelection } = this.props;
       loader
-        .getRaster({ z, loaderSelection })
+        .getVolume({ z, loaderSelection })
         .then(({ data, width, height, depth }) => {
           this.setState({ data, width, height, depth });
         });

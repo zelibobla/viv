@@ -99,9 +99,7 @@ export default class ZarrLoader {
    */
   async getRaster({ z, loaderSelection = [] }) {
     const source = this._getSource(z);
-    const [xIndex, yIndex, zIndex] = ['x', 'y', 'z'].map(k =>
-      this._dimIndices.get(k)
-    );
+    const [xIndex, yIndex] = ['x', 'y'].map(k => this._dimIndices.get(k));
 
     const dataRequests = loaderSelection.map(async sel => {
       const chunkKey = this._serializeSelection(sel);
@@ -109,9 +107,6 @@ export default class ZarrLoader {
       chunkKey[xIndex] = null;
       if (this.isRgb) {
         chunkKey[chunkKey.length - 1] = null;
-      }
-      if (this.is3d) {
-        chunkKey[zIndex] = null;
       }
       const { data } = await source.getRaw(chunkKey);
       return data;
@@ -121,9 +116,37 @@ export default class ZarrLoader {
     const { shape } = source;
     const width = shape[xIndex];
     const height = shape[yIndex];
-    const depth = shape[zIndex];
-    console.log({ data, width, height, depth });
+    return { data, width, height };
+  }
 
+  /**
+   * Returns full image panes (at level z if pyramid)
+   * @param {number} z positive integer (0 === highest zoom level)
+   * @param {Array} loaderSelection, Array of valid dimension selections
+   * @returns {Object} data: TypedArray[], width: number, height: number
+   */
+  async getVolume({ loaderSelection = [] }) {
+    const source = this._getSource(
+      this.numLevels === 1 ? 0 : this.numLevels - 1
+    );
+    const [xIndex, yIndex, zIndex] = ['x', 'y', 'z'].map(k =>
+      this._dimIndices.get(k)
+    );
+
+    const dataRequests = loaderSelection.map(async sel => {
+      const chunkKey = this._serializeSelection(sel);
+      chunkKey[yIndex] = null;
+      chunkKey[xIndex] = null;
+      chunkKey[zIndex] = null;
+      const { data } = await source.getRaw(chunkKey);
+      return data;
+    });
+
+    const data = await Promise.all(dataRequests);
+    const { shape } = source;
+    const width = shape[xIndex];
+    const height = shape[yIndex];
+    const depth = shape[zIndex];
     return { data, width, height, depth };
   }
 
