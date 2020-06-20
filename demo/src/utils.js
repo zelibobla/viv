@@ -18,7 +18,7 @@ export async function createLoader(type, infoObj) {
       return loader;
     }
     case 'ome-zarr': {
-      const reader = await OMEZarrReader.fromUrl(infoObj.url);
+      const reader = await OMEZarrReader.fromStore(infoObj.url);
       const { loader } = await reader.loadOMEZarr();
       return loader;
     }

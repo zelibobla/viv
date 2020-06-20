@@ -119,3 +119,16 @@ export async function getChannelStats({ loader, loaderSelection }) {
   });
   return channelStats;
 }
+
+/**
+ * Reads key from zarr store and parses as JSON
+ * @param {Zarr.Store} store
+ * @param {String} key
+ * @returns {Object}
+ */
+export async function getJson(store, key) {
+  const bytes = new Uint8Array(await store.getItem(key));
+  const utf8Decoder = new TextDecoder();
+  const json = JSON.parse(utf8Decoder.decode(bytes));
+  return json;
+}

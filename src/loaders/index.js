@@ -1,9 +1,9 @@
-import { openArray } from 'zarr';
+import { openArray, HTTPStore } from 'zarr';
 import { fromUrl } from 'geotiff';
 import Pool from './Pool';
 import ZarrLoader from './zarrLoader';
 import OMETiffLoader from './OMETiffLoader';
-import { getChannelStats } from './utils';
+import { getChannelStats, getJson } from './utils';
 import OMEZarrReader from './omeZarrReader';
 
 export async function createZarrLoader({
@@ -15,16 +15,15 @@ export async function createZarrLoader({
   translate
 }) {
   let data;
+  const store = typeof url === 'string' ? new HTTPStore(url) : url;
   if (isPyramid) {
-    const metadataUrl = `${url}${url.slice(-1) === '/' ? '' : '/'}.zmetadata`;
-    const response = await fetch(metadataUrl);
-    const { metadata } = await response.json();
+    const { metadata } = await getJson(store, '.zmetadata');
     const paths = Object.keys(metadata)
       .filter(metaKey => metaKey.includes('.zarray'))
       .map(arrMetaKeys => arrMetaKeys.slice(0, -7));
-    data = Promise.all(paths.map(path => openArray({ store: url, path })));
+    data = Promise.all(paths.map(path => openArray({ store, path })));
   } else {
-    data = openArray({ store: url });
+    data = openArray({ store });
   }
   return new ZarrLoader({
     data: await data,
