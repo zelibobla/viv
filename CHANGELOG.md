@@ -4,12 +4,41 @@
 
 ### Added
 
+### Changed
+
+- Use WebGL context to detect what shaders and textures to use, not whether WebGL2 is available on environment `document`.
+
+## 0.2.11
+
+### Added
+
+### Changed
+
+- Move back on to geotiff full releases.
+
+## 0.2.10
+
+### Added
+
+### Changed
+
+- Change geotiff fork branch to work with downstream installations.
+- Fix shaders divisor for intensity.
+
+## 0.2.9
+
+### Added
+
 - Support Safari in 2D raster imagery.
 - Support height as primary dimension for sizing OverviewView.
+- Add preliminary RGB check.
+- Add doc giving an overview of our API structure.
 
 ### Changed
 
 - Project overview boundary sizes instead of hardcoding.
+- Default demo color is now magenta and not red.
+- Remove Safari browser warning in docs.
 
 ## 0.2.8
 
