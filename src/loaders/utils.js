@@ -66,13 +66,16 @@ export function byteSwapInplace(src) {
 /**
  * Returns actual image stats for static imagery and an estimate via a downsampled version of image pyramids.
  * This is helpful for generating histograms of your channel data, or scaling your sliders down to a reasonable range.
+ * If the loader is for volume (i.e loaderSelection as no z specified) we use midpoint of SizeZ from the OMEXML.
  * @param {Object} args
  * @param {Object} args.loader A valid loader object.
  * @param {Array} args.loaderSelection Array of valid dimension selections
  * @returns {Array} List of { mean, domain, sd, data, q1, q3 } objects.
  */
 export async function getChannelStats({ loader, loaderSelection }) {
-  const z = loader.isPyramid ? loader.numLevels - 1 : 0;
+  const { omexml } = loader;
+  const { SizeZ } = omexml;
+  const z = loader.isPyramid ? loader.numLevels - 1 : SizeZ / 2 || 0;
   const rasters = await loader.getRaster({ z, loaderSelection });
   const { data } = rasters;
   const channelStats = data.map(arr => {

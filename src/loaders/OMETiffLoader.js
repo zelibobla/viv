@@ -200,8 +200,9 @@ export default class OMETiffLoader {
             this._parseIFD(index);
             const image = await tiff.getImage(index);
             const raster = await image.readRasters({ pool });
+            let r = rasterSize;
             // eslint-disable-next-line no-plusplus
-            for (let r = 0; r < rasterSize; r++) {
+            while (r--) {
               view[setMethodString](
                 BYTES_PER_ELEMENT * z * rasterSize + BYTES_PER_ELEMENT * r,
                 raster[0][r],
