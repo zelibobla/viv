@@ -88,7 +88,7 @@ export default class Static3DLayer extends CompositeLayer {
         coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
         data: [
           {
-            text: 'Loading Volume...',
+            text: 'Loading Volume (Firefox/Chrome Only)...',
             position: viewport.position
           }
         ],
