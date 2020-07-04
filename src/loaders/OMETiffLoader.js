@@ -182,6 +182,45 @@ export default class OMETiffLoader {
     };
   }
 
+  async getVolume({ loaderSelection }) {
+    const { tiff, omexml, pool } = this;
+    const { SizeZ, SizeX, SizeY } = omexml;
+    const { dtype } = this;
+    const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
+    const { BYTES_PER_ELEMENT } = TypedArray;
+    const volume = await Promise.all(
+      loaderSelection.map(async sel => {
+        const rasterSize = SizeX * SizeY;
+        const view = new DataView(
+          new ArrayBuffer(rasterSize * SizeZ * BYTES_PER_ELEMENT)
+        );
+        await Promise.all(
+          new Array(SizeZ).fill(0).map(async (_, z) => {
+            const index = this._getIFDIndex({ ...sel, z });
+            this._parseIFD(index);
+            const image = await tiff.getImage(index);
+            const raster = await image.readRasters({ pool });
+            // eslint-disable-next-line no-plusplus
+            for (let r = 0; r < rasterSize; r++) {
+              view[setMethodString](
+                BYTES_PER_ELEMENT * z * rasterSize + BYTES_PER_ELEMENT * r,
+                raster[0][r],
+                image.littleEndian
+              );
+            }
+          })
+        );
+        return new TypedArray(view.buffer);
+      })
+    );
+    return {
+      data: volume,
+      width: SizeX,
+      height: SizeY,
+      depth: SizeZ
+    };
+  }
+
   /**
    * Returns full image panes (at level z if pyramid)
    * @param {number} z positive integer (0 === highest zoom level)
