@@ -74,8 +74,7 @@ export function byteSwapInplace(src) {
  */
 export async function getChannelStats({ loader, loaderSelection }) {
   const { omexml } = loader;
-  const { SizeZ } = omexml;
-  const z = loader.isPyramid ? loader.numLevels - 1 : SizeZ / 2 || 0;
+  const z = loader.isPyramid ? loader.numLevels - 1 : omexml?.SizeZ / 2 || 0;
   const rasters = await loader.getRaster({ z, loaderSelection });
   const { data } = rasters;
   const channelStats = data.map(arr => {
