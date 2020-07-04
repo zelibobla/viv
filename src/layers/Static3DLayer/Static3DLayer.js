@@ -1,4 +1,5 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
+import { TextLayer } from '@deck.gl/layers';
 import XR3DLayer from './XR3DLayer';
 import { padColorsAndSliders } from '../utils';
 
@@ -80,7 +81,23 @@ export default class Static3DLayer extends CompositeLayer {
       dtype
     });
     const { data, width, height, depth } = this.state;
-    if (!(width && height)) return null;
+    if (!(width && height)) {
+      const { viewport } = this.context;
+      return new TextLayer({
+        id: `units-label-layer-${id}`,
+        coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+        data: [
+          {
+            text: 'Loading Volume...',
+            position: viewport.position
+          }
+        ],
+        getColor: [220, 220, 220, 255],
+        getSize: 25,
+        sizeUnits: 'meters',
+        sizeScale: 2 ** -viewport.zoom
+      });
+    }
     return new XR3DLayer({
       channelData: Promise.resolve({ data, width, height, depth }),
       sliderValues: paddedSliderValues,
