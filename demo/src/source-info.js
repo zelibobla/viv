@@ -530,49 +530,6 @@ const codex3DInfo = {
   description: '3D Confocal CODEX Stack (Stanford HuBMAP)'
 };
 
-const covidTiffInfo = {
-  url:
-    'https://vitessce-demo-data.storage.googleapis.com/test-data/12448_G1HR_Mesh003.ome.tif',
-  dimensions: [
-    {
-      field: 'channel',
-      type: 'nominal',
-      values: [0]
-    },
-    { field: 'y', type: 'quantitative', values: null },
-    { field: 'x', type: 'quantitative', values: null }
-  ],
-  selections: [{ channel: 0 }],
-  isPublic: true,
-  isPyramid: true,
-  description: 'Covid-19 Primary Gut Epithelial Stem Cells (OME-TIFF)',
-  initialViewState: {
-    zoom: -7,
-    target: [50000, 50000]
-  }
-};
-
-const omeZarr = {
-  url:
-    'https://vitessce-demo-data.storage.googleapis.com/test-data/9822151.zarr',
-  dimensions: [
-    // TODO: Having the actual dimensions breaks the UI components currently
-    // ome_zarr images are all (t, c, z, y, x)
-    { field: 'c', type: 'nominal', values: [0] },
-    { field: 'y', type: 'quantitative', values: null },
-    { field: 'x', type: 'quantitative', values: null }
-  ],
-  selections: [{ c: 0 }],
-  isPublic: true,
-  isPyramid: true,
-  description:
-    'IDR 9822151.zarr - SARS-CoV-2 in human instestinal cells (OME-ZARR)',
-  initialViewState: {
-    zoom: -5,
-    target: [30000, 20000]
-  }
-};
-
 export default {
   zarr: zarrInfo,
   tiff: tiffInfo,
@@ -585,8 +542,6 @@ export default {
   '3d florida zarr': rootFlorida3DInfo,
   '3d zarr': rootStatic4DNInfo,
   '3d zarr2': rootStatic3DInfo2,
-  'covid tiff': covidTiffInfo,
-  'ome-zarr': omeZarr,
   'covid tiff': covidTiffInfo,
   'ome-zarr': omeZarr,
   'rgb tiff': remoteTiffRGB,
