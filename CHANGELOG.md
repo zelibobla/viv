@@ -5,8 +5,29 @@
 ### Added
 
 ### Changed
+- Updated the font family for the `ScaleBarLayer`'s internal `TextLayer`.
+
+## 0.3.1
+
+### Added
+
+### Changed
+
+- Pad OME-TIFF tiles using both height and width in the calculation.
+
+## 0.3.0
+
+### Added
+
+- Thanks to deck.gl 8.2, we have a request scheduler which makes fetching tiles more efficient.
+
+### Changed
 
 - Use WebGL context to detect what shaders and textures to use, not whether WebGL2 is available on environment `document`.
+- Fix link in `IMAGE_RENDERING.md` and remove `img2zarr` reference since it has been depricated.
+- Upgrade deck.gl to 8.2.
+- Export `XRLayer`.
+- Fix OMEXML 32 bit float parse error.
 
 ## 0.2.11
 

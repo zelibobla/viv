@@ -6,6 +6,9 @@ export const DEFAULT_COLOR_OFF = [0, 0, 0];
 
 export const MAX_SLIDERS_AND_CHANNELS = 6;
 
+export const DEFAULT_FONT_FAMILY =
+  "-apple-system, 'Helvetica Neue', Arial, sans-serif";
+
 export const DTYPE_VALUES = {
   '<u1': {
     format: GL.R8UI,
@@ -35,9 +38,12 @@ export const DTYPE_VALUES = {
     format: GL.R32F,
     dataFormat: GL.RED,
     type: GL.FLOAT,
-    max: 2 ** 31 - 1,
     TypedArray: Float32Array,
-    setMethodString: 'setFloat32'
+    setMethodString: 'setFloat32',
+    // Not sure what to do about this one - a good use case for channel stats, I suppose:
+    // https://en.wikipedia.org/wiki/Single-precision_floating-point_format.
+    max: 3.4 * 10 ** 38,
+    TypedArray: Float32Array
   }
 };
 

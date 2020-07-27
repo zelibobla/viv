@@ -7,7 +7,7 @@ const DTYPE_LOOKUP = {
   uint8: '<u1',
   uint16: '<u2',
   uint32: '<u4',
-  float32: '<f4'
+  float: '<f4'
 };
 
 /**
@@ -171,7 +171,7 @@ export default class OMETiffLoader {
         }
       }
       image = await tiff.getImage(pyramidIndex);
-      return this._getChannel({ image, x, y });
+      return this._getChannel({ image, x, y, z });
     });
 
     const tiles = await Promise.all(tileRequests);
@@ -268,7 +268,11 @@ export default class OMETiffLoader {
     const width = image.getWidth();
     const height = image.getHeight();
     return {
-      data: rasters,
+      // GeoTiff.js returns 32 bit uint when the tiff has 32 significant bits.
+      data:
+        this.dtype === '<f4'
+          ? rasters.map(r => new Float32Array(r.buffer))
+          : rasters,
       width,
       height
     };
@@ -349,7 +353,7 @@ export default class OMETiffLoader {
     };
   }
 
-  async _getChannel({ image, x, y }) {
+  async _getChannel({ image, x, y, z }) {
     const { dtype } = this;
     const { TypedArray } = DTYPE_VALUES[dtype];
     const tile = await image.getTileOrStrip(x, y, 0, this.pool);
@@ -366,13 +370,19 @@ export default class OMETiffLoader {
 
     // If the tile data is not (tileSize x tileSize), pad the data with zeros
     if (data.length < this.tileSize * this.tileSize) {
-      const width = Math.min(
-        this.tileSize,
-        image.getWidth() - x * this.tileSize
-      );
-      const height = data.length / width;
+      const { height, width } = this.getRasterSize({ z });
+      let trueHeight = height;
+      let trueWidth = width;
+      // If height * tileSize is the size of the data, then the width is the tileSize.
+      if (data.length / height === this.tileSize) {
+        trueWidth = this.tileSize;
+      }
+      // If width * tileSize is the size of the data, then the height is the tileSize.
+      if (data.length / width === this.tileSize) {
+        trueHeight = this.tileSize;
+      }
       return padTileWithZeros(
-        { data, width, height },
+        { data, width: trueWidth, height: trueHeight },
         this.tileSize,
         this.tileSize
       );

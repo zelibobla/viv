@@ -2,7 +2,8 @@ import {
   VivViewerLayer,
   StaticImageLayer,
   ScaleBarLayer,
-  Static3DLayer
+  Static3DLayer,
+  XRLayer
 } from './layers';
 import {
   VivViewer,
@@ -10,6 +11,7 @@ import {
   SideBySideViewer,
   Static3DViewer
 } from './viewers';
+import { VivViewer, PictureInPictureViewer, SideBySideViewer } from './viewers';
 import { VivView, OverviewView, DetailView, SideBySideView } from './views';
 import {
   createZarrLoader,
@@ -27,6 +29,7 @@ export {
   ScaleBarLayer,
   Static3DLayer,
   VivViewerLayer,
+  XRLayer,
   VivViewer,
   VivView,
   OverviewView,
