@@ -11,7 +11,6 @@ import {
   SideBySideViewer,
   Static3DViewer
 } from './viewers';
-import { VivViewer, PictureInPictureViewer, SideBySideViewer } from './viewers';
 import { VivView, OverviewView, DetailView, SideBySideView } from './views';
 import {
   createZarrLoader,
