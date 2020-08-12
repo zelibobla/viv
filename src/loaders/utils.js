@@ -75,10 +75,21 @@ export function byteSwapInplace(src) {
  * @param {Array} args.loaderSelection Array of valid dimension selections
  * @returns {Array} List of { mean, domain, sd, data, q1, q3, autoSliders } objects.
  */
-export async function getChannelStats({ loader, loaderSelection }) {
-  const { omexml } = loader;
-  const z = loader.isPyramid ? loader.numLevels - 1 : omexml?.SizeZ / 2 || 0;
-  const rasters = await loader.getRaster({ z, loaderSelection });
+export async function getChannelStats({ loader, loaderSelection, use3d }) {
+  let rasters = [];
+  const z = loader.isPyramid ? loader.numLevels - 1 : 0;
+  if(use3d){
+    const { omexml } = loader;
+    rasters = await loader.getRaster({
+      z,
+      loaderSelection: loaderSelection.map(sel => ({
+        ...sel,
+        z: omexml?.SizeZ / 2
+      }))
+    });
+  } else{
+   rasters = await loader.getRaster({ z, loaderSelection });
+  }
   const { data } = rasters;
   const channelStats = data.map(arr => {
     let len = arr.length;

@@ -18,10 +18,10 @@ const Static3DViewer = props => {
     sliderValues,
     colorValues,
     channelIsOn,
-    initialViewState,
     loaderSelection,
     colormap
   } = props;
+  const initialViewState = { target: [loader.omexml.SizeX / 2, loader.omexml.SizeY / 2, loader.omexml.SizeZ / 2], zoom: -2 }
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new Static3DView({ initialViewState: detailViewState });
   const layerConfig = {

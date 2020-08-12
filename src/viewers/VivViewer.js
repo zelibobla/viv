@@ -101,14 +101,15 @@ export default class VivViewer extends PureComponent {
     if (
       views.some(
         view =>
-          view.initialViewState.target !==
-            prevState.initialViewStates[view.id].target ||
+          view.initialViewState.target.some((t, i) => prevState.initialViewStates[view.id].target[i] !== t)
+             ||
           view.initialViewState.zoom !==
             prevState.initialViewStates[view.id].zoom
       )
     ) {
       const initialViewStates = {};
       const viewStates = {};
+      console.log(views, prevState);
       views.forEach(view => {
         viewStates[view.id] = view.filterViewState({
           viewState: view.initialViewState

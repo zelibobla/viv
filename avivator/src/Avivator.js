@@ -10,6 +10,7 @@ import AddIcon from '@material-ui/icons/Add';
 import {
   SideBySideViewer,
   PictureInPictureViewer,
+  Static3DViewer,
   getChannelStats
 } from '../../src';
 import {
@@ -76,6 +77,7 @@ export default function Avivator(props) {
   const [panLock, togglePanLock] = useReducer(v => !v, true);
   const [isLensOn, toggleIsLensOn] = useReducer(v => !v, false);
   const [channels, dispatch] = useReducer(channelsReducer, initialChannels);
+  const [use3d, toggleUse3d] = useReducer(v => !v, false);
 
   useEffect(() => {
     async function changeLoader() {
@@ -293,13 +295,14 @@ export default function Avivator(props) {
         handleGlobalChannelsSelectionChange={
           handleGlobalChannelsSelectionChange
         }
+        use3d={use3d}
       />
     ) : null;
   });
   return (
     <>
       {!isLoading &&
-        initialViewState.target &&
+        initialViewState.target && !use3d && 
         (useLinkedView && isPyramid ? (
           <SideBySideViewer
             loader={loader}
@@ -339,6 +342,19 @@ export default function Avivator(props) {
             isLensOn={isLensOn}
           />
         ))}
+        {
+          use3d && !isLoading &&
+        initialViewState.target && (
+          <Static3DViewer 
+            loader={loader}
+            sliderValues={sliders}
+            colorValues={colors}
+            channelIsOn={isOn}
+            loaderSelection={selections}
+            colormap={colormap.length > 0 && colormap}
+          />
+        )
+        }
       {
         <Menu
           maxHeight={viewSize.height}
@@ -386,6 +402,15 @@ export default function Avivator(props) {
               Add Channel
             </Button>
           )}
+          <Button
+            disabled={(loader.omexml?.SizeZ === 0) || isLoading}
+            onClick={toggleUse3d}
+            variant="outlined"
+            size="small"
+            fullWidth
+          >
+            {use3d ? 'Hide' : 'Show'} Volumetric Rendering
+          </Button>
           <Button
             disabled={!isPyramid || isLoading || useLinkedView}
             onClick={() => setOverviewOn(prev => !prev)}

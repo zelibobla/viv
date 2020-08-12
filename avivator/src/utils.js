@@ -27,10 +27,11 @@ export async function createLoader(
       // built in to the format for them, hence the ternary.
       const {
         omexml: { SizeZ, SizeT, SizeC },
-        isBioFormats6Pyramid
+        isBioFormats6Pyramid,
+        isPyramid
       } = loader;
       const totalImageCount =
-        SizeZ * SizeT * SizeC * (isBioFormats6Pyramid ? 1 : loader.numLevels);
+        SizeZ * SizeT * SizeC * (isPyramid ? (isBioFormats6Pyramid ? 1 : (loader.numLevels)) : 1);
       if (isOffsets404 && totalImageCount > MAX_CHANNELS_FOR_SNACKBAR_WARNING) {
         handleOffsetsNotFound(true);
       }
