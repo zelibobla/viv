@@ -3,7 +3,7 @@ import { isWebGL2 } from '@luma.gl/core';
 
 import XRLayer from './XRLayer';
 import { padTileWithZeros } from '../loaders/utils';
-import { to32BitFloat } from './utils';
+import { to32BitFloat, onPointer } from './utils';
 
 const defaultProps = {
   pickable: true,
@@ -16,6 +16,8 @@ const defaultProps = {
   domain: { type: 'array', value: [], compare: true },
   translate: { type: 'array', value: [0, 0], compare: true },
   scale: { type: 'number', value: 1, compare: true },
+  boxSize: { type: 'number', value: 0, compare: true },
+  viewportId: { type: 'string', value: '', compare: true },
   loader: {
     type: 'object',
     value: {
@@ -24,7 +26,12 @@ const defaultProps = {
     },
     compare: true
   },
-  z: { type: 'number', value: 0, compare: true }
+  z: { type: 'number', value: 0, compare: true },
+  isLensOn: { type: 'boolean', value: false, compare: true },
+  lensSelection: { type: 'number', value: 0, compare: true },
+  lensRadius: { type: 'number', value: 100, compare: true },
+  lensBorderColor: { type: 'array', value: [255, 255, 255], compare: true },
+  lensBorderRadius: { type: 'number', value: 0.02, compare: true }
 };
 
 function scaleBounds({ width, height, translate, scale }) {
@@ -40,12 +47,13 @@ function scaleBounds({ width, height, translate, scale }) {
  * fixes the rendering. This is not ideal since padding the tile makes a copy of underlying
  * buffer, but without digging deeper into the WebGL it is a reasonable fix.
  */
-function padEven(data, width, height) {
-  const targetWidth = width % 2 === 0 ? width : width + 1;
+function padEven(data, width, height, boxSize) {
+  const targetWidth = boxSize || (width % 2 === 0 ? width : width + 1);
+  const targetHeight = boxSize || height;
   const padded = data.map(d =>
-    padTileWithZeros({ data: d, width, height }, targetWidth, height)
+    padTileWithZeros({ data: d, width, height }, targetWidth, targetHeight)
   );
-  return { data: padded, width: targetWidth, height };
+  return { data: padded, width: targetWidth, height: targetHeight };
 }
 
 /**
@@ -57,24 +65,44 @@ function padEven(data, width, height) {
  * @param {number} props.opacity Opacity of the layer.
  * @param {string} props.colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
- * @param {string} props.viewportId Id for the current view.
+ * @param {string} props.viewportId Id for the current view.  This needs to match the viewState id in deck.gl and is necessary for the lens.
  * @param {Array} props.translate Translate transformation to be applied to the bounds after scaling.
  * @param {number} props.scale Scaling factor for this layer to be used against the dimensions of the loader's `getRaster`.
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
  * @param {String} props.onHover Hook function from deck.gl to handle hover objects.
+ * @param {String} props.boxSize If you want to pad an incoming tile to be a certain squared pixel size, pass the number here (only used by OverviewLayer/VivViewerLayer for now).
+ * @param {boolean} props.isLensOn Whether or not to use the lens.
+ * @param {number} props.lensSelection Numeric index of the channel to be focused on by the lens.
+ * @param {number} props.lensRadius Pixel radius of the lens (default: 100).
+ * @param {number} props.lensBorderColor RGB color of the border of the lens.
+ * @param {number} props.lensBorderRadius Percentage of the radius of the lens for a border (default 0.02).
  */
-export default class StaticImageLayer extends CompositeLayer {
+export default class ImageLayer extends CompositeLayer {
   initializeState() {
-    const { loader, z, loaderSelection } = this.props;
+    this.state = {
+      unprojectLensBounds: [0, 0, 0, 0],
+      width: 0,
+      height: 0,
+      data: []
+    };
+    const { loader, z, loaderSelection, boxSize } = this.props;
     loader.getRaster({ z, loaderSelection }).then(({ data, width, height }) => {
       this.setState(
         padEven(
           !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
           width,
-          height
+          height,
+          boxSize
         )
       );
     });
+    if (this.context.deck) {
+      this.context.deck.eventManager.on({
+        pointermove: () => onPointer(this),
+        pointerleave: () => onPointer(this),
+        wheel: () => onPointer(this)
+      });
+    }
   }
 
   updateState({ changeFlags, props, oldProps }) {
@@ -85,7 +113,7 @@ export default class StaticImageLayer extends CompositeLayer {
       props.loaderSelection !== oldProps.loaderSelection;
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, z, loaderSelection } = this.props;
+      const { loader, z, loaderSelection, boxSize } = this.props;
       loader
         .getRaster({ z, loaderSelection })
         .then(({ data, width, height }) => {
@@ -93,7 +121,8 @@ export default class StaticImageLayer extends CompositeLayer {
             padEven(
               !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
               width,
-              height
+              height,
+              boxSize
             )
           );
         });
@@ -123,10 +152,14 @@ export default class StaticImageLayer extends CompositeLayer {
       z,
       domain,
       pickable,
+      isLensOn,
+      lensSelection,
+      lensBorderColor,
+      lensRadius,
       id
     } = this.props;
     const { dtype } = loader;
-    const { data, width, height } = this.state;
+    const { data, width, height, unprojectLensBounds } = this.state;
     if (!(width && height)) return null;
     const bounds = scaleBounds({
       width,
@@ -135,7 +168,7 @@ export default class StaticImageLayer extends CompositeLayer {
       scale
     });
     return new XRLayer({
-      channelData: Promise.resolve({ data, width, height }),
+      channelData: { data, width, height },
       pickable,
       bounds,
       sliderValues,
@@ -147,10 +180,15 @@ export default class StaticImageLayer extends CompositeLayer {
       opacity,
       visible,
       dtype,
-      colormap
+      colormap,
+      unprojectLensBounds,
+      isLensOn,
+      lensSelection,
+      lensBorderColor,
+      lensRadius
     });
   }
 }
 
-StaticImageLayer.layerName = 'StaticImageLayer';
-StaticImageLayer.defaultProps = defaultProps;
+ImageLayer.layerName = 'ImageLayer';
+ImageLayer.defaultProps = defaultProps;

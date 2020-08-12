@@ -5,7 +5,42 @@
 ### Added
 
 ### Changed
+
+## 0.4.1
+
+### Added
+
+### Changed
+
+-  Fix lens and PIP.
+
+## 0.4.0
+
+### Added
+
+- Lens view built into layers.
+- Add avivator.
+
+### Changed
+
+- Update docs for avivator.
+
+## 0.3.3
+
+### Added
+
+### Changed
+
+- Upgrade geotiff.js to Ilan's branch for large string fix.
+
+## 0.3.2
+
+### Added
+
+### Changed
+
 - Updated the font family for the `ScaleBarLayer`'s internal `TextLayer`.
+- Guarantee that `OverviewLayer` shows an image by forcing it to be a power of 2.
 
 ## 0.3.1
 

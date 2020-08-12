@@ -1,6 +1,6 @@
 import {
-  VivViewerLayer,
-  StaticImageLayer,
+  MultiscaleImageLayer,
+  ImageLayer,
   ScaleBarLayer,
   Static3DLayer,
   XRLayer
@@ -14,11 +14,11 @@ import {
 import { VivView, OverviewView, DetailView, SideBySideView } from './views';
 import {
   createZarrLoader,
+  createBioformatsZarrLoader,
   ZarrLoader,
   createOMETiffLoader,
   OMETiffLoader,
-  getChannelStats,
-  OMEZarrReader
+  getChannelStats
 } from './loaders';
 import { DTYPE_VALUES, MAX_SLIDERS_AND_CHANNELS } from './constants';
 
@@ -27,7 +27,7 @@ export {
   MAX_SLIDERS_AND_CHANNELS,
   ScaleBarLayer,
   Static3DLayer,
-  VivViewerLayer,
+  MultiscaleImageLayer,
   XRLayer,
   VivViewer,
   VivView,
@@ -38,10 +38,10 @@ export {
   SideBySideViewer,
   Static3DViewer,
   DetailView,
-  StaticImageLayer,
+  ImageLayer,
   ZarrLoader,
   OMETiffLoader,
   createOMETiffLoader,
   createZarrLoader,
-  OMEZarrReader
+  createBioformatsZarrLoader
 };
