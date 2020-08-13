@@ -109,7 +109,6 @@ export default class VivViewer extends PureComponent {
     ) {
       const initialViewStates = {};
       const viewStates = {};
-      console.log(views, prevState);
       views.forEach(view => {
         viewStates[view.id] = view.filterViewState({
           viewState: view.initialViewState

@@ -21,7 +21,19 @@ const Static3DViewer = props => {
     loaderSelection,
     colormap
   } = props;
-  const initialViewState = { target: [loader.omexml.SizeX / 2, loader.omexml.SizeY / 2, loader.omexml.SizeZ / 2], zoom: -2 }
+  const {
+    isPyramid,
+    tileSize,
+    omexml: { SizeZ, SizeX, SizeY }
+  } = loader;
+  const initialViewState = {
+    target: [
+      (isPyramid ? tileSize / 2 : SizeX) / 2,
+      (isPyramid ? tileSize / 2 : SizeY) / 2,
+      SizeZ / 2
+    ],
+    zoom: -2
+  };
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new Static3DView({ initialViewState: detailViewState });
   const layerConfig = {

@@ -171,14 +171,18 @@ export default class OMETiffLoader {
   }
 
   async getVolume({ loaderSelection }) {
-    const { tiff, omexml, pool } = this;
-    const { SizeZ, SizeX, SizeY } = omexml;
+    const { tiff, omexml, pool, isPyramid, numLevels, tileSize } = this;
+    const { SizeZ, SizeX, SizeY, SizeT, SizeC } = omexml;
     const { dtype } = this;
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
     const { BYTES_PER_ELEMENT } = TypedArray;
+    const pyramidOffset = isPyramid
+      ? (numLevels - 1) * SizeZ * SizeT * SizeC
+      : 0;
     const volume = await Promise.all(
       loaderSelection.map(async sel => {
-        const rasterSize = SizeX * SizeY;
+        // tileSize over two since bioformats6 pyramids go down further than tilesize.
+        const rasterSize = isPyramid ? (tileSize / 2) ** 2 : SizeX * SizeY;
         const view = new DataView(
           new ArrayBuffer(rasterSize * SizeZ * BYTES_PER_ELEMENT)
         );
@@ -186,7 +190,14 @@ export default class OMETiffLoader {
           new Array(SizeZ).fill(0).map(async (_, z) => {
             const index = this._getIFDIndex({ ...sel, z });
             this._parseIFD(index);
-            const image = await tiff.getImage(index);
+            const pyramidIndex = pyramidOffset + index;
+            if (isPyramid) {
+              const parentImage = await tiff.getImage(index);
+              tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
+                parentImage.fileDirectory.SubIFDs[numLevels - 1]
+              );
+            }
+            const image = await tiff.getImage(pyramidIndex);
             const raster = await image.readRasters({ pool });
             let r = rasterSize;
             // eslint-disable-next-line no-plusplus
@@ -194,7 +205,8 @@ export default class OMETiffLoader {
               view[setMethodString](
                 BYTES_PER_ELEMENT * z * rasterSize + BYTES_PER_ELEMENT * r,
                 raster[0][r],
-                image.littleEndian
+                // Pyramid raster is bigEndian data and we are using the raster not the underlying data.
+                isPyramid ? true : image.littleEndian
               );
             }
           })
@@ -204,8 +216,8 @@ export default class OMETiffLoader {
     );
     return {
       data: volume,
-      width: SizeX,
-      height: SizeY,
+      width: isPyramid ? tileSize / 2 : SizeX,
+      height: isPyramid ? tileSize / 2 : SizeY,
       depth: SizeZ
     };
   }
