@@ -23,14 +23,14 @@ const Static3DViewer = props => {
   } = props;
   const {
     isPyramid,
-    tileSize,
+    numLevels,
     omexml: { SizeZ, SizeX, SizeY }
   } = loader;
   const initialViewState = {
     target: [
-      (isPyramid ? tileSize / 2 : SizeX) / 2,
-      (isPyramid ? tileSize / 2 : SizeY) / 2,
-      SizeZ / 2
+      (isPyramid ? SizeX >> numLevels : SizeX) / 2,
+      (isPyramid ? SizeY >> numLevels : SizeY) / 2,
+      (SizeZ >> numLevels) / 2
     ],
     zoom: -2
   };

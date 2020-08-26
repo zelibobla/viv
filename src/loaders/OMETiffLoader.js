@@ -171,7 +171,7 @@ export default class OMETiffLoader {
   }
 
   async getVolume({ loaderSelection }) {
-    const { tiff, omexml, pool, isPyramid, numLevels, tileSize } = this;
+    const { tiff, omexml, pool, isPyramid, numLevels } = this;
     const { SizeZ, SizeX, SizeY, SizeT, SizeC } = omexml;
     const { dtype } = this;
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
@@ -179,16 +179,31 @@ export default class OMETiffLoader {
     const pyramidOffset = isPyramid
       ? (numLevels - 1) * SizeZ * SizeT * SizeC
       : 0;
+    const zDownsampled = Math.floor(SizeZ / 2 ** numLevels);
+    let height;
+    let width;
     const volume = await Promise.all(
       loaderSelection.map(async sel => {
-        // tileSize over two since bioformats6 pyramids go down further than tilesize.
-        const rasterSize = isPyramid ? (tileSize / 2) ** 2 : SizeX * SizeY;
+        this._parseIFD(0);
+        const firstImage = await tiff.getImage(0);
+        if (isPyramid) {
+          tiff.ifdRequests[pyramidOffset] = tiff.parseFileDirectoryAt(
+            firstImage.fileDirectory.SubIFDs[numLevels - 1]
+          );
+        }
+        const lowestResImage = await tiff.getImage(pyramidOffset);
+        height = isPyramid ? lowestResImage.getHeight() : SizeY;
+        width = isPyramid ? lowestResImage.getWidth() : SizeX;
+        const rasterSize = height * width;
         const view = new DataView(
-          new ArrayBuffer(rasterSize * SizeZ * BYTES_PER_ELEMENT)
+          new ArrayBuffer(rasterSize * zDownsampled * BYTES_PER_ELEMENT)
         );
         await Promise.all(
-          new Array(SizeZ).fill(0).map(async (_, z) => {
-            const index = this._getIFDIndex({ ...sel, z });
+          new Array(zDownsampled).fill(0).map(async (_, z) => {
+            const index = this._getIFDIndex({
+              ...sel,
+              z: z * 2 ** numLevels
+            });
             this._parseIFD(index);
             const pyramidIndex = pyramidOffset + index;
             if (isPyramid) {
@@ -216,9 +231,9 @@ export default class OMETiffLoader {
     );
     return {
       data: volume,
-      width: isPyramid ? tileSize / 2 : SizeX,
-      height: isPyramid ? tileSize / 2 : SizeY,
-      depth: SizeZ
+      width,
+      height,
+      depth: isPyramid ? zDownsampled : SizeZ
     };
   }
 
