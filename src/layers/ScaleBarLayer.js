@@ -37,11 +37,6 @@ function getPosition(boundingBox, position, length) {
 
 const defaultProps = {
   pickable: true,
-  viewState: {
-    type: 'object',
-    value: { zoom: 0, target: [0, 0, 0] },
-    compare: true
-  },
   unit: { type: 'string', value: '', compare: true },
   size: { type: 'number', value: 1, compare: true },
   position: { type: 'string', value: 'bottom-right', compare: true },
@@ -55,10 +50,9 @@ const defaultProps = {
  * @param {Object} props
  * @param {String} props.unit Physical unit size per pixel at full resolution.
  * @param {Number} props.size Physical size of a pixel.
- * @param {Array} props.boundingBox Boudning box of the view in which this should render.
- * @param {id} props.id Id from the parent layer.
- * @param {ViewState} props.viewState The current viewState for the desired view.  We cannot internally use this.context.viewport because it is one frame behind:
- * https://github.com/visgl/deck.gl/issues/4504
+ * @param {String} props.id Id from the parent layer.
+ * @param {String} props.viewportId The id of the view in which the scale bar renders.
+ * @param {String} props.position One of bottom-right, bottom-left, top-right, or top-left
  * @param {ViewState} props.length Value from 0 to 1 representing the portion of the view to be used for the length part of the scale bar.
  */
 export default class ScaleBarLayer extends CompositeLayer {
