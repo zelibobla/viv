@@ -72,6 +72,19 @@ export function getNearestPowerOf2(width, height) {
   return 2 ** Math.ceil(Math.log2(Math.max(width, height)));
 }
 
+export function getCurrentViewInfo(layer, id) {
+  if (!layer.context.deck) return null;
+  const [layerView] = layer.context.deck.viewManager.views.filter(
+    view => view.id === id
+  );
+  const viewState = layer.context.deck.viewManager.viewState[id];
+  const viewport = layerView.makeViewport({
+    ...viewState,
+    viewState
+  });
+  return { viewport, viewState, view: layerView };
+}
+
 export function onPointer(layer) {
   const { viewportId, lensRadius } = layer.props;
   // If there is no viewportId, don't try to do anything.
@@ -80,14 +93,7 @@ export function onPointer(layer) {
     return;
   }
   const { mousePosition } = layer.context;
-  const layerView = layer.context.deck.viewManager.views.filter(
-    view => view.id === viewportId
-  )[0];
-  const viewState = layer.context.deck.viewManager.viewState[viewportId];
-  const viewport = layerView.makeViewport({
-    ...viewState,
-    viewState
-  });
+  const { viewport } = getCurrentViewInfo(layer, viewportId);
   // If the mouse is in the viewport and the mousePosition exists, set
   // the state with the bounding box of the circle that will render as a lens.
   if (mousePosition && viewport.containsPixel(mousePosition)) {

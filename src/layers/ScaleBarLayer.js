@@ -1,6 +1,6 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { LineLayer, TextLayer } from '@deck.gl/layers';
-import { range } from './utils';
+import { range, getCurrentViewInfo } from './utils';
 import { makeBoundingBox } from '../views/utils';
 import { DEFAULT_FONT_FAMILY } from '../constants';
 
@@ -45,7 +45,8 @@ const defaultProps = {
   unit: { type: 'string', value: '', compare: true },
   size: { type: 'number', value: 1, compare: true },
   position: { type: 'string', value: 'bottom-right', compare: true },
-  length: { type: 'number', value: 0.085, compare: true }
+  length: { type: 'number', value: 0.085, compare: true },
+  viewportId: { type: 'string', value: '', compare: true }
 };
 
 /**
@@ -61,8 +62,16 @@ const defaultProps = {
  * @param {ViewState} props.length Value from 0 to 1 representing the portion of the view to be used for the length part of the scale bar.
  */
 export default class ScaleBarLayer extends CompositeLayer {
+  // eslint-disable-next-line class-methods-use-this
+  shouldUpdateState({ changeFlags }) {
+    return changeFlags.somethingChanged;
+  }
+
   renderLayers() {
-    const { id, unit, size, position, viewState, length } = this.props;
+    const { id, unit, size, position, length, viewportId } = this.props;
+    const viewInfo = getCurrentViewInfo(this, viewportId);
+    if (!viewInfo) return null;
+    const { viewState } = viewInfo;
     const boundingBox = makeBoundingBox(viewState);
     const { zoom } = viewState;
     const viewLength = boundingBox[2][0] - boundingBox[0][0];

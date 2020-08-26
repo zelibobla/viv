@@ -6,6 +6,9 @@
 
 ### Changed
 
+- Stronger checking in Avivator for global selections.
+- Make scale bar layer API more usable.
+
 ## 0.4.2
 
 ### Added

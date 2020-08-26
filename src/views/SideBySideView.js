@@ -131,10 +131,11 @@ export default class SideBySideView extends VivView {
       if (unit && value) {
         layers.push(
           new ScaleBarLayer({
-            id: getVivId(id),
+            id: `scalebar${getVivId(id)}`,
             loader,
             unit,
             size: value,
+            viewportId: id,
             viewState: layerViewState
           })
         );
