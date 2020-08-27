@@ -184,9 +184,9 @@ export default class OMETiffLoader {
     let width;
     const volume = await Promise.all(
       loaderSelection.map(async sel => {
-        this._parseIFD(0);
-        const firstImage = await tiff.getImage(0);
         if (isPyramid) {
+          this._parseIFD(0);
+          const firstImage = await tiff.getImage(0);
           tiff.ifdRequests[pyramidOffset] = tiff.parseFileDirectoryAt(
             firstImage.fileDirectory.SubIFDs[numLevels - 1]
           );
@@ -205,6 +205,14 @@ export default class OMETiffLoader {
               z: z * 2 ** numLevels
             });
             this._parseIFD(index);
+            console.log(
+              {
+                ...sel,
+                z: z * 2 ** numLevels
+              },
+              pyramidOffset,
+              index
+            );
             const pyramidIndex = pyramidOffset + index;
             if (isPyramid) {
               const parentImage = await tiff.getImage(index);

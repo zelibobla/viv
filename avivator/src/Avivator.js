@@ -319,7 +319,7 @@ export default function Avivator(props) {
   });
   const globalControllers = globalControlDimensions.map(dimension => {
     // Only return a slider if there is a "stack."
-    return dimension.values.length > 1 ? (
+    return dimension.values.length > 1 && !use3d ? (
       <GlobalSelectionSlider
         key={dimension.field}
         dimension={dimension}
@@ -327,7 +327,6 @@ export default function Avivator(props) {
         handleGlobalChannelsSelectionChange={
           handleGlobalChannelsSelectionChange
         }
-        use3d={use3d}
       />
     ) : null;
   });
