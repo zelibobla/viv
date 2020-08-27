@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import VivViewer from './VivViewer';
 import { Static3DView } from '../views';
 
@@ -21,19 +21,21 @@ const Static3DViewer = props => {
     loaderSelection,
     colormap
   } = props;
-  const {
-    isPyramid,
-    numLevels,
-    omexml: { SizeZ, SizeX, SizeY }
-  } = loader;
-  const initialViewState = {
-    target: [
-      (isPyramid ? SizeX >> numLevels : SizeX) / 2,
-      (isPyramid ? SizeY >> numLevels : SizeY) / 2,
-      (SizeZ >> numLevels) / 2
-    ],
-    zoom: -2
-  };
+  const initialViewState = useMemo(() => {
+    const {
+      isPyramid,
+      numLevels,
+      omexml: { SizeZ, SizeX, SizeY }
+    } = loader;
+    return {
+      target: [
+        (isPyramid ? SizeX >> numLevels : SizeX) / 2,
+        (isPyramid ? SizeY >> numLevels : SizeY) / 2,
+        (SizeZ >> numLevels) / 2
+      ],
+      zoom: -2
+    };
+  }, [loader]);
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new Static3DView({ initialViewState: detailViewState });
   const layerConfig = {

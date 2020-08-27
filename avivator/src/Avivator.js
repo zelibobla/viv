@@ -27,7 +27,12 @@ import Menu from './components/Menu';
 import ColormapSelect from './components/ColormapSelect';
 import GlobalSelectionSlider from './components/GlobalSelectionSlider';
 import LensSelect from './components/LensSelect';
-import { LoaderError, OffsetsWarning } from './components/Snackbars';
+import {
+  LoaderError,
+  OffsetsWarning,
+  NoImageUrlInfo
+} from './components/SnackbarAlerts';
+import { DropzoneWrapper } from './components/Dropzone';
 
 import {
   MAX_CHANNELS,
@@ -36,6 +41,7 @@ import {
   GLOBAL_SLIDER_DIMENSION_FIELDS,
   COLOR_PALLETE
 } from './constants';
+import sources from './source-info';
 import './index.css';
 
 const initialChannels = {
@@ -68,7 +74,13 @@ export default function Avivator(props) {
   const [globalSelections, setGlobalSelections] = useState({ z: 0, t: 0 });
   const [initialViewState, setInitialViewState] = useState({});
   const [offsetsSnackbarOn, toggleOffsetsSnackbar] = useState(false);
-  const [loaderErrorSnackbarOn, toggleLoaderErrorSnackbar] = useState(false);
+  const [loaderErrorSnackbar, setLoaderErrorSnackbar] = useState({
+    on: false,
+    message: null
+  });
+  const [noImageUrlSnackbarIsOn, toggleNoImageUrlSnackbar] = useState(
+    sources.map(s => s.url).indexOf(initSource.url) >= 0
+  );
 
   const [useLinkedView, toggleLinkedView] = useReducer(v => !v, false);
   const [overviewOn, setOverviewOn] = useReducer(v => !v, false);
@@ -82,10 +94,11 @@ export default function Avivator(props) {
   useEffect(() => {
     async function changeLoader() {
       setIsLoading(true);
+      const { urlOrFile } = source;
       const nextLoader = await createLoader(
-        source.url,
+        urlOrFile,
         toggleOffsetsSnackbar,
-        toggleLoaderErrorSnackbar
+        message => setLoaderErrorSnackbar({ on: true, message })
       );
       if (nextLoader) {
         const { dimensions: newDimensions, isRgb } = nextLoader;
@@ -163,7 +176,9 @@ export default function Avivator(props) {
         // Set the global selections (needed for the UI). All selections have the same global selection.
         setGlobalSelections(selections[0]);
         // eslint-disable-next-line no-unused-expressions
-        history?.push(`?image_url=${source.url}`);
+        history?.push(
+          typeof urlOrFile === 'string' ? `?image_url=${urlOrFile}` : ''
+        );
       }
     }
     changeLoader();
@@ -172,7 +187,7 @@ export default function Avivator(props) {
   const handleSubmitNewUrl = (event, url) => {
     event.preventDefault();
     const newSource = {
-      url,
+      urlOrFile: url,
       // Use the trailing part of the URL (file name, presumably) as the description.
       description: getNameFromUrl(url)
     };
@@ -230,6 +245,22 @@ export default function Avivator(props) {
       dispatch({ type, index, value });
     }
   };
+  const handleSubmitFile = files => {
+    let newSource;
+    if (files.length === 1) {
+      newSource = {
+        urlOrFile: files[0],
+        // Use the trailing part of the URL (file name, presumably) as the description.
+        description: files[0].name
+      };
+    } else {
+      newSource = {
+        urlOrFile: files,
+        description: 'data.zarr'
+      };
+    }
+    setSource(newSource);
+  };
 
   const handleChannelAdd = async () => {
     const selection = {};
@@ -255,7 +286,7 @@ export default function Avivator(props) {
       }
     });
   };
-  const { isPyramid, isRgb } = loader;
+  const { isPyramid, isRgb, dtype } = loader;
   const { colors, sliders, isOn, ids, selections, domains } = channels;
   const globalControlDimensions = dimensions?.filter(dimension =>
     GLOBAL_SLIDER_DIMENSION_FIELDS.includes(dimension.field)
@@ -274,6 +305,7 @@ export default function Avivator(props) {
           name={name}
           channelOptions={channelOptions}
           isOn={isOn[i]}
+          dtype={dtype}
           sliderValue={sliders[i]}
           colorValue={colors[i]}
           domain={domains[i]}
@@ -301,67 +333,70 @@ export default function Avivator(props) {
   });
   return (
     <>
-      {!isLoading &&
-        initialViewState.target && !use3d && 
-        (useLinkedView && isPyramid ? (
-          <SideBySideViewer
-            loader={loader}
-            sliderValues={sliders}
-            colorValues={colors}
-            channelIsOn={isOn}
-            loaderSelection={selections}
-            initialViewState={{
-              ...initialViewState,
-              height: viewSize.height,
-              width: viewSize.width * 0.5
-            }}
-            colormap={colormap.length > 0 && colormap}
-            zoomLock={zoomLock}
-            panLock={panLock}
-            hoverHooks={{ handleValue: setPixelValues }}
-            lensSelection={lensSelection}
-            isLensOn={isLensOn}
-          />
-        ) : (
-          <PictureInPictureViewer
-            loader={loader}
-            sliderValues={sliders}
-            colorValues={colors}
-            channelIsOn={isOn}
-            loaderSelection={selections}
-            initialViewState={{
-              ...initialViewState,
-              height: viewSize.height,
-              width: viewSize.width
-            }}
-            colormap={colormap.length > 0 && colormap}
-            overview={DEFAULT_OVERVIEW}
-            overviewOn={overviewOn && isPyramid}
-            hoverHooks={{ handleValue: setPixelValues }}
-            lensSelection={lensSelection}
-            isLensOn={isLensOn}
-          />
-        ))}
-        {
-          use3d && !isLoading &&
-        initialViewState.target && (
-          <Static3DViewer 
-            loader={loader}
-            sliderValues={sliders}
-            colorValues={colors}
-            channelIsOn={isOn}
-            loaderSelection={selections}
-            colormap={colormap.length > 0 && colormap}
-          />
-        )
-        }
+      {
+        <DropzoneWrapper handleSubmitFile={handleSubmitFile}>
+          {!isLoading &&
+            initialViewState.target &&
+            !use3d &&
+            (useLinkedView && isPyramid ? (
+              <SideBySideViewer
+                loader={loader}
+                sliderValues={sliders}
+                colorValues={colors}
+                channelIsOn={isOn}
+                loaderSelection={selections}
+                initialViewState={{
+                  ...initialViewState,
+                  height: viewSize.height,
+                  width: viewSize.width * 0.5
+                }}
+                colormap={colormap.length > 0 && colormap}
+                zoomLock={zoomLock}
+                panLock={panLock}
+                hoverHooks={{ handleValue: setPixelValues }}
+                lensSelection={lensSelection}
+                isLensOn={isLensOn}
+              />
+            ) : (
+              <PictureInPictureViewer
+                loader={loader}
+                sliderValues={sliders}
+                colorValues={colors}
+                channelIsOn={isOn}
+                loaderSelection={selections}
+                initialViewState={{
+                  ...initialViewState,
+                  height: viewSize.height,
+                  width: viewSize.width
+                }}
+                colormap={colormap.length > 0 && colormap}
+                overview={DEFAULT_OVERVIEW}
+                overviewOn={overviewOn && isPyramid}
+                hoverHooks={{ handleValue: setPixelValues }}
+                lensSelection={lensSelection}
+                isLensOn={isLensOn}
+              />
+            ))}
+          {use3d && !isLoading && initialViewState.target && (
+            <Static3DViewer
+              loader={loader}
+              sliderValues={sliders}
+              colorValues={colors}
+              channelIsOn={isOn}
+              loaderSelection={selections}
+              colormap={colormap.length > 0 && colormap}
+            />
+          )}
+        </DropzoneWrapper>
+      }
       {
         <Menu
           maxHeight={viewSize.height}
           handleSubmitNewUrl={handleSubmitNewUrl}
-          url={source.url}
+          urlOrFile={source.urlOrFile}
           on={controllerOn}
           toggle={toggleController}
+          handleSubmitFile={handleSubmitFile}
         >
           {!isRgb && (
             <ColormapSelect
@@ -403,7 +438,7 @@ export default function Avivator(props) {
             </Button>
           )}
           <Button
-            disabled={(loader.omexml?.SizeZ === 0) || isLoading}
+            disabled={loader.omexml?.SizeZ === 0 || isLoading}
             onClick={toggleUse3d}
             variant="outlined"
             size="small"
@@ -454,27 +489,38 @@ export default function Avivator(props) {
         </Menu>
       }
       <Snackbar
-        open={offsetsSnackbarOn || loaderErrorSnackbarOn}
-        autoHideDuration={8000}
-        onClose={() => {
-          toggleOffsetsSnackbar(false);
-          toggleLoaderErrorSnackbar(false);
-        }}
+        open={offsetsSnackbarOn}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         elevation={6}
         variant="filled"
       >
-        {offsetsSnackbarOn || loaderErrorSnackbarOn ? (
-          <Alert
-            onClose={() => {
-              toggleOffsetsSnackbar(false);
-              toggleLoaderErrorSnackbar(false);
-            }}
-            severity={offsetsSnackbarOn ? 'warning' : 'error'}
-          >
-            {offsetsSnackbarOn && <OffsetsWarning />}
-            {loaderErrorSnackbarOn && <LoaderError />}
-          </Alert>
-        ) : null}
+        <Alert onClose={() => toggleOffsetsSnackbar(false)} severity="warning">
+          <OffsetsWarning />
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={loaderErrorSnackbar.on}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        elevation={6}
+        variant="filled"
+      >
+        <Alert
+          onClose={() => setLoaderErrorSnackbar({ on: false, message: null })}
+          severity="error"
+        >
+          <LoaderError message={loaderErrorSnackbar.message} />
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={noImageUrlSnackbarIsOn}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        elevation={6}
+        variant="filled"
+      >
+        <Alert onClose={() => toggleNoImageUrlSnackbar(false)} severity="info">
+          <NoImageUrlInfo />
+        </Alert>
       </Snackbar>
     </>
   );

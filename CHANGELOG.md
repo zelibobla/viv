@@ -4,7 +4,23 @@
 
 ### Added
 
+- Support local tiff files.
+- Support local zarr directories.
+
 ### Changed
+
+## 0.4.2
+
+### Added
+
+- Add snackbar for included images when no url provided.
+
+### Changed
+
+- Fix snackbar placement.
+- Fix small range, float sliders.
+- Clean up dependencies from migration.
+- Fix small dif between sliders in shaders.
 
 ## 0.4.1
 
@@ -12,7 +28,7 @@
 
 ### Changed
 
--  Fix lens and PIP.
+- Fix lens and PIP.
 
 ## 0.4.0
 

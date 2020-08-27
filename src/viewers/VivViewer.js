@@ -101,8 +101,8 @@ export default class VivViewer extends PureComponent {
     if (
       views.some(
         view =>
-          view.initialViewState.target.some((t, i) => prevState.initialViewStates[view.id].target[i] !== t)
-             ||
+          view.initialViewState.target !==
+            prevState.initialViewStates[view.id].target ||
           view.initialViewState.zoom !==
             prevState.initialViewStates[view.id].zoom
       )
