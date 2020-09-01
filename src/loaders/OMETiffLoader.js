@@ -1,9 +1,12 @@
+import GL from '@luma.gl/constants';
+
 import OMEXML from './omeXML';
 import {
   isInTileBounds,
   byteSwapInplace,
   padTileWithZeros,
-  dimensionsFromOMEXML
+  dimensionsFromOMEXML,
+  getScaleForSize
 } from './utils';
 import { DTYPE_VALUES } from '../constants';
 
@@ -171,29 +174,30 @@ export default class OMETiffLoader {
   }
 
   async getVolume({ loaderSelection }) {
-    const { tiff, omexml, pool, isPyramid, numLevels } = this;
+    const { tiff, omexml, pool, isPyramid } = this;
     const { SizeZ, SizeX, SizeY, SizeT, SizeC } = omexml;
     const { dtype } = this;
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
     const { BYTES_PER_ELEMENT } = TypedArray;
-    const pyramidOffset = isPyramid
-      ? (numLevels - 1) * SizeZ * SizeT * SizeC
-      : 0;
-    const zDownsampled = Math.floor(SizeZ / 2 ** numLevels);
+    const scale = getScaleForSize({ loader: this });
+    const usePyramid =
+      SizeX * SizeY * SizeZ <= GL.MAX_3D_TEXTURE_SIZE ** 3 ? false : isPyramid;
+    const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
+    const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
     let width;
     const volume = await Promise.all(
       loaderSelection.map(async sel => {
-        if (isPyramid) {
+        if (usePyramid) {
           this._parseIFD(0);
           const firstImage = await tiff.getImage(0);
           tiff.ifdRequests[pyramidOffset] = tiff.parseFileDirectoryAt(
-            firstImage.fileDirectory.SubIFDs[numLevels - 1]
+            firstImage.fileDirectory.SubIFDs[scale - 1]
           );
         }
         const lowestResImage = await tiff.getImage(pyramidOffset);
-        height = isPyramid ? lowestResImage.getHeight() : SizeY;
-        width = isPyramid ? lowestResImage.getWidth() : SizeX;
+        height = usePyramid ? lowestResImage.getHeight() : SizeY;
+        width = usePyramid ? lowestResImage.getWidth() : SizeX;
         const rasterSize = height * width;
         const view = new DataView(
           new ArrayBuffer(rasterSize * zDownsampled * BYTES_PER_ELEMENT)
@@ -202,22 +206,14 @@ export default class OMETiffLoader {
           new Array(zDownsampled).fill(0).map(async (_, z) => {
             const index = this._getIFDIndex({
               ...sel,
-              z: z * 2 ** numLevels
+              z: z * 2 ** scale
             });
             this._parseIFD(index);
-            console.log(
-              {
-                ...sel,
-                z: z * 2 ** numLevels
-              },
-              pyramidOffset,
-              index
-            );
             const pyramidIndex = pyramidOffset + index;
-            if (isPyramid) {
+            if (usePyramid) {
               const parentImage = await tiff.getImage(index);
               tiff.ifdRequests[pyramidIndex] = tiff.parseFileDirectoryAt(
-                parentImage.fileDirectory.SubIFDs[numLevels - 1]
+                parentImage.fileDirectory.SubIFDs[scale - 1]
               );
             }
             const image = await tiff.getImage(pyramidIndex);
@@ -241,7 +237,7 @@ export default class OMETiffLoader {
       data: volume,
       width,
       height,
-      depth: isPyramid ? zDownsampled : SizeZ
+      depth: usePyramid ? zDownsampled : SizeZ
     };
   }
 

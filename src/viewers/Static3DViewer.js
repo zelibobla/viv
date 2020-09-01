@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import VivViewer from './VivViewer';
 import { Static3DView } from '../views';
+import { getScaleForSize } from '../loaders/utils';
 
 /**
  * This component provides a component for viewing a 3D volume.
@@ -24,14 +25,14 @@ const Static3DViewer = props => {
   const initialViewState = useMemo(() => {
     const {
       isPyramid,
-      numLevels,
       omexml: { SizeZ, SizeX, SizeY }
     } = loader;
+    const scale = getScaleForSize({ loader });
     return {
       target: [
-        (isPyramid ? SizeX >> numLevels : SizeX) / 2,
-        (isPyramid ? SizeY >> numLevels : SizeY) / 2,
-        (SizeZ >> numLevels) / 2
+        (isPyramid ? SizeX >> scale : SizeX) / 2,
+        (isPyramid ? SizeY >> scale : SizeY) / 2,
+        (SizeZ >> scale) / 2
       ],
       zoom: -2
     };

@@ -57,7 +57,17 @@ export async function createLoader(
         return loader;
       }
       const url = urlOrFile;
-      const res = await fetch(url.replace(/ome\.tif(f?)/gi, 'offsets.json'));
+      const res = url.includes('.hubmapconsortium.org')
+        ? await fetch(
+            url
+              .replace(/ome\.tif(f?)/gi, 'offsets.json')
+              .replace('/ometiff-pyramids/', '/output_offsets/')
+              .replace(
+                '/output/extract/expressions/ome-tiff/',
+                '/output_offsets/'
+              )
+          )
+        : await fetch(url.replace(/ome\.tif(f?)/gi, 'offsets.json'));
       const isOffsets404 = res.status === 404;
       const offsets = !isOffsets404 ? await res.json() : [];
       const loader = await createOMETiffLoader({ urlOrFile, offsets });

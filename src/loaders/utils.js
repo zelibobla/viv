@@ -1,4 +1,5 @@
 import quickselect from 'quickselect';
+import GL from '@luma.gl/constants';
 
 import { range } from '../layers/utils';
 
@@ -205,4 +206,40 @@ export function dimensionsFromOMEXML(omexml) {
     return { field, type, values: range(SizeZ) };
   });
   return dimensions;
+}
+
+export function getScaleForSize({ loader, size = 1500 }) {
+  const {
+    isPyramid,
+    numLevels,
+    omexml: { SizeZ, SizeX, SizeY }
+  } = loader;
+  if (SizeZ >> numLevels >= 10) {
+    return numLevels;
+  }
+  if (SizeX * SizeY * SizeZ <= GL.MAX_3D_TEXTURE_SIZE ** 3) {
+    return 0;
+  }
+  if (isPyramid) {
+    let z = 0;
+    let checkSize = Math.max(
+      ...Object.values(
+        loader.getRasterSize({
+          z
+        })
+      )
+    );
+    while (checkSize > size) {
+      z += 1;
+      checkSize = Math.max(
+        ...Object.values(
+          loader.getRasterSize({
+            z
+          })
+        )
+      );
+    }
+    return z;
+  }
+  return numLevels;
 }
