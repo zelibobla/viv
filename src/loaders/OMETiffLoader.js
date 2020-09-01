@@ -221,7 +221,8 @@ export default class OMETiffLoader {
             let r = 0;
             while (r < rasterSize) {
               view[setMethodString](
-                BYTES_PER_ELEMENT * z * rasterSize + BYTES_PER_ELEMENT * r,
+                BYTES_PER_ELEMENT * (zDownsampled - z - 1) * rasterSize +
+                  BYTES_PER_ELEMENT * r,
                 raster[0][rasterSize - r],
                 // Pyramid raster is bigEndian data and we are using the raster not the underlying data.
                 isPyramid ? true : image.littleEndian
