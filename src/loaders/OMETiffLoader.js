@@ -218,15 +218,15 @@ export default class OMETiffLoader {
             }
             const image = await tiff.getImage(pyramidIndex);
             const raster = await image.readRasters({ pool });
-            let r = rasterSize;
-            // eslint-disable-next-line no-plusplus
-            while (r--) {
+            let r = 0;
+            while (r < rasterSize) {
               view[setMethodString](
                 BYTES_PER_ELEMENT * z * rasterSize + BYTES_PER_ELEMENT * r,
-                raster[0][r],
+                raster[0][rasterSize - r],
                 // Pyramid raster is bigEndian data and we are using the raster not the underlying data.
                 isPyramid ? true : image.littleEndian
               );
+              r += 1;
             }
           })
         );

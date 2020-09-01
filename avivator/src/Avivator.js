@@ -437,7 +437,7 @@ export default function Avivator(props) {
             </Button>
           )}
           <Button
-            disabled={loader.omexml?.SizeZ === 0 || isLoading}
+            disabled={loader.omexml?.SizeZ === 1 || isLoading}
             onClick={toggleUse3d}
             variant="outlined"
             size="small"
