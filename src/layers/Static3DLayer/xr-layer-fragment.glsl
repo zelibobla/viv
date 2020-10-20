@@ -11,7 +11,6 @@ uniform highp usampler3D volume4;
 uniform highp usampler3D volume5;
 
 uniform vec3 dimensions;
-uniform float dt_scale;
 
 // range
 uniform vec2 sliderValues[6];
@@ -127,7 +126,7 @@ void main(void) {
 		vec4 val_color = vec4(rgbCombo, total);
 
 		// Opacity correction
-		val_color.a = 1.0 - pow(1.0 - val_color.a, dt_scale);
+		val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
 		color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
 		color.a += (1.0 - color.a) * val_color.a;
 		if (color.a >= 0.95) {

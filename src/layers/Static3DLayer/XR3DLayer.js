@@ -139,10 +139,6 @@ export default class XR3DLayer extends Layer {
           positions: new Float32Array(CUBE_STRIP)
         }
       }),
-      // This in theory can be coupled with sampling rate to make interaction smoother.
-      uniforms: {
-        dt_scale: 1.0
-      }
     });
   }
 

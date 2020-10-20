@@ -181,7 +181,7 @@ export default class OMETiffLoader {
     const { BYTES_PER_ELEMENT } = TypedArray;
     const scale = getScaleForSize({ loader: this });
     const usePyramid =
-      SizeX * SizeY * SizeZ <= GL.MAX_3D_TEXTURE_SIZE ** 3 ? false : isPyramid;
+      SizeX * SizeY * SizeZ <= GL.MAX_3D_TEXTURE_SIZE ? false : isPyramid;
     const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
@@ -223,7 +223,7 @@ export default class OMETiffLoader {
               view[setMethodString](
                 BYTES_PER_ELEMENT * (zDownsampled - z - 1) * rasterSize +
                   BYTES_PER_ELEMENT * r,
-                raster[0][rasterSize - r],
+                Math.max(0, raster[0][r]),
                 // Pyramid raster is bigEndian data and we are using the raster not the underlying data.
                 isPyramid ? true : image.littleEndian
               );
@@ -234,6 +234,7 @@ export default class OMETiffLoader {
         return new TypedArray(view.buffer);
       })
     );
+    
     return {
       data: volume,
       width,
