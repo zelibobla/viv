@@ -61,7 +61,10 @@ const defaultProps = {
   sliderValues: { type: 'array', value: [], compare: true },
   opacity: { type: 'number', value: 1, compare: true },
   dtype: { type: 'string', value: '<u2', compare: true },
-  colormap: { type: 'string', value: '', compare: true }
+  colormap: { type: 'string', value: '', compare: true },
+  xSlice: { type: 'array', value: [0, 1], compare: true },
+  ySlice: { type: 'array', value: [0, 1], compare: true },
+  zSlice: { type: 'array', value: [0, 1], compare: true },
 };
 /**
  * This is the 3D rendering layer.
@@ -147,7 +150,7 @@ export default class XR3DLayer extends Layer {
    */
   draw({ uniforms }) {
     const { textures, model, volDims } = this.state;
-    const { sliderValues, colorValues } = this.props;
+    const { sliderValues, colorValues, xSlice, ySlice, zSlice } = this.props;
     if (textures && model) {
       model
         .setUniforms({
@@ -155,7 +158,10 @@ export default class XR3DLayer extends Layer {
           ...textures,
           sliderValues,
           colorValues,
-          dimensions: new Float32Array(volDims)
+          dimensions: new Float32Array(volDims),
+          xSlice: new Float32Array(xSlice),
+          ySlice: new Float32Array(ySlice),
+          zSlice: new Float32Array(zSlice)
         })
         .draw();
     }

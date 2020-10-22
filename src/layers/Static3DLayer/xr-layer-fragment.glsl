@@ -18,6 +18,11 @@ uniform vec2 sliderValues[6];
 // color
 uniform vec3 colorValues[6];
 
+// slices
+uniform vec2 xSlice;
+uniform vec2 ySlice;
+uniform vec2 zSlice;
+
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
 out vec4 color;
@@ -101,12 +106,16 @@ void main(void) {
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
-    float intensityValue0 = max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
-    float intensityValue1 = max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
-		float intensityValue2 = max((float(texture(volume2, p).r) - sliderValues[2][0]) / sliderValues[2][1], 0.0);
-		float intensityValue3 = max((float(texture(volume3, p).r) - sliderValues[3][0]) / sliderValues[3][1], 0.0);
-    float intensityValue4 = max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
-		float intensityValue5 = max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
+		float canShowXCoordinate = max(p.x - xSlice[0], 0.0) * max(xSlice[1] - p.x , 0.0);
+		float canShowYCoordinate = max(p.y - ySlice[0], 0.0) * max(ySlice[1] - p.y , 0.0);
+		float canShowZCoordinate = max(p.z - zSlice[0], 0.0) * max(zSlice[1] - p.z , 0.0);
+		float canShowCoordinate = float(ceil(canShowXCoordinate * canShowYCoordinate * canShowZCoordinate));
+    float intensityValue0 = canShowCoordinate * max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
+    float intensityValue1 = canShowCoordinate * max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
+		float intensityValue2 = canShowCoordinate * max((float(texture(volume2, p).r) - sliderValues[2][0]) / sliderValues[2][1], 0.0);
+		float intensityValue3 = canShowCoordinate * max((float(texture(volume3, p).r) - sliderValues[3][0]) / sliderValues[3][1], 0.0);
+    float intensityValue4 = canShowCoordinate * max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
+		float intensityValue5 = canShowCoordinate * max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
 
 		vec3 rgbCombo = vec3(0.0);
   	vec3 hsvCombo = vec3(0.0);

@@ -20,7 +20,9 @@ const defaultProps = {
     },
     compare: true
   },
-  z: { type: 'number', value: 0, compare: true }
+  xSlice: { type: 'array', value: [0, 1], compare: true },
+  ySlice: { type: 'array', value: [0, 1], compare: true },
+  zSlice: { type: 'array', value: [0, 1], compare: true },
 };
 
 /**
@@ -35,9 +37,9 @@ const defaultProps = {
  */
 export default class Static3DLayer extends CompositeLayer {
   initializeState() {
-    const { loader, z, loaderSelection } = this.props;
+    const { loader, loaderSelection } = this.props;
     loader
-      .getVolume({ z, loaderSelection })
+      .getVolume({ loaderSelection })
       .then(({ data, width, height, depth }) => {
         this.setState({ data, width, height, depth });
       });
@@ -51,9 +53,9 @@ export default class Static3DLayer extends CompositeLayer {
       typeof propsChanged === 'string' && propsChanged.includes('props.loader');
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, z, loaderSelection } = this.props;
+      const { loader, loaderSelection } = this.props;
       loader
-        .getVolume({ z, loaderSelection })
+        .getVolume({ loaderSelection })
         .then(({ data, width, height, depth }) => {
           this.setState({ data, width, height, depth });
         });
@@ -71,7 +73,10 @@ export default class Static3DLayer extends CompositeLayer {
       domain,
       colormap,
       z,
-      id
+      id,
+      xSlice,
+      ySlice,
+      zSlice
     } = this.props;
     const { dtype } = loader;
     const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
@@ -109,7 +114,10 @@ export default class Static3DLayer extends CompositeLayer {
       opacity,
       visible,
       colormap,
-      dtype
+      dtype,
+      xSlice,
+      ySlice,
+      zSlice
     });
   }
 }

@@ -4,6 +4,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+import Slider from '@material-ui/core/Slider';
 
 import AddIcon from '@material-ui/icons/Add';
 
@@ -78,6 +79,9 @@ export default function Avivator(props) {
     on: false,
     message: null
   });
+  const [xSlice, setXSlice] = useState([0, 1]);
+  const [ySlice, setYSlice] = useState([0, 1]);
+  const [zSlice, setZSlice] = useState([0, 1]);
   const [noImageUrlSnackbarIsOn, toggleNoImageUrlSnackbar] = useState(
     sources.map(s => s.url).indexOf(initSource.url) >= 0
   );
@@ -90,7 +94,6 @@ export default function Avivator(props) {
   const [isLensOn, toggleIsLensOn] = useReducer(v => !v, false);
   const [channels, dispatch] = useReducer(channelsReducer, initialChannels);
   const [use3d, toggleUse3d] = useReducer(v => !v, false);
-
   useEffect(() => {
     async function changeLoader() {
       setIsLoading(true);
@@ -384,6 +387,9 @@ export default function Avivator(props) {
               channelIsOn={isOn}
               loaderSelection={selections}
               colormap={colormap.length > 0 && colormap}
+              xSlice={xSlice}
+              ySlice={ySlice}
+              zSlice={zSlice}
             />
           )}
         </DropzoneWrapper>
@@ -483,6 +489,61 @@ export default function Avivator(props) {
               >
                 {panLock ? 'Unlock' : 'Lock'} Pan
               </Button>
+            </>
+          )}
+          {use3d && (
+            <>
+              <div key="x">
+                {'x: '}
+                <Slider
+                  value={xSlice}
+                  // See https://github.com/hms-dbmi/viv/issues/176 for why
+                  // we have the two handlers.
+                  onChange={(e, v) => {
+                    setXSlice(v);
+                  }}
+                  valueLabelDisplay="auto"
+                  getAriaLabel={() => `x slider`}
+                  min={0}
+                  max={1}
+                  step={0.005}
+                  orientation="horizontal"
+                />
+              </div>
+              <div key="y">
+                {'y: '}
+                <Slider
+                  value={ySlice}
+                  // See https://github.com/hms-dbmi/viv/issues/176 for why
+                  // we have the two handlers.
+                  onChange={(e, v) => {
+                    setYSlice(v);
+                  }}
+                  valueLabelDisplay="auto"
+                  getAriaLabel={() => `y slider`}
+                  min={0}
+                  max={1}
+                  step={0.005}
+                  orientation="horizontal"
+                />
+              </div>
+              <div key="z">
+                {'z: '}
+                <Slider
+                  value={zSlice}
+                  // See https://github.com/hms-dbmi/viv/issues/176 for why
+                  // we have the two handlers.
+                  onChange={(e, v) => {
+                    setZSlice(v);
+                  }}
+                  valueLabelDisplay="auto"
+                  getAriaLabel={() => `z slider`}
+                  min={0}
+                  max={1}
+                  step={0.005}
+                  orientation="horizontal"
+                />
+              </div>
             </>
           )}
         </Menu>

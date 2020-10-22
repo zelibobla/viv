@@ -20,7 +20,10 @@ const Static3DViewer = props => {
     colorValues,
     channelIsOn,
     loaderSelection,
-    colormap
+    colormap,
+    xSlice,
+    ySlice,
+    zSlice
   } = props;
   const initialViewState = useMemo(() => {
     const {
@@ -45,7 +48,10 @@ const Static3DViewer = props => {
     colorValues,
     channelIsOn,
     loaderSelection,
-    colormap
+    colormap,
+    xSlice,
+    ySlice,
+    zSlice
   };
   const views = [detailView];
   const layerProps = [layerConfig];
