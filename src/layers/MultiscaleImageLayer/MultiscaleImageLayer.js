@@ -19,7 +19,9 @@ const defaultProps = {
   lensSelection: { type: 'number', value: 0, compare: true },
   lensRadius: { type: 'number', value: 100, compare: true },
   lensBorderColor: { type: 'array', value: [255, 255, 255], compare: true },
-  lensBorderRadius: { type: 'number', value: 0.02, compare: true }
+  lensBorderRadius: { type: 'number', value: 0.02, compare: true },
+  maxRequests: { type: 'number', value: 10, compare: true },
+  onClick: { type: 'function', value: null, compare: true }
 };
 
 /**
@@ -42,6 +44,8 @@ const defaultProps = {
  * @param {number} props.lensRadius Pixel radius of the lens (default: 100).
  * @param {number} props.lensBorderColor RGB color of the border of the lens (default [255, 255, 255]).
  * @param {number} props.lensBorderRadius Percentage of the radius of the lens for a border (default 0.02).
+ * @param {number} props.maxRequests Maximum parallel ongoing requests allowed before aborting.
+ * @param {number} props.onClick Hook function from deck.gl to handle clicked-on objects.
  */
 
 export default class MultiscaleImageLayer extends CompositeLayer {
@@ -76,12 +80,14 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       isLensOn,
       lensSelection,
       lensBorderColor,
-      lensBorderRadius
+      lensBorderRadius,
+      maxRequests,
+      onClick
     } = this.props;
     const { tileSize, numLevels, dtype } = loader;
     const { unprojectLensBounds } = this.state;
     const noWebGl2 = !isWebGL2(this.context.gl);
-    const getTileData = async ({ x, y, z }) => {
+    const getTileData = async ({ x, y, z, signal }) => {
       const tile = await loader.getTile({
         x,
         y,
@@ -92,7 +98,8 @@ export default class MultiscaleImageLayer extends CompositeLayer {
         // The image-tile example works without, this but I have a feeling there is something
         // going on with our pyramids and/or rendering that is different.
         z: Math.round(-z + Math.log2(512 / tileSize)),
-        loaderSelection
+        loaderSelection,
+        signal
       });
       if (tile) {
         tile.data = noWebGl2 ? to32BitFloat(tile.data) : tile.data;
@@ -105,17 +112,19 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       return tile;
     };
     const { height, width } = loader.getRasterSize({ z: 0 });
-    const tiledLayer = new MultiscaleImageLayerBase({
+    const tiledLayer = new MultiscaleImageLayerBase(this.props, {
       id: `Tiled-Image-${id}`,
       getTileData,
       dtype,
       tileSize,
+      onClick,
       extent: [0, 0, width, height],
       minZoom: -(numLevels - 1),
       maxZoom: Math.min(0, Math.round(Math.log2(512 / tileSize))),
       colorValues,
       sliderValues,
       channelIsOn,
+      maxRequests,
       domain,
       // We want a no-overlap caching strategy with an opacity < 1 to prevent
       // multiple rendered sublayers (some of which have been cached) from overlapping
@@ -158,6 +167,7 @@ export default class MultiscaleImageLayer extends CompositeLayer {
         z: numLevels - 1,
         pickable: true,
         onHover,
+        onClick,
         boxSize: getNearestPowerOf2(lowResWidth, lowResHeight)
       });
     const layers = [baseLayer, tiledLayer];

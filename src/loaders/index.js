@@ -1,4 +1,4 @@
-import { openArray, HTTPStore } from 'zarr';
+import { openArray } from 'zarr';
 import { fromBlob, fromUrl } from 'geotiff';
 import Pool from './Pool';
 import ZarrLoader from './zarrLoader';
@@ -6,6 +6,7 @@ import OMETiffLoader from './OMETiffLoader';
 import { getChannelStats, getJson, dimensionsFromOMEXML } from './utils';
 import OMEXML from './omeXML';
 import FileStore from './fileStore';
+import HTTPStore from './httpStore';
 
 export async function createZarrLoader({
   url,
@@ -43,9 +44,14 @@ export async function createZarrLoader({
 
 /**
  * This function wraps parsing OME-XML metadata and creating a zarr loader.
- * @param {(string | File[])}, either a string URL or array of File Objects.
+ * @param {Object} args
+ * @param {(string | File[])} args.source either a string URL or array of File Objects.
+ * @param {Object} args.fetchOptions options to forward to fetch requests for url if provided.
  */
-export async function createBioformatsZarrLoader({ source }) {
+export async function createBioformatsZarrLoader({
+  source,
+  fetchOptions = {}
+}) {
   const METADATA = 'METADATA.ome.xml';
   const ZARR_DIR = 'data.zarr/';
 
@@ -55,7 +61,7 @@ export async function createBioformatsZarrLoader({ source }) {
     // Remote Zarr
     const baseUrl = source.endsWith('/') ? source : `${source}/`;
     const metaUrl = `${baseUrl}${METADATA}`;
-    store = new HTTPStore(`${baseUrl}${ZARR_DIR}`); // first image
+    store = new HTTPStore(`${baseUrl}${ZARR_DIR}`, fetchOptions); // first image
     omexmlBuffer = await fetch(metaUrl).then(res => res.arrayBuffer());
   } else {
     // Local Zarr
@@ -114,12 +120,10 @@ export async function createBioformatsZarrLoader({ source }) {
    * Specifying different dimension orders form the METADATA.ome.xml is
    * possible and necessary for creating an OME-Zarr precursor.
    *
-   * e.g. `bioformats2raw --file_type=zarr --dimension-order='XYZCY'`
+   * e.g. `bioformats2raw --file_type=zarr --dimension-order='XYZCT'`
    *
-   * Here we check the shape of base of the pyrmaid and compare the shape
-   * to the shape of the dimensions. If they are different, we reorder the
-   * dimensions to create the zarr loader. This is fragile code, and will only
-   * be executed if someone tries to specify different dimension orders.
+   * This is fragile code, and will only be executed if someone
+   * tries to specify different dimension orders.
    */
   const nonXYShape = shape.slice(0, -2); // XY always last dims and don't need to be compared
   const nonXYDims = dimensions.filter(d => d.values); // XY are null
@@ -127,13 +131,21 @@ export async function createBioformatsZarrLoader({ source }) {
     (s, i) => s === nonXYDims[i].values.length
   );
   if (!allSameSize) {
-    const sortedDims = [];
-    // Greedily match first matching dimension
-    nonXYShape.forEach(len => {
-      const firstMatchedDim = nonXYDims.filter(d => d.values.length === len)[0];
-      sortedDims.push(firstMatchedDim);
-    });
-    const newDimensions = [...sortedDims, ...dimensions.slice(-2)]; // append YX dims
+    // Assume OME-Zarr, dims === XYZCT
+    const omeZarrDims = [
+      nonXYDims.filter(d => d.field === 'time')[0],
+      nonXYDims.filter(d => d.field === 'channel')[0],
+      nonXYDims.filter(d => d.field === 'z')[0]
+    ];
+    // compare sizes of sorted dims
+    if (
+      !omeZarrDims.every(({ values }, i) => values.length === nonXYShape[i])
+    ) {
+      throw Error(
+        `Dimension order is different from METADATA.ome.xml and isn't OME-Zarr.`
+      );
+    }
+    const newDimensions = [...omeZarrDims, ...dimensions.slice(-2)]; // append YX dims
     return new ZarrLoader({ data, dimensions: newDimensions });
   }
 
