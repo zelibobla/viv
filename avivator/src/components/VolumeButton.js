@@ -82,10 +82,11 @@ function VolumeButton({
                   const { BYTES_PER_ELEMENT } = TypedArray;
                   // Check memory allocation limits
                   const totalBytes = BYTES_PER_ELEMENT * height * width * depth;
-                  if (
-                    totalBytes <
-                    window.performance.memory.jsHeapSizeLimit / 2
-                  ) {
+                  const maxHeapSize =
+                    window.performance?.memory &&
+                    window.performance?.memory?.jsHeapSizeLimit / 2;
+                  const maxSize = maxHeapSize || 2 ** 31 - 1;
+                  if (totalBytes < maxSize) {
                     return (
                       <MenuItem
                         dense
