@@ -28,6 +28,7 @@ import Menu from './components/Menu';
 import ColormapSelect from './components/ColormapSelect';
 import GlobalSelectionSlider from './components/GlobalSelectionSlider';
 import LensSelect from './components/LensSelect';
+import VolumeButton from './components/VolumeButton';
 import {
   LoaderError,
   OffsetsWarning,
@@ -82,6 +83,7 @@ export default function Avivator(props) {
   const [xSlice, setXSlice] = useState([0, 1]);
   const [ySlice, setYSlice] = useState([0, 1]);
   const [zSlice, setZSlice] = useState([0, 1]);
+  const [resolution, on3DResolutionSelect] = useState(0);
   const [noImageUrlSnackbarIsOn, toggleNoImageUrlSnackbar] = useState(
     sources.map(s => s.url).indexOf(initSource.url) >= 0
   );
@@ -390,6 +392,7 @@ export default function Avivator(props) {
               xSlice={xSlice}
               ySlice={ySlice}
               zSlice={zSlice}
+              resolution={resolution}
             />
           )}
         </DropzoneWrapper>
@@ -442,15 +445,14 @@ export default function Avivator(props) {
               Add Channel
             </Button>
           )}
-          <Button
-            disabled={loader.omexml?.SizeZ === 1 || isLoading}
-            onClick={toggleUse3d}
-            variant="outlined"
-            size="small"
+          <VolumeButton
+            toggleUse3d={toggleUse3d}
             fullWidth
-          >
-            {use3d ? 'Hide' : 'Show'} Volumetric Rendering
-          </Button>
+            loader={loader}
+            isLoading={isLoading}
+            use3d={use3d}
+            on3DResolutionSelect={on3DResolutionSelect}
+          />
           <Button
             disabled={!isPyramid || isLoading || useLinkedView}
             onClick={() => setOverviewOn(prev => !prev)}

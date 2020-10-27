@@ -10,7 +10,7 @@ uniform highp usampler3D volume3;
 uniform highp usampler3D volume4;
 uniform highp usampler3D volume5;
 
-uniform vec3 dimensions;
+uniform vec3 scaledDimensions;
 
 // range
 uniform vec2 sliderValues[6];
@@ -98,7 +98,7 @@ void main(void) {
     discard;
   }
   t_hit.x = max(t_hit.x, 0.0);
-  vec3 dt_vec = 1.0 / (vec3(dimensions) * abs(ray_dir));
+  vec3 dt_vec = 1.0 / (scaledDimensions * abs(ray_dir));
 	// The dt parameter is too small and needs to be a little bigger to prevent a bulls-eye artifact.
 	float extraDt = 1.1;
   float dt = extraDt * min(dt_vec.x, min(dt_vec.y, dt_vec.z));

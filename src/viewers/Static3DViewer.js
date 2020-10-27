@@ -23,23 +23,40 @@ const Static3DViewer = props => {
     colormap,
     xSlice,
     ySlice,
-    zSlice
+    zSlice,
+    resolution
   } = props;
   const initialViewState = useMemo(() => {
     const {
       isPyramid,
-      omexml: { SizeZ, SizeX, SizeY }
+      omexml: {
+        SizeZ,
+        SizeX,
+        SizeY,
+        PhysicalSizeZ,
+        PhysicalSizeX,
+        PhysicalSizeY
+      }
     } = loader;
-    const scale = getScaleForSize({ loader });
+    let ratio = { x: 1, z: 1, y: 1 };
+    if (PhysicalSizeZ && PhysicalSizeX && PhysicalSizeY) {
+      ratio = {
+        x:
+          PhysicalSizeX / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
+        y:
+          PhysicalSizeY / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
+        z: PhysicalSizeZ / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY)
+      };
+    }
     return {
       target: [
-        (isPyramid ? SizeX >> scale : SizeX) / 2,
-        (isPyramid ? SizeY >> scale : SizeY) / 2,
-        (SizeZ >> scale) / 2
+        (ratio.x * (isPyramid ? SizeX >> resolution : SizeX)) / 2,
+        (ratio.y * (isPyramid ? SizeY >> resolution : SizeY)) / 2,
+        (ratio.z * (SizeZ >> resolution)) / 2
       ],
       zoom: -2
     };
-  }, [loader]);
+  }, [loader, resolution]);
   const detailViewState = { ...initialViewState, id: 'detail' };
   const detailView = new Static3DView({ initialViewState: detailViewState });
   const layerConfig = {
@@ -51,7 +68,8 @@ const Static3DViewer = props => {
     colormap,
     xSlice,
     ySlice,
-    zSlice
+    zSlice,
+    resolution
   };
   const views = [detailView];
   const layerProps = [layerConfig];

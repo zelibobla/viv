@@ -64,7 +64,7 @@ const defaultProps = {
   colormap: { type: 'string', value: '', compare: true },
   xSlice: { type: 'array', value: [0, 1], compare: true },
   ySlice: { type: 'array', value: [0, 1], compare: true },
-  zSlice: { type: 'array', value: [0, 1], compare: true },
+  zSlice: { type: 'array', value: [0, 1], compare: true }
 };
 /**
  * This is the 3D rendering layer.
@@ -141,7 +141,7 @@ export default class XR3DLayer extends Layer {
         attributes: {
           positions: new Float32Array(CUBE_STRIP)
         }
-      }),
+      })
     });
   }
 
@@ -151,7 +151,7 @@ export default class XR3DLayer extends Layer {
   draw({ uniforms }) {
     const { textures, model, volDims } = this.state;
     const { sliderValues, colorValues, xSlice, ySlice, zSlice } = this.props;
-    if (textures && model) {
+    if (textures && model && volDims) {
       model
         .setUniforms({
           ...uniforms,
@@ -161,7 +161,8 @@ export default class XR3DLayer extends Layer {
           dimensions: new Float32Array(volDims),
           xSlice: new Float32Array(xSlice),
           ySlice: new Float32Array(ySlice),
-          zSlice: new Float32Array(zSlice)
+          zSlice: new Float32Array(zSlice),
+          scaledDimensions: new Float32Array(volDims)
         })
         .draw();
     }
@@ -191,7 +192,14 @@ export default class XR3DLayer extends Layer {
       channelData.data.forEach((d, i) => {
         textures[`volume${i}`] = this.dataToTexture(d, width, height, depth);
       }, this);
-      this.setState({ textures, volDims: [width, height, depth] });
+      this.setState({
+        textures,
+        volDims: this.props.modelMatrixNoApply.transformPoint([
+          width,
+          height,
+          depth
+        ])
+      });
     }
   }
 

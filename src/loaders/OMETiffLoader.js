@@ -45,6 +45,10 @@ export default class OMETiffLoader {
       y: {
         value: this.omexml.PhysicalSizeY,
         unit: this.omexml.PhysicalSizeYUnit
+      },
+      z: {
+        value: this.omexml.PhysicalSizeZ,
+        unit: this.omexml.PhysicalSizeZUnit
       }
     };
     this.software = firstImage.fileDirectory.Software;
@@ -173,15 +177,14 @@ export default class OMETiffLoader {
     };
   }
 
-  async getVolume({ loaderSelection }) {
+  async getVolume({ loaderSelection, resolution }) {
     const { tiff, omexml, pool, isPyramid } = this;
     const { SizeZ, SizeX, SizeY, SizeT, SizeC } = omexml;
     const { dtype } = this;
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
     const { BYTES_PER_ELEMENT } = TypedArray;
-    const scale = getScaleForSize({ loader: this });
-    const usePyramid =
-      SizeX * SizeY * SizeZ <= GL.MAX_3D_TEXTURE_SIZE ? false : isPyramid;
+    const scale = resolution;
+    const usePyramid = isPyramid;
     const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
@@ -195,9 +198,9 @@ export default class OMETiffLoader {
             firstImage.fileDirectory.SubIFDs[scale - 1]
           );
         }
-        const lowestResImage = await tiff.getImage(pyramidOffset);
-        height = usePyramid ? lowestResImage.getHeight() : SizeY;
-        width = usePyramid ? lowestResImage.getWidth() : SizeX;
+        const resImage = await tiff.getImage(pyramidOffset);
+        height = usePyramid ? resImage.getHeight() : SizeY;
+        width = usePyramid ? resImage.getWidth() : SizeX;
         const rasterSize = height * width;
         const view = new DataView(
           new ArrayBuffer(rasterSize * zDownsampled * BYTES_PER_ELEMENT)
@@ -319,11 +322,12 @@ export default class OMETiffLoader {
    * @returns {Object} width: number, height: number
    */
   getRasterSize({ z }) {
-    const { width, height } = this;
+    const { SizeX, SizeY, SizeZ } = this.omexml;
     /* eslint-disable no-bitwise */
     return {
-      height: height >> z,
-      width: width >> z
+      height: SizeY >> z,
+      width: SizeX >> z,
+      depth: SizeZ >> z
     };
     /* eslint-disable no-bitwise */
   }

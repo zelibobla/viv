@@ -1,5 +1,6 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
+import { Matrix4 } from 'math.gl';
 import XR3DLayer from './XR3DLayer';
 import { padColorsAndSliders } from '../utils';
 
@@ -22,7 +23,7 @@ const defaultProps = {
   },
   xSlice: { type: 'array', value: [0, 1], compare: true },
   ySlice: { type: 'array', value: [0, 1], compare: true },
-  zSlice: { type: 'array', value: [0, 1], compare: true },
+  zSlice: { type: 'array', value: [0, 1], compare: true }
 };
 
 /**
@@ -37,9 +38,9 @@ const defaultProps = {
  */
 export default class Static3DLayer extends CompositeLayer {
   initializeState() {
-    const { loader, loaderSelection } = this.props;
+    const { loader, loaderSelection, resolution } = this.props;
     loader
-      .getVolume({ loaderSelection })
+      .getVolume({ loaderSelection, resolution })
       .then(({ data, width, height, depth }) => {
         this.setState({ data, width, height, depth });
       });
@@ -53,9 +54,9 @@ export default class Static3DLayer extends CompositeLayer {
       typeof propsChanged === 'string' && propsChanged.includes('props.loader');
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, loaderSelection } = this.props;
+      const { loader, loaderSelection, resolution } = this.props;
       loader
-        .getVolume({ loaderSelection })
+        .getVolume({ loaderSelection, resolution })
         .then(({ data, width, height, depth }) => {
           this.setState({ data, width, height, depth });
         });
@@ -104,6 +105,18 @@ export default class Static3DLayer extends CompositeLayer {
         sizeScale: 2 ** -viewport.zoom
       });
     }
+    let modelMatrixNoApply = new Matrix4().identity();
+    const {
+      omexml: { PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY }
+    } = loader;
+    if (PhysicalSizeZ && PhysicalSizeX && PhysicalSizeY) {
+      const ratio = [
+        PhysicalSizeX / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
+        PhysicalSizeY / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
+        PhysicalSizeZ / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY)
+      ];
+      modelMatrixNoApply = new Matrix4().scale(ratio);
+    }
     return new XR3DLayer({
       channelData: Promise.resolve({ data, width, height, depth }),
       sliderValues: paddedSliderValues,
@@ -111,6 +124,7 @@ export default class Static3DLayer extends CompositeLayer {
       id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,
       pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+      modelMatrixNoApply,
       opacity,
       visible,
       colormap,

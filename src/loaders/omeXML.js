@@ -36,6 +36,12 @@ export default class OMEXML {
         : PhysicalSizeXUnit;
     this.PhysicalSizeY = Pixels['@_PhysicalSizeY'];
     this.PhysicalSizeX = Pixels['@_PhysicalSizeX'];
+    const PhysicalSizeZUnit = Pixels['@_PhysicalSizeZUnit'];
+    this.PhysicalSizeZUnit =
+      PhysicalSizeZUnit && PhysicalSizeZUnit.includes('µm')
+        ? 'µm'
+        : PhysicalSizeXUnit;
+    this.PhysicalSizeZ = Pixels['@_PhysicalSizeZ'];
   }
 
   getChannelNames() {
