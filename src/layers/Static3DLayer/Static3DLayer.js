@@ -105,6 +105,7 @@ export default class Static3DLayer extends CompositeLayer {
         sizeScale: 2 ** -viewport.zoom
       });
     }
+    // TODO: Figure out how to make this work with the built-in modelMatrix.
     let modelMatrixNoApply = new Matrix4().identity();
     const {
       omexml: { PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY }

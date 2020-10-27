@@ -1,12 +1,9 @@
-import GL from '@luma.gl/constants';
-
 import OMEXML from './omeXML';
 import {
   isInTileBounds,
   byteSwapInplace,
   padTileWithZeros,
-  dimensionsFromOMEXML,
-  getScaleForSize
+  dimensionsFromOMEXML
 } from './utils';
 import { DTYPE_VALUES } from '../constants';
 
@@ -184,7 +181,7 @@ export default class OMETiffLoader {
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
     const { BYTES_PER_ELEMENT } = TypedArray;
     const scale = resolution;
-    const usePyramid = isPyramid;
+    const usePyramid = isPyramid && resolution > 0;
     const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;

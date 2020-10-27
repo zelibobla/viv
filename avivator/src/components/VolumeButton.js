@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useReducer } from 'react';
+import React, { useRef, useReducer } from 'react';
 
 import Button from '@material-ui/core/Button';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
@@ -9,9 +9,24 @@ import MenuList from '@material-ui/core/MenuList';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import { DTYPE_VALUES } from '../../../src';
+
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  // eslint-disable-next-line no-restricted-properties
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
 const useStyles = makeStyles(() => ({
   paper: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)'
+    backgroundColor: 'rgba(0, 0, 0, 1)'
   },
   span: {
     width: '70px',
@@ -62,20 +77,33 @@ function VolumeButton({
                 .fill(0)
                 .map((v, z) => {
                   const { height, width, depth } = loader.getRasterSize({ z });
-                  return (
-                    <MenuItem
-                      dense
-                      disableGutters
-                      onClick={() => {
-                        on3DResolutionSelect(z);
-                        toggleUse3d();
-                        toggle();
-                      }}
-                      key={`(${height}, ${width}, ${depth})`}
-                    >
-                      {`${z}x Downsampled (${height}, ${width}, ${depth})`}
-                    </MenuItem>
-                  );
+                  const { dtype } = loader;
+                  const { TypedArray } = DTYPE_VALUES[dtype];
+                  const { BYTES_PER_ELEMENT } = TypedArray;
+                  // Check memory allocation limits
+                  const totalBytes = BYTES_PER_ELEMENT * height * width * depth;
+                  if (
+                    totalBytes <
+                    window.performance.memory.jsHeapSizeLimit / 2
+                  ) {
+                    return (
+                      <MenuItem
+                        dense
+                        disableGutters
+                        onClick={() => {
+                          on3DResolutionSelect(z);
+                          toggleUse3d();
+                          toggle();
+                        }}
+                        key={`(${height}, ${width}, ${depth})`}
+                      >
+                        {`${z}x Downsampled, ~${formatBytes(
+                          totalBytes
+                        )} per channel, (${height}, ${width}, ${depth})`}
+                      </MenuItem>
+                    );
+                  }
+                  return null;
                 })}
             </MenuList>
           </ClickAwayListener>
