@@ -1,0 +1,14 @@
+name: Ensure Updated CHANGELOG.md
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: curl https://raw.githubusercontent.com/hms-dbmi/viv/master/CHANGELOG.md > tmp.md
+      - run: cmp -s tmp.md CHANGELOG.md && echo "Update CHANGELOG.md" && exit 1 || echo "files are different"
