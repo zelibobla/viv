@@ -76,33 +76,38 @@ function VolumeButton({
               {Array.from({ length: loader.numLevels + 1 })
                 .fill(0)
                 .map((v, z) => {
-                  const { height, width, depth } = loader.getRasterSize({ z });
-                  const { dtype } = loader;
-                  const { TypedArray } = DTYPE_VALUES[dtype];
-                  const { BYTES_PER_ELEMENT } = TypedArray;
-                  // Check memory allocation limits
-                  const totalBytes = BYTES_PER_ELEMENT * height * width * depth;
-                  const maxHeapSize =
-                    window.performance?.memory &&
-                    window.performance?.memory?.jsHeapSizeLimit / 2;
-                  const maxSize = maxHeapSize || 2 ** 31 - 1;
-                  if (totalBytes < maxSize) {
-                    return (
-                      <MenuItem
-                        dense
-                        disableGutters
-                        onClick={() => {
-                          on3DResolutionSelect(z);
-                          toggleUse3d();
-                          toggle();
-                        }}
-                        key={`(${height}, ${width}, ${depth})`}
-                      >
-                        {`${z}x Downsampled, ~${formatBytes(
-                          totalBytes
-                        )} per channel, (${height}, ${width}, ${depth})`}
-                      </MenuItem>
-                    );
+                  if (loader && loader.type === 'ome-tiff') {
+                    const { height, width, depth } = loader.getRasterSize({
+                      z
+                    });
+                    const { dtype } = loader;
+                    const { TypedArray } = DTYPE_VALUES[dtype];
+                    const { BYTES_PER_ELEMENT } = TypedArray;
+                    // Check memory allocation limits
+                    const totalBytes =
+                      BYTES_PER_ELEMENT * height * width * depth;
+                    const maxHeapSize =
+                      window.performance?.memory &&
+                      window.performance?.memory?.jsHeapSizeLimit / 2;
+                    const maxSize = maxHeapSize || 2 ** 31 - 1;
+                    if (totalBytes < maxSize) {
+                      return (
+                        <MenuItem
+                          dense
+                          disableGutters
+                          onClick={() => {
+                            on3DResolutionSelect(z);
+                            toggleUse3d();
+                            toggle();
+                          }}
+                          key={`(${height}, ${width}, ${depth})`}
+                        >
+                          {`${z}x Downsampled, ~${formatBytes(
+                            totalBytes
+                          )} per channel, (${height}, ${width}, ${depth})`}
+                        </MenuItem>
+                      );
+                    }
                   }
                   return null;
                 })}
