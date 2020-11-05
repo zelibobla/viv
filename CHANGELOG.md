@@ -6,6 +6,10 @@
 
 ### Changed
 
+- Fix snackbars for errors and initial image.
+- Export custom zarr `HTTPStore` with abort controller signal support.
+- Provide pure ESM export of Viv and use separate build for Avivator
+
 ## 0.5.0
 
 ### Added
