@@ -121,7 +121,11 @@ export default class XR3DLayer extends Layer {
       }
       this.setState({ model: this._getModel(gl) });
     }
-    if (props.channelData !== oldProps.channelData && props.channelData.data) {
+    if (
+      props.channelData &&
+      oldProps.channelData &&
+      props.channelData.data !== oldProps.channelData.data
+    ) {
       this.loadTexture(props.channelData);
     }
   }
@@ -207,22 +211,21 @@ export default class XR3DLayer extends Layer {
    * This function creates textures from the data
    */
   dataToTexture(data, width, height, depth) {
-    const { dtype } = this.props;
-    const { format, dataFormat, type } = DTYPE_VALUES[dtype];
+    const { format, dataFormat, type } = DTYPE_VALUES['<f4'];
     const texture = new Texture3D(this.context.gl, {
       width,
       height,
       depth,
-      data,
+      data: new Float32Array(data),
       // ? Seems to be a luma.gl bug.  Looks like Texture2D is wrong but these are flipped somewhere.
       format: dataFormat,
       dataFormat: format,
       type,
-      mmipmaps: false,
+      mipmaps: false,
       parameters: {
         // NEAREST for integer data
-        [GL.TEXTURE_MIN_FILTER]: GL.NEAREST,
-        [GL.TEXTURE_MAG_FILTER]: GL.NEAREST,
+        [GL.TEXTURE_MIN_FILTER]: GL.LINEAR,
+        [GL.TEXTURE_MAG_FILTER]: GL.LINEAR,
         // CLAMP_TO_EDGE to remove tile artifacts
         [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
         [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE,

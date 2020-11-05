@@ -1,14 +1,14 @@
 #version 300 es
 precision highp int;
 precision highp float;
-precision highp usampler3D;
+precision highp sampler3D;
 
-uniform highp usampler3D volume0;
-uniform highp usampler3D volume1;
-uniform highp usampler3D volume2;
-uniform highp usampler3D volume3;
-uniform highp usampler3D volume4;
-uniform highp usampler3D volume5;
+uniform highp sampler3D volume0;
+uniform highp sampler3D volume1;
+uniform highp sampler3D volume2;
+uniform highp sampler3D volume3;
+uniform highp sampler3D volume4;
+uniform highp sampler3D volume5;
 
 uniform vec3 scaledDimensions;
 
