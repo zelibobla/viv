@@ -97,20 +97,3 @@ test('URL join suffixes', t => {
   );
   t.end();
 });
-
-describe('URL joining works', () => {
-  it('join various suffixes', () => {
-    expect(joinUrlParts('https://example.com', 'bla')).equal(
-      'https://example.com/bla'
-    );
-    expect(joinUrlParts('https://example.com/my-store', 'arr.zarr')).equal(
-      'https://example.com/my-store/arr.zarr'
-    );
-    expect(joinUrlParts('https://example.com/', 'arr.zarr')).equal(
-      'https://example.com/arr.zarr'
-    );
-    expect(joinUrlParts('https://example.com/', '', 'arr.zarr')).equal(
-      'https://example.com/arr.zarr'
-    );
-  });
-});

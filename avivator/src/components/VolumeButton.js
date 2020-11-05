@@ -9,7 +9,7 @@ import MenuList from '@material-ui/core/MenuList';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { DTYPE_VALUES } from '../../../src';
+import { DTYPE_VALUES } from '../../../dist';
 
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
