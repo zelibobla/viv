@@ -90,9 +90,56 @@ export default class XR3DLayer extends Layer {
     const fragmentShaderColormap = colormap
       ? fsColormap.replace('colormapFunction', colormap)
       : fs;
+    // const __RENDER_MODE = `\
+    //   vec3 rgbCombo = vec3(0.0);
+    //   vec3 hsvCombo = vec3(0.0);
+    //   float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+    //   float total = 0.0;
+
+    //   for(int i = 0; i < 6; i++) {
+    //     float intensityValue = intensityArray[i];
+    //     hsvCombo = rgb2hsv(vec3(colorValues[i]));
+    //     hsvCombo = vec3(hsvCombo.xy, intensityValue);
+    //     rgbCombo += hsv2rgb(hsvCombo);
+    //     total += intensityValue;
+    //   }
+    //   // Do not go past 1 in opacity.
+    //   total = min(total, 1.0);
+
+    //   vec4 val_color = vec4(rgbCombo, total);
+
+    //   // Opacity correction
+    //   val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
+    //   color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
+    //   color.a += (1.0 - color.a) * val_color.a;
+    //   if (color.a >= 0.95) {
+    //     break;
+    //   }
+    // `
+    const __RENDER_MODE = `\
+    
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+
+      for(int i = 0; i < 6; i++) {
+        if(intensityArray[i] > maxVals[i]) {
+          maxVals[i] = intensityArray[i];
+        }
+      }
+    `;
+    const __AFTER_RENDER = `\
+      vec3 rgbCombo = vec3(0.0);
+      for(int i = 0; i < 6; i++) {
+        vec3 hsvCombo = rgb2hsv(vec3(colorValues[i]));
+        hsvCombo = vec3(hsvCombo.xy, maxVals[i]);
+        rgbCombo += hsv2rgb(hsvCombo);
+      }
+      color = vec4(rgbCombo, 1.0);
+    `;
     return super.getShaders({
       vs,
-      fs: fragmentShaderColormap,
+      fs: fragmentShaderColormap
+        .replace('__RENDER_MODE', __RENDER_MODE)
+        .replace('__AFTER_RENDER', __AFTER_RENDER),
       modules: [project32]
     });
   }

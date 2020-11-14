@@ -105,6 +105,7 @@ void main(void) {
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
+	float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
 		float canShowXCoordinate = max(p.x - xSlice[0], 0.0) * max(xSlice[1] - p.x , 0.0);
 		float canShowYCoordinate = max(p.y - ySlice[0], 0.0) * max(ySlice[1] - p.y , 0.0);
@@ -117,32 +118,11 @@ void main(void) {
     float intensityValue4 = canShowCoordinate * max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
 		float intensityValue5 = canShowCoordinate * max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
 
-		vec3 rgbCombo = vec3(0.0);
-  	vec3 hsvCombo = vec3(0.0);
-		float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
-		float total = 0.0;
+		__RENDER_MODE
 
-		for(int i = 0; i < 6; i++) {
-			float intensityValue = intensityArray[i];
-			hsvCombo = rgb2hsv(vec3(colorValues[i]));
-			hsvCombo = vec3(hsvCombo.xy, intensityValue);
-			rgbCombo += hsv2rgb(hsvCombo);
-			total += intensityValue;
-		}
-		// Do not go past 1 in opacity.
-		total = min(total, 1.0);
-
-		vec4 val_color = vec4(rgbCombo, total);
-
-		// Opacity correction
-		val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
-		color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
-		color.a += (1.0 - color.a) * val_color.a;
-		if (color.a >= 0.95) {
-			break;
-		}
 		p += ray_dir * dt;
 	}
+	__AFTER_RENDER
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);
