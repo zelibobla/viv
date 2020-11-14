@@ -14,8 +14,6 @@ const defaultProps = {
   loaderSelection: { type: 'array', value: [], compare: true },
   colormap: { type: 'string', value: '', compare: true },
   domain: { type: 'array', value: [], compare: true },
-  translate: { type: 'array', value: [0, 0], compare: true },
-  scale: { type: 'number', value: 1, compare: true },
   boxSize: { type: 'number', value: 0, compare: true },
   viewportId: { type: 'string', value: '', compare: true },
   loader: {
@@ -34,13 +32,6 @@ const defaultProps = {
   lensBorderRadius: { type: 'number', value: 0.02, compare: true },
   onClick: { type: 'function', value: null, compare: true }
 };
-
-function scaleBounds({ width, height, translate, scale }) {
-  const [left, top] = translate;
-  const right = width * scale + left;
-  const bottom = height * scale + top;
-  return [left, bottom, right, top];
-}
 
 /*
  * For some reason data of uneven length fails to be converted to a texture (Issue #144).
@@ -67,8 +58,6 @@ function padEven(data, width, height, boxSize) {
  * @param {string} props.colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
  * @param {string} props.viewportId Id for the current view.  This needs to match the viewState id in deck.gl and is necessary for the lens.
- * @param {Array} props.translate Translate transformation to be applied to the bounds after scaling.
- * @param {number} props.scale Scaling factor for this layer to be used against the dimensions of the loader's `getRaster`.
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
  * @param {String} props.onHover Hook function from deck.gl to handle hover objects.
  * @param {String} props.boxSize If you want to pad an incoming tile to be a certain squared pixel size, pass the number here (only used by OverviewLayer/VivViewerLayer for now).
@@ -78,6 +67,7 @@ function padEven(data, width, height, boxSize) {
  * @param {number} props.lensBorderColor RGB color of the border of the lens.
  * @param {number} props.lensBorderRadius Percentage of the radius of the lens for a border (default 0.02).
  * @param {number} props.onClick Hook function from deck.gl to handle clicked-on objects.
+ * @param {number} props.modelMatrix Math.gl Matrix4 object containing an affine transformation to be applied to the image.
  */
 export default class ImageLayer extends CompositeLayer {
   initializeState() {
@@ -87,17 +77,6 @@ export default class ImageLayer extends CompositeLayer {
       height: 0,
       data: []
     };
-    const { loader, z, loaderSelection, boxSize } = this.props;
-    loader.getRaster({ z, loaderSelection }).then(({ data, width, height }) => {
-      this.setState(
-        padEven(
-          !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
-          width,
-          height,
-          boxSize
-        )
-      );
-    });
     if (this.context.deck) {
       this.context.deck.eventManager.on({
         pointermove: () => onPointer(this),
@@ -149,8 +128,6 @@ export default class ImageLayer extends CompositeLayer {
       sliderValues,
       colorValues,
       channelIsOn,
-      translate,
-      scale,
       z,
       domain,
       pickable,
@@ -160,21 +137,16 @@ export default class ImageLayer extends CompositeLayer {
       lensRadius,
       id,
       onClick,
-      onHover
+      onHover,
+      modelMatrix
     } = this.props;
     const { dtype } = loader;
     const { data, width, height, unprojectLensBounds } = this.state;
     if (!(width && height)) return null;
-    const bounds = scaleBounds({
-      width,
-      height,
-      translate,
-      scale
-    });
     return new XRLayer(this.props, {
       channelData: { data, width, height },
       pickable,
-      bounds,
+      bounds: [0, height, width, 0],
       sliderValues,
       colorValues,
       channelIsOn,
@@ -191,7 +163,8 @@ export default class ImageLayer extends CompositeLayer {
       lensBorderColor,
       lensRadius,
       onClick,
-      onHover
+      onHover,
+      modelMatrix
     });
   }
 }

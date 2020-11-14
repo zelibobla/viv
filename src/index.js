@@ -45,5 +45,5 @@ export {
   createOMETiffLoader,
   createZarrLoader,
   createBioformatsZarrLoader,
-  HTTPStore
+  HTTPStore,
 };

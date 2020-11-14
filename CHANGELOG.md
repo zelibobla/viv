@@ -6,9 +6,30 @@
 
 ### Changed
 
+## 0.7.0
+
+### Added
+
+- Support arbitrary affine transformations of `MultiscaleImageLayer`.
+
+### Changed
+
+- Clean up docs for OME-TIFF creation.
+- Remove OMETIFF_LOADING.md docs.
+- Upgrade deck.gl to 8.4.0-alpha.2.
+- Remove `scale` and `translate` from `ImageLayer` and its usages in favor of `modelMatrix`.
+
+## 0.6.0
+
+### Added
+
+### Changed
+
 - Fix snackbars for errors and initial image.
 - Export custom zarr `HTTPStore` with abort controller signal support.
+- Modularize shaders using deck.gl shader modules.
 - Provide pure ESM export of Viv and use separate build for Avivator
+- Downgrade react back to 16.8
 
 ## 0.5.0
 

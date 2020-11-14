@@ -1,5 +1,6 @@
 import { CompositeLayer } from '@deck.gl/core';
 import { isWebGL2 } from '@luma.gl/core';
+import { Matrix4 } from 'math.gl';
 
 import MultiscaleImageLayerBase from './MultiscaleImageLayerBase';
 import ImageLayer from '../ImageLayer';
@@ -46,6 +47,7 @@ const defaultProps = {
  * @param {number} props.lensBorderRadius Percentage of the radius of the lens for a border (default 0.02).
  * @param {number} props.maxRequests Maximum parallel ongoing requests allowed before aborting.
  * @param {number} props.onClick Hook function from deck.gl to handle clicked-on objects.
+ * @param {number} props.modelMatrix Math.gl Matrix4 object containing an affine transformation to be applied to the image.
  */
 
 export default class MultiscaleImageLayer extends CompositeLayer {
@@ -82,7 +84,8 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       lensBorderColor,
       lensBorderRadius,
       maxRequests,
-      onClick
+      onClick,
+      modelMatrix
     } = this.props;
     const { tileSize, numLevels, dtype } = loader;
     const { unprojectLensBounds } = this.state;
@@ -145,7 +148,8 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       isLensOn,
       lensSelection,
       lensBorderColor,
-      lensBorderRadius
+      lensBorderRadius,
+      modelMatrix
     });
     // This gives us a background image and also solves the current
     // minZoom funny business.  We don't use it for the background if we have an opacity
@@ -155,11 +159,12 @@ export default class MultiscaleImageLayer extends CompositeLayer {
     const { width: lowResWidth, height: lowResHeight } = loader.getRasterSize({
       z: numLevels - 1
     });
+    const layerModelMatrix = modelMatrix ? modelMatrix.clone() : new Matrix4();
     const baseLayer =
       implementsGetRaster &&
       new ImageLayer(this.props, {
         id: `Background-Image-${id}`,
-        scale: 2 ** (numLevels - 1),
+        modelMatrix: layerModelMatrix.scale(2 ** (numLevels - 1)),
         visible:
           opacity === 1 ||
           (-numLevels > this.context.viewport.zoom &&

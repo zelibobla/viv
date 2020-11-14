@@ -69,19 +69,29 @@ $ raw2ometiff n5_tile_directory/ LuCa-7color_Scan1.ome.tif
 
 There are a few different ways to view your data in Avivator.
 
-If you have an OME-TIFF or Bio-Formats "raw" Zarr output saved locally, you may simply drag and drop
+If you have an OME-TIFF or Bio-Formats "raw" Zarr output saved locally, you may simply drag and drop 
 the file (or directory) over the canvas or use the "Choose file" button to view your data.
-Note that this action does **NOT** necessarily load the entire dataset into memory. Viv still works as normal and will retrieve data tiles based on the viewport for an image pyramid and/or a specific channel/z/time selection.
+Note that this action does **NOT** necessarily load the entire dataset into memory. Viv still works as normal and will retrieve data tiles based on the viewport for an image pyramid and/or a specific channel/z/time selection. 
 
 If you followed **Option 1** above, you may drag and drop the `LuCa-7color_Scan1/` directory created via `bioformats2raw`
 into Avivator. If you followed **Option 2**, simply select the `LuCa-7color_Scan1.ome.tif` to view in Avivator.
 
-> NOTE: Large Zarr-based image pyramids may take a bit longer to load initially using this method. We recommend using a simple web
-> server (see below) if you experience issues with Zarr loading times. Additionally, support for drag-and-drop for Zarr-based
+> NOTE: Large Zarr-based image pyramids may take a bit longer to load initially using this method. We recommend using a simple web 
+> server (see below) if you experience issues with Zarr loading times. Additionally, support for drag-and-drop for Zarr-based 
 > images is only currently supported in Chrome, Firefox, and Microsoft Edge. If using Safari, please use a web-server.
 
-Otherwise Avivator relies on access to data over HTTP, and you can serve data locally using a simple web-server.
-It's easiest to use [`http-server`](https://github.com/http-party/http-server#readme) to start a web-server locally, which can be installed via `npm` or `Homebrew` if using a Mac:
+Otherwise Avivator relies on access to data over HTTP, and you can serve data locally using a simple web-server. 
+It's easiest to use [`http-server`](https://github.com/http-party/http-server#readme) to start a web-server locally, which can be installed via `npm` or `Homebrew` if using a Mac.
+
+> NOTE: If your OME-TIFF image has many [TIFF IFDs](https://en.wikipedia.org/wiki/TIFF#Multiple_subfiles), which correspond to indvidual time-z-channel sub-images, please generate an `offsets.json` file as well for remote HTTP viewing.
+> This file contains the byte offsets to each IFD and allows fast interaction with remote data:
+> ```bash
+> $ pip install generate-tiff-offsets
+> $ generate_tiff_offsets --input_file my_tiff_file.ome.tiff
+> ```
+> For viewing in Avivator, this file should live adjacent to the OME-TIFF file in its folder and will be automatically recognized and used.
+> For use with Viv's loaders/layers, you need to fetch the `offsets.json` and pass it in as an argument to the [loader](http://viv.gehlenborglab.org/#createometiffloader).
+> Please see [this sample](http://viv.gehlenborglab.org/#getting-started) for help getting started.
 
 #### Install `http-server`
 
@@ -108,7 +118,7 @@ link by appending an `image_url` query parameter:
 - http://avivator.gehlenborglab.org/?image_url=http://localhost:8000/LuCa-7color_Scan1.ome.tif (OME-TIFF)
 
 > Troubleshooting: Viv relies on cross-origin requests to retrieve data from servers. The `--cors='*'` flag is important to ensure
-> that the appropriate `Access-Control-Allow-Origin` response is sent from your local server. In addition, web servers must allow
+> that the appropriate `Access-Control-Allow-Origin` response is sent from your local server.  In addition, web servers must allow
 > [HTTP range requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests) to support viewing OME-TIFF images.
 > Range requests are allowed by default by `http-server` but may need to be enabled explicitly for your production web server.
 

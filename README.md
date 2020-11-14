@@ -11,7 +11,7 @@ $ npm install @hms-dbmi/viv
 
 ## About
 
-Viv is a JavaScript library providing utilities for rendering primary imaging data. Viv supports WebGL-based multi-channel rendering of both pyramidal and non-pyramidal images. The rendering components of Viv are provided as Deck.gl layers, making it easy to compose images with existing layers and efficiently update rendering properties within a reactive paradigm.
+Viv is a JavaScript library providing utilities for rendering primary imaging data. Viv supports WebGL-based multi-channel rendering of both pyramidal and non-pyramidal images. The rendering components of Viv are provided as Deck.gl layers, making it easy to compose images with existing layers and efficiently update rendering properties within a reactive paradigm. 
 
 More details can be found in our preprint describing the Viv library and related work. Please cite this preprint in your research:
 
@@ -19,12 +19,14 @@ More details can be found in our preprint describing the Viv library and related
 
 ## Avivator
 
-Also included in this repository is [`Avivator`](http://avivator.gehlenborglab.org), a lightweight "batteries-included"
+Also included in this repository is [`Avivator`](http://avivator.gehlenborglab.org), a lightweight "batteries-included" 
 WebGL viewer for remote imaging data. Avivator is a purely client-side program that only requires access to
-Bio-Formats "raw" Zarr or OME-TIFF data over HTTP. To use Avivator with your own data, please see the data preparation
+Bio-Formats "raw" Zarr or OME-TIFF data over HTTP. To use Avivator with your own data, please see the data preparation 
 [tutorial](tutorial/README.md). Initial load time for OME-TIFFs can be optimized by generating a special `offsets.json`
-file containing byte offsets for the associated binary data. For more information, see the
-[documentation](http://viv.gehlenborglab.org/#ome-tiff-loading).
+file containing byte offsets for the associated binary data. For more information, see the 
+[documentation](http://viv.gehlenborglab.org/#data-preparation).
+
+
 
 ## Development
 
@@ -35,13 +37,10 @@ $ npm run install:avivator # install deps for avivator app
 $ npm start # Starts rollup build (for Viv) & dev server for Avivator
 ```
 
-Please install the [Prettier plug-in](https://prettier.io/docs/en/editors.html) for your preferred editor.
+Please install the [Prettier plug-in](https://prettier.io/docs/en/editors.html) for your preferred editor. 
 (Badly formatted code will fail on Travis.)
 
-Due to [difficulties](https://github.com/hms-dbmi/viv/issues/103) around compiling shaders on Travis, unit tests and layer lifecycle
-tests are run locally as a pre-push hook. Travis runs a test build, linting, and prettier.
-
-To run unit and integration tests locally, use `npm test`. For full prodcution test (including linting and formatting checks),
+To run unit and integration tests locally, use `npm test`. For full prodcution test (including linting and formatting checks), 
 use `npm run test:prod`.
 
 ## Build
