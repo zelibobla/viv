@@ -180,17 +180,38 @@ export default function Avivator(props) {
     const mouseUp = event.type === 'mouseup';
     // Only update image on screen on a mouseup event for the same reason as above.
     if (mouseUp) {
-      const stats = await getChannelStats({ loader, loaderSelection });
+      const stats = await getChannelStats({
+        loader,
+        loaderSelection
+      });
       const domains = stats.map(stat => stat.domain);
       const sliders = stats.map(stat => stat.autoSliders);
       const { colors, isOn } = channels;
       dispatch({
         type: 'RESET_CHANNELS',
-        value: { selections: loaderSelection, domains, sliders, colors, isOn }
+        value: {
+          selections: loaderSelection,
+          domains,
+          sliders,
+          colors,
+          isOn
+        }
       });
-      setGlobalSelections(prev => ({ ...prev, ...selection }));
+      setGlobalSelections(prev => ({
+        ...prev,
+        ...selection
+      }));
     } else {
-      setGlobalSelections(prev => ({ ...prev, ...selection }));
+      dispatch({
+        type: 'CHANGE_CHANNEL_SELECTIONS',
+        value: {
+          selections: loaderSelection
+        }
+      });
+      setGlobalSelections(prev => ({
+        ...prev,
+        ...selection
+      }));
     }
   };
 

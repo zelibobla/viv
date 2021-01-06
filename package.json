@@ -85,6 +85,7 @@
     "geotiff": "ilan-gold/geotiff.js#ilan-gold/viv_release_080",
     "math.gl": "^3.3.0",
     "quickselect": "^2.0.0",
+    "sequential-task-queue": "^1.2.1",
     "zarr": "^0.3.0"
   },
   "prettier": {

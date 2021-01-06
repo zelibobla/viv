@@ -1,5 +1,6 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { isWebGL2 } from '@luma.gl/core';
+import { SequentialTaskQueue } from 'sequential-task-queue';
 import GL from '@luma.gl/constants';
 
 import XRLayer from './XRLayer';
@@ -59,7 +60,8 @@ export default class ImageLayer extends CompositeLayer {
       unprojectLensBounds: [0, 0, 0, 0],
       width: 0,
       height: 0,
-      data: []
+      data: [],
+      queue: new SequentialTaskQueue()
     };
     if (this.context.deck) {
       this.context.deck.eventManager.on({
@@ -79,7 +81,9 @@ export default class ImageLayer extends CompositeLayer {
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
       const { loader, z, loaderSelection } = this.props;
-      loader.getRaster({ z, loaderSelection }).then(raster => {
+      const { queue } = this.state;
+      queue.push(async () => {
+        const raster = await loader.getRaster({ z, loaderSelection });
         /* eslint-disable no-param-reassign */
         if (loader.isInterleaved && loader.isRgb) {
           // data is for BitmapLayer and needs to be of form { data: Uint8Array, width, height };

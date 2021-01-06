@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Make sure loader selections in `ImageLayer` are returned in the order they are requested.
+
 ## 0.8.1
 
 ### Added
