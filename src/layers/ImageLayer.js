@@ -1,8 +1,9 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { isWebGL2 } from '@luma.gl/core';
+import GL from '@luma.gl/constants';
 
 import XRLayer from './XRLayer';
-import { padTileWithZeros } from '../loaders/utils';
+import BitmapLayer from './BitmapLayer';
 import { to32BitFloat, onPointer } from './utils';
 
 const defaultProps = {
@@ -14,7 +15,6 @@ const defaultProps = {
   loaderSelection: { type: 'array', value: [], compare: true },
   colormap: { type: 'string', value: '', compare: true },
   domain: { type: 'array', value: [], compare: true },
-  boxSize: { type: 'number', value: 0, compare: true },
   viewportId: { type: 'string', value: '', compare: true },
   loader: {
     type: 'object',
@@ -33,21 +33,6 @@ const defaultProps = {
   onClick: { type: 'function', value: null, compare: true }
 };
 
-/*
- * For some reason data of uneven length fails to be converted to a texture (Issue #144).
- * Here we pad the width of tile by one if the data is uneven in length, which seemingly
- * fixes the rendering. This is not ideal since padding the tile makes a copy of underlying
- * buffer, but without digging deeper into the WebGL it is a reasonable fix.
- */
-function padEven(data, width, height, boxSize) {
-  const targetWidth = boxSize || (width % 2 === 0 ? width : width + 1);
-  const targetHeight = boxSize || height;
-  const padded = data.map(d =>
-    padTileWithZeros({ data: d, width, height }, targetWidth, targetHeight)
-  );
-  return { data: padded, width: targetWidth, height: targetHeight };
-}
-
 /**
  * This layer wraps XRLayer and generates a static image
  * @param {Object} props
@@ -60,7 +45,6 @@ function padEven(data, width, height, boxSize) {
  * @param {string} props.viewportId Id for the current view.  This needs to match the viewState id in deck.gl and is necessary for the lens.
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
  * @param {String} props.onHover Hook function from deck.gl to handle hover objects.
- * @param {String} props.boxSize If you want to pad an incoming tile to be a certain squared pixel size, pass the number here (only used by OverviewLayer/VivViewerLayer for now).
  * @param {boolean} props.isLensOn Whether or not to use the lens.
  * @param {number} props.lensSelection Numeric index of the channel to be focused on by the lens.
  * @param {number} props.lensRadius Pixel radius of the lens (default: 100).
@@ -94,19 +78,26 @@ export default class ImageLayer extends CompositeLayer {
       props.loaderSelection !== oldProps.loaderSelection;
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, z, loaderSelection, boxSize } = this.props;
-      loader
-        .getRaster({ z, loaderSelection })
-        .then(({ data, width, height }) => {
-          this.setState(
-            padEven(
-              !isWebGL2(this.context.gl) ? to32BitFloat(data) : data,
-              width,
-              height,
-              boxSize
-            )
-          );
-        });
+      const { loader, z, loaderSelection } = this.props;
+      loader.getRaster({ z, loaderSelection }).then(raster => {
+        /* eslint-disable no-param-reassign */
+        if (loader.isInterleaved && loader.isRgb) {
+          // data is for BitmapLayer and needs to be of form { data: Uint8Array, width, height };
+          // eslint-disable-next-line prefer-destructuring
+          raster.data = raster.data[0];
+          if (raster.data.length === raster.width * raster.height * 3) {
+            // data is RGB (not RGBA) and need to update texture formats
+            raster.format = GL.RGB;
+            raster.dataFormat = GL.RGB;
+          }
+        } else if (!isWebGL2(this.context.gl)) {
+          // data is for XLRLayer in non-WebGL2 evironment
+          // we need to convert data to compatible textures
+          raster.data = to32BitFloat(raster.data);
+        }
+        this.setState({ ...raster });
+        /* eslint-disable no-param-reassign */
+      });
     }
   }
 
@@ -141,20 +132,31 @@ export default class ImageLayer extends CompositeLayer {
       modelMatrix
     } = this.props;
     const { dtype } = loader;
-    const { data, width, height, unprojectLensBounds } = this.state;
+    const { width, height, data, unprojectLensBounds } = this.state;
     if (!(width && height)) return null;
+    const bounds = [0, height, width, 0];
+    const { isRgb, isInterleaved, photometricInterpretation } = loader;
+    if (isRgb && isInterleaved) {
+      return new BitmapLayer(this.props, {
+        image: this.state,
+        photometricInterpretation,
+        // Shared props with XRLayer:
+        bounds,
+        id: `image-sub-layer-${bounds}-${id}-${z}`,
+        onHover,
+        pickable,
+        onClick,
+        modelMatrix,
+        opacity,
+        visible
+      });
+    }
     return new XRLayer(this.props, {
-      channelData: { data, width, height },
-      pickable,
-      bounds: [0, height, width, 0],
+      channelData: { data, height, width },
       sliderValues,
       colorValues,
       channelIsOn,
       domain,
-      id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,
-      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-      opacity,
-      visible,
       dtype,
       colormap,
       unprojectLensBounds,
@@ -162,9 +164,15 @@ export default class ImageLayer extends CompositeLayer {
       lensSelection,
       lensBorderColor,
       lensRadius,
-      onClick,
+      // Shared props with BitmapLayer:
+      bounds,
+      id: `image-sub-layer-${bounds}-${id}-${z}`,
       onHover,
-      modelMatrix
+      pickable,
+      onClick,
+      modelMatrix,
+      opacity,
+      visible
     });
   }
 }

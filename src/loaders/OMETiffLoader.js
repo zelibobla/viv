@@ -1,10 +1,5 @@
 import OMEXML from './omeXML';
-import {
-  isInTileBounds,
-  byteSwapInplace,
-  padTileWithZeros,
-  dimensionsFromOMEXML
-} from './utils';
+import { isInTileBounds, dimensionsFromOMEXML } from './utils';
 import { DTYPE_VALUES } from '../constants';
 
 const DTYPE_LOOKUP = {
@@ -49,13 +44,17 @@ export default class OMETiffLoader {
       }
     };
     this.software = firstImage.fileDirectory.Software;
+    this.photometricInterpretation =
+      firstImage.fileDirectory.PhotometricInterpretation;
     this.offsets = offsets || [];
     this.channelNames = this.omexml.getChannelNames();
     this.width = this.omexml.SizeX;
     this.height = this.omexml.SizeY;
     this.tileSize = firstImage.getTileWidth();
     const { SubIFDs } = firstImage.fileDirectory;
-    this.numLevels = SubIFDs?.length || this.omexml.getNumberOfImages();
+    this.numLevels = SubIFDs?.length
+      ? SubIFDs.length + 1
+      : this.omexml.getNumberOfImages();
     this.isBioFormats6Pyramid = SubIFDs;
     this.isPyramid = this.numLevels > 1;
     this.dimensions = dimensionsFromOMEXML(this.omexml);
@@ -67,14 +66,19 @@ export default class OMETiffLoader {
     // we flag that as rgb.
     this.isRgb =
       this.omexml.SamplesPerPixel === 3 ||
-      (this.channelNames.length === 3 && this.omexml.Type === 'uint8');
+      (this.channelNames.length === 3 && this.omexml.Type === 'uint8') ||
+      (this.omexml.SizeC === 3 &&
+        this.channelNames.length === 1 &&
+        this.omexml.Interleaved);
+    this.isInterleaved = this.omexml.Interleaved;
   }
 
   /**
    * Returns an IFD index for a given loader selection.
-   * @param {number} z Z axis selection.
-   * @param {number} time Time axis selection.
-   * @param {String} channel Channel axis selection.
+   * @param {Object} args
+   * @param {number} args.z Z axis selection.
+   * @param {number} args.time Time axis selection.
+   * @param {String} args.channel Channel axis selection.
    * @returns {number} IFD index.
    */
   _getIFDIndex({ z = 0, channel, time = 0 }) {
@@ -129,10 +133,12 @@ export default class OMETiffLoader {
 
   /**
    * Returns image tiles at tile-position (x, y) at pyramidal level z.
-   * @param {number} x positive integer
-   * @param {number} y positive integer
-   * @param {number} z positive integer (0 === highest zoom level)
-   * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
+   * @param {Object} args
+   * @param {number} args.x positive integer
+   * @param {number} args.y positive integer
+   * @param {number} args.z positive integer (0 === highest zoom level)
+   * @param {Array} args.loaderSelection, Array of number Arrays specifying channel selections
+   * @param {Array} args.signal AbortSignal object
    * @returns {Object} data: TypedArray[], width: number (tileSize), height: number (tileSize).
    * Default is `{data: [], width: tileSize, height: tileSize}`.
    */
@@ -140,7 +146,7 @@ export default class OMETiffLoader {
     if (!this._tileInBounds({ x, y, z })) {
       return null;
     }
-    const { tiff, isBioFormats6Pyramid, omexml, tileSize } = this;
+    const { tiff, isBioFormats6Pyramid, omexml } = this;
     const { SizeZ, SizeT, SizeC } = omexml;
     const pyramidOffset = z * SizeZ * SizeT * SizeC;
     let image;
@@ -165,12 +171,17 @@ export default class OMETiffLoader {
       image = await tiff.getImage(pyramidIndex);
       return this._getChannel({ image, x, y, z, signal });
     });
-    const tiles = await Promise.all(tileRequests);
+    const data = await Promise.all(tileRequests);
+    const { height, width } = this._getTileExtent({
+      x,
+      y,
+      z
+    });
     if (signal?.aborted) return null;
     return {
-      data: tiles,
-      width: tileSize,
-      height: tileSize
+      data,
+      height,
+      width
     };
   }
 
@@ -183,6 +194,7 @@ export default class OMETiffLoader {
     const scale = resolution;
     const usePyramid = isPyramid && resolution > 0;
     const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
+    console.log(scale, this);
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
     let width;
@@ -194,7 +206,13 @@ export default class OMETiffLoader {
           tiff.ifdRequests[pyramidOffset] = tiff.parseFileDirectoryAt(
             firstImage.fileDirectory.SubIFDs[scale - 1]
           );
+          console.log(
+            firstImage,
+            scale,
+            firstImage.fileDirectory.SubIFDs[scale - 1]
+          );
         }
+        console.log('here', pyramidOffset);
         const resImage = await tiff.getImage(pyramidOffset);
         height = usePyramid ? resImage.getHeight() : SizeY;
         width = usePyramid ? resImage.getWidth() : SizeX;
@@ -245,14 +263,14 @@ export default class OMETiffLoader {
 
   /**
    * Returns full image panes (at level z if pyramid)
-   * @param {number} z positive integer (0 === highest zoom level)
-   * @param {Array} loaderSelection, Array of number Arrays specifying channel selections
+   * @param {Object} args
+   * @param {number} args.z positive integer (0 === highest zoom level)
+   * @param {Array} args.loaderSelection, Array of number Arrays specifying channel selections
    * @returns {Object} data: TypedArray[], width: number, height: number
-    * Default is `{data: [], width, height}`.
-
+   * Default is `{data: [], width, height}`.
    */
   async getRaster({ z, loaderSelection }) {
-    const { tiff, omexml, isBioFormats6Pyramid, pool } = this;
+    const { tiff, omexml, isBioFormats6Pyramid, pool, isInterleaved } = this;
     const { SizeZ, SizeT, SizeC } = omexml;
     const rasters = await Promise.all(
       loaderSelection.map(async sel => {
@@ -275,8 +293,11 @@ export default class OMETiffLoader {
         }
         const image = await tiff.getImage(pyramidIndex);
         // Flips bits for us for endianness.
-        const raster = await image.readRasters({ pool });
-        return raster[0];
+        const raster = await image.readRasters({
+          pool,
+          interleave: isInterleaved
+        });
+        return isInterleaved ? raster : raster[0];
       })
     );
     // Get first selection * SizeZ * SizeT * SizeC + loaderSelection[0] size as proxy for image size.
@@ -312,10 +333,10 @@ export default class OMETiffLoader {
   /**
    * Returns image width and height (at pyramid level z) without fetching data.
    * This information is inferrable from the provided omexml.
-   * This is only used by the OverviewLayer for inferring the box size.
    * It is NOT the actual pixel-size but rather the image size
    * without any padding.
-   * @param {number} z positive integer (0 === highest zoom level)
+   * @param {Object} args
+   * @param {number} args.z positive integer (0 === highest zoom level)
    * @returns {Object} width: number, height: number
    */
   getRasterSize({ z }) {
@@ -386,41 +407,28 @@ export default class OMETiffLoader {
   }
 
   async _getChannel({ image, x, y, z, signal }) {
-    const { dtype } = this;
-    const { TypedArray } = DTYPE_VALUES[dtype];
-    const tile = await image.getTileOrStrip(x, y, 0, this.pool, signal);
-    const data = new TypedArray(tile.data);
+    const { tileSize, pool, isInterleaved: interleave } = this;
+    const { height, width } = this._getTileExtent({
+      x,
+      y,
+      z
+    });
+    // Passing in the height and width explicitly prevents resampling that geotiff does without such parameters.
+    const rasters = await image.readRasters({
+      window: [
+        x * tileSize,
+        y * tileSize,
+        x * tileSize + width,
+        y * tileSize + height
+      ],
+      pool,
+      signal,
+      width,
+      height,
+      interleave
+    });
+    const data = interleave ? rasters : rasters[0];
     if (signal?.aborted) return null;
-    /*
-     * The endianness of JavaScript TypedArrays are determined by the endianness
-     * of the end-users' hardware. Nearly all desktop computers are x86 (little endian),
-     * so we flip bytes in place for big-endian buffers. This is substantially faster than using
-     * the DataView API.
-     */
-    if (!image.littleEndian) {
-      byteSwapInplace(data);
-    }
-
-    // If the tile data is not (tileSize x tileSize), pad the data with zeros
-    if (data.length < this.tileSize * this.tileSize) {
-      const { height, width } = this.getRasterSize({ z });
-      let trueHeight = height;
-      let trueWidth = width;
-      // If height * tileSize is the size of the data, then the width is the tileSize.
-      if (data.length / height === this.tileSize) {
-        trueWidth = this.tileSize;
-      }
-      // If width * tileSize is the size of the data, then the height is the tileSize.
-      if (data.length / width === this.tileSize) {
-        trueHeight = this.tileSize;
-      }
-      return padTileWithZeros(
-        { data, width: trueWidth, height: trueHeight },
-        this.tileSize,
-        this.tileSize
-      );
-    }
-
     if (this.omexml.Type.startsWith('int')) {
       // Uint view isn't correct for underling buffer, need to take an
       // IntXArray view and cast to UintXArray.
@@ -432,7 +440,6 @@ export default class OMETiffLoader {
       }
       return new Uint32Array(new Int32Array(data.buffer));
     }
-
     return data;
   }
 
@@ -454,5 +461,32 @@ export default class OMETiffLoader {
     if (offsets.length > 0) {
       tiff.ifdRequests[index] = tiff.parseFileDirectoryAt(offsets[index]);
     }
+  }
+
+  /**
+   * For a given resolution level, z, the expected tile size on the boundary
+   * of the image should be exactly enough to fit the image bounds at the resolution level.
+   * This function returns that size or the parametrized tileSize from TIFF file.
+   * @param {tileData: TypedArray[]} data The array to be filled in.
+   * @param {Object} tile { x, y, z }
+   * @returns {TypedArray} TypedArray
+   */
+  _getTileExtent({ x, y, z }) {
+    const { tileSize } = this;
+    let height = tileSize;
+    let width = tileSize;
+    const {
+      height: zoomLevelHeight,
+      width: zoomLevelWidth
+    } = this.getRasterSize({ z });
+    const maxXTileCoord = Math.floor(zoomLevelWidth / tileSize);
+    const maxYTileCoord = Math.floor(zoomLevelHeight / tileSize);
+    if (x === maxXTileCoord) {
+      width = zoomLevelWidth % tileSize;
+    }
+    if (y === maxYTileCoord) {
+      height = zoomLevelHeight % tileSize;
+    }
+    return { height, width };
   }
 }

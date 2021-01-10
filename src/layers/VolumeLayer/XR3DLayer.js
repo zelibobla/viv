@@ -54,7 +54,6 @@ const MAX_INTENSITY_PROJECTION = 'maxIntensityProjection';
 const MIN_INTENSITY_PROJECTION = 'minIntensityProjection';
 const ADDITIVE = 'additive';
 
-
 const RENDERING_MODES = {
   [MAX_INTENSITY_PROJECTION]: {
     _BEFORE_RENDER: `\
@@ -177,10 +176,13 @@ export default class XR3DLayer extends Layer {
     const fragmentShaderColormap = colormap
       ? fsColormap.replace('colormapFunction', colormap)
       : fs;
-    const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = RENDERING_MODES[renderingMode]
+    const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = RENDERING_MODES[
+      renderingMode
+    ];
     return super.getShaders({
       vs,
-      fs: fragmentShaderColormap.replace('_BEFORE_RENDER', _BEFORE_RENDER)
+      fs: fragmentShaderColormap
+        .replace('_BEFORE_RENDER', _BEFORE_RENDER)
         .replace('_RENDER', _RENDER)
         .replace('_AFTER_RENDER', _AFTER_RENDER),
       modules: [project32]

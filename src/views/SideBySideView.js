@@ -7,11 +7,8 @@ import { getVivId, makeBoundingBox } from './utils';
 /**
  * This class generates a MultiscaleImageLayer and a view for use in the SideBySideViewer.
  * It is linked with its other views as controlled by `linkedIds`, `zoomLock`, and `panLock` parameters.
+ * It takes the same arguments for its constructor as its base class VivView plus the following:
  * @param {Object} args
- * @param {Object} args.viewState ViewState object
- * @param {string} args.id Id for the current view
- * @param {number} args.x X (top-left) location on the screen for the current view
- * @param {number} args.y Y (top-left) location on the screen for the current view
  * @param {Array} args.linkedIds Ids of the other views to which this could be locked via zoom/pan.
  * @param {Boolean} args.panLock Whether or not we lock pan.
  * @param {Boolean} args.zoomLock Whether or not we lock zoom.
@@ -23,13 +20,15 @@ export default class SideBySideView extends VivView {
     initialViewState,
     x,
     y,
+    height,
+    width,
     linkedIds = [],
     panLock = true,
     zoomLock = true,
     viewportOutlineColor = [255, 255, 255],
     viewportOutlineWidth = 10
   }) {
-    super({ initialViewState, x, y });
+    super({ initialViewState, x, y, height, width });
     this.linkedIds = linkedIds;
     this.panLock = panLock;
     this.zoomLock = zoomLock;
@@ -96,9 +95,15 @@ export default class SideBySideView extends VivView {
 
   getLayers({ props, viewStates }) {
     const { loader } = props;
-    const { id, viewportOutlineColor, viewportOutlineWidth } = this;
+    const {
+      id,
+      viewportOutlineColor,
+      viewportOutlineWidth,
+      height,
+      width
+    } = this;
     const layerViewState = viewStates[id];
-    const boundingBox = makeBoundingBox(layerViewState);
+    const boundingBox = makeBoundingBox({ ...layerViewState, height, width });
     const layers = [];
 
     const detailLayer = loader.isPyramid
@@ -135,7 +140,7 @@ export default class SideBySideView extends VivView {
             loader,
             unit,
             size: value,
-            viewState: layerViewState
+            viewState: { ...layerViewState, height, width }
           })
         );
       }

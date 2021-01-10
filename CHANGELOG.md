@@ -3,8 +3,48 @@
 ## In Progress
 
 ### Added
+- Issue templates for Github.
 
 ### Changed
+
+## 0.8.2
+
+### Added
+
+### Changed
+
+- Fix opacity with photometric interpretations.
+- Only show background image when opacity is 1 (and viewport id prop matches that of the current viewport).
+- Fix `minZoom` calculation bug in `MultiscaleImageLayer`.
+
+## 0.8.1
+
+### Added
+
+- Property `onViewStateChange` of all viewers accepts a callback for deck.gl view state changes.
+- Add a click handler to the overview that centers the detail view on the click position. The handler can be turned off by setting the `PictureInPictureViewer` property `clickCenter` to `false`.
+- Support interleaved RGB OME-TIFF files.
+
+### Changed
+
+- Fix documentation of instances where spreading is used in the arguments for a function.
+- Fix link to bioformats in README
+
+## 0.8.0
+
+### Added
+
+- Export a `getDefaultInitialViewState` function for getting a default initial view state given a loader and desired size of view.
+- Added a README file for Avivator at `avivator/README.md`.
+
+### Changed
+
+- Fix default component args API.
+- Change WebGL setting so that textures of non-multiple-of-4 length bind and display.
+- Update preprint title in README.md
+- Use `readRasters` for TIFF for fetching tiles so that we are robust to non-uniformly sized tiles - thus we no longer need to "pad tiles."
+- Switch to Github Actions
+- Don't show snackbar if image provided is one of our demos.
 
 ## 0.7.0
 

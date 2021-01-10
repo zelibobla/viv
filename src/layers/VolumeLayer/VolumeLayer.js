@@ -37,7 +37,6 @@ const defaultProps = {
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
  */
 export default class VolumeLayer extends CompositeLayer {
-
   updateState({ changeFlags, oldProps, props }) {
     const { propsChanged } = changeFlags;
     const loaderSelectionChanged =

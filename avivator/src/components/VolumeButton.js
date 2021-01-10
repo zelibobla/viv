@@ -73,7 +73,7 @@ function VolumeButton({
         <Paper className={classes.paper}>
           <ClickAwayListener onClickAway={toggle}>
             <MenuList id="resolution-options">
-              {Array.from({ length: loader.numLevels + 1 })
+              {Array.from({ length: loader.numLevels })
                 .fill(0)
                 .map((v, z) => {
                   if (loader && loader.type === 'ome-tiff') {

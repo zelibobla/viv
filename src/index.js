@@ -2,16 +2,18 @@ import {
   MultiscaleImageLayer,
   ImageLayer,
   ScaleBarLayer,
-  VolumeLayer,
-  XRLayer
+  XRLayer,
+  OverviewLayer,
+  VolumeLayer
 } from './layers';
+import { VivViewer, PictureInPictureViewer, SideBySideViewer, Static3DViewer } from './viewers';
 import {
-  VivViewer,
-  PictureInPictureViewer,
-  SideBySideViewer,
-  Static3DViewer
-} from './viewers';
-import { VivView, OverviewView, DetailView, SideBySideView } from './views';
+  VivView,
+  OverviewView,
+  DetailView,
+  SideBySideView,
+  getDefaultInitialViewState
+} from './views';
 import {
   createZarrLoader,
   createBioformatsZarrLoader,
@@ -30,10 +32,12 @@ export {
   VolumeLayer,
   MultiscaleImageLayer,
   XRLayer,
+  OverviewLayer,
   VivViewer,
   VivView,
   OverviewView,
   PictureInPictureViewer,
+  getDefaultInitialViewState,
   SideBySideView,
   getChannelStats,
   SideBySideViewer,
@@ -45,5 +49,5 @@ export {
   createOMETiffLoader,
   createZarrLoader,
   createBioformatsZarrLoader,
-  HTTPStore,
+  HTTPStore
 };

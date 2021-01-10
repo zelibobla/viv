@@ -3,26 +3,28 @@ import DeckGL from '@deck.gl/react';
 import { getVivId } from '../views/utils';
 
 /**
+ * @callback ViewStateChange
+ * @param {Object} event
+ */
+
+/**
  * This component handles rendering the various views within the DeckGL contenxt.
  * @param {Object} props
  * @param {Array} props.layerProps  Props for the layers in each view.
  * @param {Array} props.randomize Whether or not to randomize which view goes first (for dynamic rendering).
  * @param {VivView} props.views Various VivViews to render.
+ * @param {ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
  * */
 export default class VivViewer extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      viewStates: {},
-      initialViewStates: {}
+      viewStates: {}
     };
-    const { viewStates, initialViewStates } = this.state;
+    const { viewStates } = this.state;
     const { views } = this.props;
     views.forEach(view => {
       viewStates[view.id] = view.filterViewState({
-        viewState: view.initialViewState
-      });
-      initialViewStates[view.id] = view.filterViewState({
         viewState: view.initialViewState
       });
     });
@@ -48,9 +50,19 @@ export default class VivViewer extends PureComponent {
    * This updates the viewState as a callback to the viewport changing in DeckGL
    * (hence the need for storing viewState in state).
    */
-  _onViewStateChange({ viewId, viewState, oldViewState }) {
+  _onViewStateChange({ viewId, viewState, interactionState, oldViewState }) {
     // Save the view state and trigger rerender.
-    const { views } = this.props;
+    const { views, onViewStateChange } = this.props;
+    // eslint-disable-next-line no-param-reassign
+    viewState =
+      (onViewStateChange &&
+        onViewStateChange({
+          viewId,
+          viewState,
+          interactionState,
+          oldViewState
+        })) ||
+      viewState;
     this.setState(prevState => {
       const viewStates = {};
       views.forEach(view => {
@@ -63,6 +75,7 @@ export default class VivViewer extends PureComponent {
       });
       return { viewStates };
     });
+    return viewState;
   }
 
   /**
@@ -78,14 +91,13 @@ export default class VivViewer extends PureComponent {
       views.some(
         view =>
           !prevState.viewStates[view.id] ||
-          view.initialViewState.height !==
-            prevState.viewStates[view.id].height ||
-          view.initialViewState.width !== prevState.viewStates[view.id].width
+          view.height !== prevState.viewStates[view.id].height ||
+          view.width !== prevState.viewStates[view.id].width
       )
     ) {
       const viewStates = {};
       views.forEach(view => {
-        const { height, width } = view.initialViewState;
+        const { height, width } = view;
         const currentViewState = prevState.viewStates[view.id];
         viewStates[view.id] = view.filterViewState({
           viewState: {
@@ -97,27 +109,6 @@ export default class VivViewer extends PureComponent {
         });
       });
       return { viewStates };
-    }
-    if (
-      views.some(
-        view =>
-          view.initialViewState.target !==
-            prevState.initialViewStates[view.id].target ||
-          view.initialViewState.zoom !==
-            prevState.initialViewStates[view.id].zoom
-      )
-    ) {
-      const initialViewStates = {};
-      const viewStates = {};
-      views.forEach(view => {
-        viewStates[view.id] = view.filterViewState({
-          viewState: view.initialViewState
-        });
-        initialViewStates[view.id] = view.filterViewState({
-          viewState: view.initialViewState
-        });
-      });
-      return { initialViewStates, viewStates };
     }
     return prevState;
   }

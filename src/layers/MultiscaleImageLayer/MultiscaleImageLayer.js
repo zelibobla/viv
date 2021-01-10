@@ -1,10 +1,11 @@
 import { CompositeLayer } from '@deck.gl/core';
 import { isWebGL2 } from '@luma.gl/core';
 import { Matrix4 } from 'math.gl';
+import GL from '@luma.gl/constants';
 
 import MultiscaleImageLayerBase from './MultiscaleImageLayerBase';
 import ImageLayer from '../ImageLayer';
-import { to32BitFloat, getNearestPowerOf2, onPointer } from '../utils';
+import { to32BitFloat, onPointer } from '../utils';
 
 const defaultProps = {
   pickable: true,
@@ -87,7 +88,7 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       onClick,
       modelMatrix
     } = this.props;
-    const { tileSize, numLevels, dtype } = loader;
+    const { tileSize, numLevels, dtype, isInterleaved, isRgb } = loader;
     const { unprojectLensBounds } = this.state;
     const noWebGl2 = !isWebGL2(this.context.gl);
     const getTileData = async ({ x, y, z, signal }) => {
@@ -104,13 +105,18 @@ export default class MultiscaleImageLayer extends CompositeLayer {
         loaderSelection,
         signal
       });
-      if (tile) {
-        tile.data = noWebGl2 ? to32BitFloat(tile.data) : tile.data;
-        if (tile.width !== tileSize || tile.height !== tileSize) {
-          console.warn(
-            `Tile data  { width: ${tile.width}, height: ${tile.height} } does not match tilesize: ${tileSize}`
-          );
+      if (isInterleaved && isRgb) {
+        // eslint-disable-next-line prefer-destructuring
+        tile.data = tile.data[0];
+        if (tile.data.length === tile.width * tile.height * 3) {
+          tile.format = GL.RGB;
+          tile.dataFormat = GL.RGB; // is this not properly inferred?
         }
+        // can just return early, no need  to check for webgl2
+        return tile;
+      }
+      if (noWebGl2) {
+        tile.data = to32BitFloat(tile.data);
       }
       return tile;
     };
@@ -122,7 +128,8 @@ export default class MultiscaleImageLayer extends CompositeLayer {
       tileSize,
       onClick,
       extent: [0, 0, width, height],
-      minZoom: -(numLevels - 1),
+      // See the above note within getTileData for why the division with 512 and the rounding necessary.
+      minZoom: Math.round(-(numLevels - 1) + Math.log2(512 / tileSize)),
       maxZoom: Math.min(0, Math.round(Math.log2(512 / tileSize))),
       colorValues,
       sliderValues,
@@ -156,9 +163,6 @@ export default class MultiscaleImageLayer extends CompositeLayer {
     // paramteter set to anything but 1, but we always use it for situations where
     // we are zoomed out too far.
     const implementsGetRaster = typeof loader.getRaster === 'function';
-    const { width: lowResWidth, height: lowResHeight } = loader.getRasterSize({
-      z: numLevels - 1
-    });
     const layerModelMatrix = modelMatrix ? modelMatrix.clone() : new Matrix4();
     const baseLayer =
       implementsGetRaster &&
@@ -166,14 +170,12 @@ export default class MultiscaleImageLayer extends CompositeLayer {
         id: `Background-Image-${id}`,
         modelMatrix: layerModelMatrix.scale(2 ** (numLevels - 1)),
         visible:
-          opacity === 1 ||
-          (-numLevels > this.context.viewport.zoom &&
-            (!viewportId || this.context.viewport.id === viewportId)),
+          opacity === 1 &&
+          (!viewportId || this.context.viewport.id === viewportId),
         z: numLevels - 1,
         pickable: true,
         onHover,
-        onClick,
-        boxSize: getNearestPowerOf2(lowResWidth, lowResHeight)
+        onClick
       });
     const layers = [baseLayer, tiledLayer];
     return layers;
