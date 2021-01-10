@@ -24,7 +24,7 @@ toc:
 - MultiscaleImageLayer
 - ImageLayer
 - ScaleBarLayer
-- Static3DLayer
+- VolumeLayer
 - name: Loaders
 - createOMETiffLoader
 - OMETiffLoader

@@ -27,7 +27,7 @@ const defaultProps = {
 };
 
 /**
- * This layer wraps XR3DLayer and generates a volumetric rendering. **EXPERIMENTAL**
+ * This layer wraps XR3DLayer and generates a volumetric rendering.
  * @param {Object} props
  * @param {Array} props.sliderValues List of [begin, end] values to control each channel's ramp function.
  * @param {Array} props.colorValues List of [r, g, b] values for each channel.
@@ -36,15 +36,7 @@ const defaultProps = {
  * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
  * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
  */
-export default class Static3DLayer extends CompositeLayer {
-  initializeState() {
-    const { loader, loaderSelection, resolution } = this.props;
-    loader
-      .getVolume({ loaderSelection, resolution })
-      .then(({ data, width, height, depth }) => {
-        this.setState({ data, width, height, depth });
-      });
-  }
+export default class VolumeLayer extends CompositeLayer {
 
   updateState({ changeFlags, oldProps, props }) {
     const { propsChanged } = changeFlags;
@@ -106,7 +98,7 @@ export default class Static3DLayer extends CompositeLayer {
       });
     }
     // TODO: Figure out how to make this work with the built-in modelMatrix.
-    let modelMatrixNoApply = new Matrix4().identity();
+    let physicalSizeScalingMatrix = new Matrix4().identity();
     const {
       omexml: { PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY }
     } = loader;
@@ -116,16 +108,17 @@ export default class Static3DLayer extends CompositeLayer {
         PhysicalSizeY / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
         PhysicalSizeZ / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY)
       ];
-      modelMatrixNoApply = new Matrix4().scale(ratio);
+      physicalSizeScalingMatrix = new Matrix4().scale(ratio);
     }
+    if (!height || !width || !depth) return null;
     return new XR3DLayer({
-      channelData: Promise.resolve({ data, width, height, depth }),
+      channelData: { data, width, height, depth },
       sliderValues: paddedSliderValues,
       colorValues: paddedColorValues,
       id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,
       pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-      modelMatrixNoApply,
+      physicalSizeScalingMatrix,
       opacity,
       visible,
       colormap,
@@ -137,5 +130,5 @@ export default class Static3DLayer extends CompositeLayer {
   }
 }
 
-Static3DLayer.layerName = 'Static3DLayer';
-Static3DLayer.defaultProps = defaultProps;
+VolumeLayer.layerName = 'VolumeLayer';
+VolumeLayer.defaultProps = defaultProps;

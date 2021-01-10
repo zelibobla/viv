@@ -8,8 +8,8 @@ The major changes are:
 - Code has been adapted to the luma.gl/deck.gl framework instead of more-or-less pure WebGL.
 
 - We use a coordinate system that will allow overlays/other figures on our vertex shader/javascript.  
-Will implements everything in a unit cube (?) centered at the origin.  Our center is at the midpoint of
-the dimensions of the volume which will allow for pixel-space overlays.
+Will implements everything in a unit cube (I think?) centered at the origin.  Our center is at the midpoint of
+the dimensions of the volume which will allow for pixel-space overlays (i.e the top left back corner is the origin).
 
 - We use an OrbitView which is a similar camera to what Will has, but stops gimbal lock from happening
 by stopping full rotations whereas Will implements a camera that allows for full rotations without gimbal lock.
@@ -19,13 +19,10 @@ We could probably implement a similar camera in deck.gl but that is for another 
 
 - We need to handle different texture datatypes (Will uses R8 data?).
 
-- Will implements a sampling rate calculation on the fragment shader 
-that we do not to improve performance as the frame rate drops.
-
 - Will uses a colormap via a sampled texture, which is not a bad idea, but is not the direction we have gone in so far.
 So, if we want 3d colormaps, we'll need another shader.
 
-- 
+- We allow for multiple rendering settings (Max/Min Int. Proj., Additive, etc.)
 */
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
@@ -53,10 +50,93 @@ const CUBE_STRIP = [
 	0, 0, 0
 ];
 
+const MAX_INTENSITY_PROJECTION = 'maxIntensityProjection';
+const MIN_INTENSITY_PROJECTION = 'minIntensityProjection';
+const ADDITIVE = 'additive';
+
+
+const RENDERING_MODES = {
+  [MAX_INTENSITY_PROJECTION]: {
+    _BEFORE_RENDER: `\
+      float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+    `,
+    _RENDER: `\
+    
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+
+      for(int i = 0; i < 6; i++) {
+        if(intensityArray[i] > maxVals[i]) {
+          maxVals[i] = intensityArray[i];
+        }
+      }
+    `,
+    _AFTER_RENDER: `\
+      vec3 rgbCombo = vec3(0.0);
+      for(int i = 0; i < 6; i++) {
+        vec3 hsvCombo = rgb2hsv(vec3(colorValues[i]));
+        hsvCombo = vec3(hsvCombo.xy, maxVals[i]);
+        rgbCombo += hsv2rgb(hsvCombo);
+      }
+      color = vec4(rgbCombo, 1.0);
+    `
+  },
+  [MIN_INTENSITY_PROJECTION]: {
+    _BEFORE_RENDER: `\
+      float minVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+    `,
+    _RENDER: `\
+    
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+
+      for(int i = 0; i < 6; i++) {
+        if(intensityArray[i] < minVals[i]) {
+          minVals[i] = intensityArray[i];
+        }
+      }
+    `,
+    _AFTER_RENDER: `\
+      vec3 rgbCombo = vec3(0.0);
+      for(int i = 0; i < 6; i++) {
+        vec3 hsvCombo = rgb2hsv(vec3(colorValues[i]));
+        hsvCombo = vec3(hsvCombo.xy, minVals[i]);
+        rgbCombo += hsv2rgb(hsvCombo);
+      }
+      color = vec4(rgbCombo, 1.0);
+    `
+  },
+  [ADDITIVE]: {
+    _BEFORE_RENDER: ``,
+    _RENDER: `\
+      vec3 rgbCombo = vec3(0.0);
+      vec3 hsvCombo = vec3(0.0);
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+      float total = 0.0;
+      for(int i = 0; i < 6; i++) {
+        float intensityValue = intensityArray[i];
+        hsvCombo = rgb2hsv(vec3(colorValues[i]));
+        hsvCombo = vec3(hsvCombo.xy, intensityValue);
+        rgbCombo += hsv2rgb(hsvCombo);
+        total += intensityValue;
+      }
+      // Do not go past 1 in opacity.
+      total = min(total, 1.0);
+      vec4 val_color = vec4(rgbCombo, total);
+      // Opacity correction
+      val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
+      color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
+      color.a += (1.0 - color.a) * val_color.a;
+      if (color.a >= 0.95) {
+        break;
+      }
+    `,
+    _AFTER_RENDER: ``
+  }
+};
+
 const defaultProps = {
   pickable: false,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-  channelData: { type: 'object', value: {}, async: true },
+  channelData: { type: 'object', value: {}, compare: true },
   colorValues: { type: 'array', value: [], compare: true },
   sliderValues: { type: 'array', value: [], compare: true },
   opacity: { type: 'number', value: 1, compare: true },
@@ -64,7 +144,8 @@ const defaultProps = {
   colormap: { type: 'string', value: '', compare: true },
   xSlice: { type: 'array', value: [0, 1], compare: true },
   ySlice: { type: 'array', value: [0, 1], compare: true },
-  zSlice: { type: 'array', value: [0, 1], compare: true }
+  zSlice: { type: 'array', value: [0, 1], compare: true },
+  renderingMode: { type: 'string', value: ADDITIVE, compare: true }
 };
 /**
  * This is the 3D rendering layer.
@@ -92,60 +173,16 @@ export default class XR3DLayer extends Layer {
    * This function compiles the shaders and the projection module.
    */
   getShaders() {
-    const { colormap } = this.props;
+    const { colormap, renderingMode } = this.props;
     const fragmentShaderColormap = colormap
       ? fsColormap.replace('colormapFunction', colormap)
       : fs;
-    // const __RENDER_MODE = `\
-    //   vec3 rgbCombo = vec3(0.0);
-    //   vec3 hsvCombo = vec3(0.0);
-    //   float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
-    //   float total = 0.0;
-
-    //   for(int i = 0; i < 6; i++) {
-    //     float intensityValue = intensityArray[i];
-    //     hsvCombo = rgb2hsv(vec3(colorValues[i]));
-    //     hsvCombo = vec3(hsvCombo.xy, intensityValue);
-    //     rgbCombo += hsv2rgb(hsvCombo);
-    //     total += intensityValue;
-    //   }
-    //   // Do not go past 1 in opacity.
-    //   total = min(total, 1.0);
-
-    //   vec4 val_color = vec4(rgbCombo, total);
-
-    //   // Opacity correction
-    //   val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
-    //   color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
-    //   color.a += (1.0 - color.a) * val_color.a;
-    //   if (color.a >= 0.95) {
-    //     break;
-    //   }
-    // `
-    const __RENDER_MODE = `\
-    
-      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
-
-      for(int i = 0; i < 6; i++) {
-        if(intensityArray[i] > maxVals[i]) {
-          maxVals[i] = intensityArray[i];
-        }
-      }
-    `;
-    const __AFTER_RENDER = `\
-      vec3 rgbCombo = vec3(0.0);
-      for(int i = 0; i < 6; i++) {
-        vec3 hsvCombo = rgb2hsv(vec3(colorValues[i]));
-        hsvCombo = vec3(hsvCombo.xy, maxVals[i]);
-        rgbCombo += hsv2rgb(hsvCombo);
-      }
-      color = vec4(rgbCombo, 1.0);
-    `;
+    const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = RENDERING_MODES[renderingMode]
     return super.getShaders({
       vs,
-      fs: fragmentShaderColormap
-        .replace('__RENDER_MODE', __RENDER_MODE)
-        .replace('__AFTER_RENDER', __AFTER_RENDER),
+      fs: fragmentShaderColormap.replace('_BEFORE_RENDER', _BEFORE_RENDER)
+        .replace('_RENDER', _RENDER)
+        .replace('_AFTER_RENDER', _AFTER_RENDER),
       modules: [project32]
     });
   }
@@ -176,8 +213,7 @@ export default class XR3DLayer extends Layer {
     }
     if (
       props.channelData &&
-      oldProps.channelData &&
-      props.channelData.data !== oldProps.channelData.data
+      props?.channelData?.data !== oldProps?.channelData?.data
     ) {
       this.loadTexture(props.channelData);
     }
@@ -251,7 +287,7 @@ export default class XR3DLayer extends Layer {
       }, this);
       this.setState({
         textures,
-        volDims: this.props.modelMatrixNoApply.transformPoint([
+        volDims: this.props.physicalSizeScalingMatrix.transformPoint([
           width,
           height,
           depth

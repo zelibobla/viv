@@ -105,7 +105,7 @@ void main(void) {
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
-	float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+	_BEFORE_RENDER
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
 		float canShowXCoordinate = max(p.x - xSlice[0], 0.0) * max(xSlice[1] - p.x , 0.0);
 		float canShowYCoordinate = max(p.y - ySlice[0], 0.0) * max(ySlice[1] - p.y , 0.0);
@@ -118,11 +118,11 @@ void main(void) {
     float intensityValue4 = canShowCoordinate * max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
 		float intensityValue5 = canShowCoordinate * max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
 
-		__RENDER_MODE
+		_RENDER
 
 		p += ray_dir * dt;
 	}
-	__AFTER_RENDER
+	_AFTER_RENDER
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);

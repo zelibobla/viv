@@ -2,7 +2,7 @@ import {
   MultiscaleImageLayer,
   ImageLayer,
   ScaleBarLayer,
-  Static3DLayer,
+  VolumeLayer,
   XRLayer
 } from './layers';
 import {
@@ -27,7 +27,7 @@ export {
   DTYPE_VALUES,
   MAX_SLIDERS_AND_CHANNELS,
   ScaleBarLayer,
-  Static3DLayer,
+  VolumeLayer,
   MultiscaleImageLayer,
   XRLayer,
   VivViewer,
