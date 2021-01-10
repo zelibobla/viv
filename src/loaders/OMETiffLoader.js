@@ -194,7 +194,6 @@ export default class OMETiffLoader {
     const scale = resolution;
     const usePyramid = isPyramid && resolution > 0;
     const pyramidOffset = usePyramid ? scale * SizeZ * SizeT * SizeC : 0;
-    console.log(scale, this);
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
     let width;
@@ -206,13 +205,7 @@ export default class OMETiffLoader {
           tiff.ifdRequests[pyramidOffset] = tiff.parseFileDirectoryAt(
             firstImage.fileDirectory.SubIFDs[scale - 1]
           );
-          console.log(
-            firstImage,
-            scale,
-            firstImage.fileDirectory.SubIFDs[scale - 1]
-          );
         }
-        console.log('here', pyramidOffset);
         const resImage = await tiff.getImage(pyramidOffset);
         height = usePyramid ? resImage.getHeight() : SizeY;
         width = usePyramid ? resImage.getWidth() : SizeX;
