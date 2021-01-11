@@ -52,6 +52,7 @@ export default class OMETiffLoader {
     this.height = this.omexml.SizeY;
     this.tileSize = firstImage.getTileWidth();
     const { SubIFDs } = firstImage.fileDirectory;
+    console.log(SubIFDs, this.omexml.getNumberOfImages());
     this.numLevels = SubIFDs?.length
       ? SubIFDs.length + 1
       : this.omexml.getNumberOfImages();
@@ -71,6 +72,7 @@ export default class OMETiffLoader {
         this.channelNames.length === 1 &&
         this.omexml.Interleaved);
     this.isInterleaved = this.omexml.Interleaved;
+    console.log(this);
   }
 
   /**

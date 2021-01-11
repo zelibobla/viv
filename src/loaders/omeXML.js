@@ -53,7 +53,8 @@ export default class OMEXML {
   }
 
   getNumberOfImages() {
-    return this.metadataOMEXML.Image.length || 0;
+    console.log(this.metadataOMEXML.Image);
+    return this.metadataOMEXML.Image.length || 1;
   }
 
   get SamplesPerPixel() {
