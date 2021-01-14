@@ -164,6 +164,10 @@ export default class ZarrLoader {
           chunkKey[zIndex] = z * 2 ** resolution;
           const { data } = await source.getRaw(chunkKey);
           let r = 0;
+          if (source.dtype[0] === '>') {
+            // big endian
+            byteSwapInplace(data);
+          }
           while (r < rasterSize) {
             view[setMethodString](
               BYTES_PER_ELEMENT * (depth - z - 1) * rasterSize +
