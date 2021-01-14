@@ -47,7 +47,11 @@ export default class VolumeLayer extends CompositeLayer {
       // Only fetch new data to render if loader has changed
       const { loader, loaderSelection, resolution } = this.props;
       loader
-        .getVolume({ loaderSelection, resolution })
+        .getVolume({
+          loaderSelection,
+          resolution,
+          updateProgress: progress => this.setState({ progress })
+        })
         .then(({ data, width, height, depth }) => {
           this.setState({ data, width, height, depth });
         });
@@ -78,7 +82,7 @@ export default class VolumeLayer extends CompositeLayer {
       domain,
       dtype
     });
-    const { data, width, height, depth } = this.state;
+    const { data, width, height, depth, progress } = this.state;
     if (!(width && height)) {
       const { viewport } = this.context;
       return new TextLayer({
@@ -86,7 +90,10 @@ export default class VolumeLayer extends CompositeLayer {
         coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
         data: [
           {
-            text: 'Loading Volume (Firefox/Chrome Only)...',
+            text: `Loading Volume ${String((progress || 0) * 100).slice(
+              0,
+              5
+            )}% (Firefox/Chrome Only)...`,
             position: viewport.position
           }
         ],

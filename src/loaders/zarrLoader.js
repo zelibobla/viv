@@ -142,7 +142,11 @@ export default class ZarrLoader {
    * @param {Array} loaderSelection, Array of valid dimension selections
    * @returns {Object} data: TypedArray[], width: number, height: number
    */
-  async getVolume({ loaderSelection = [], resolution = 0 }) {
+  async getVolume({
+    loaderSelection = [],
+    resolution = 0,
+    updateProgress = () => {}
+  }) {
     const source = this._getSource(resolution);
     const [xIndex, yIndex, zIndex] = ['x', 'y', 'z'].map(k =>
       this._dimIndices.get(k)
@@ -152,7 +156,8 @@ export default class ZarrLoader {
     const { dtype } = this;
     const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
     const { BYTES_PER_ELEMENT } = TypedArray;
-    const dataRequests = loaderSelection.map(async sel => {
+    let progress = 0;
+    const dataRequests = loaderSelection.map(async (sel, i) => {
       const chunkKey = this._serializeSelection(sel);
       chunkKey[yIndex] = null;
       chunkKey[xIndex] = null;
@@ -162,7 +167,11 @@ export default class ZarrLoader {
       await Promise.all(
         new Array(depth).fill(0).map(async (_, z) => {
           chunkKey[zIndex] = z * 2 ** resolution;
+          progress += 0.1;
+          updateProgress(progress / (depth * loaderSelection.length));
           const { data } = await source.getRaw(chunkKey);
+          progress += 0.4;
+          updateProgress(progress / (depth * loaderSelection.length));
           let r = 0;
           if (source.dtype[0] === '>') {
             // big endian
@@ -176,6 +185,8 @@ export default class ZarrLoader {
             );
             r += 1;
           }
+          progress += 0.5;
+          updateProgress(progress / (depth * loaderSelection.length));
         })
       );
       return new TypedArray(view.buffer);

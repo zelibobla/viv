@@ -185,7 +185,7 @@ export default class OMETiffLoader {
     };
   }
 
-  async getVolume({ loaderSelection, resolution }) {
+  async getVolume({ loaderSelection, resolution, updateProgress = () => {} }) {
     const { tiff, omexml, pool, isPyramid } = this;
     const { SizeZ, SizeX, SizeY, SizeT, SizeC } = omexml;
     const { dtype } = this;
@@ -197,6 +197,7 @@ export default class OMETiffLoader {
     const zDownsampled = Math.floor(SizeZ / 2 ** scale);
     let height;
     let width;
+    let progress = 0;
     const volume = await Promise.all(
       loaderSelection.map(async sel => {
         if (usePyramid) {
@@ -227,8 +228,14 @@ export default class OMETiffLoader {
                 parentImage.fileDirectory.SubIFDs[scale - 1]
               );
             }
+            progress += 0.1;
+            updateProgress(progress / (zDownsampled * loaderSelection.length));
             const image = await tiff.getImage(pyramidIndex);
+            progress += 0.1;
+            updateProgress(progress / (zDownsampled * loaderSelection.length));
             const raster = await image.readRasters({ pool });
+            progress += 0.3;
+            updateProgress(progress / (zDownsampled * loaderSelection.length));
             let r = 0;
             while (r < rasterSize) {
               view[setMethodString](
@@ -240,6 +247,8 @@ export default class OMETiffLoader {
               );
               r += 1;
             }
+            progress += 0.5;
+            updateProgress(progress / (zDownsampled * loaderSelection.length));
           })
         );
         return new TypedArray(view.buffer);
