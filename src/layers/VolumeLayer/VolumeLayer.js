@@ -99,13 +99,17 @@ export default class VolumeLayer extends CompositeLayer {
     // TODO: Figure out how to make this work with the built-in modelMatrix.
     let physicalSizeScalingMatrix = new Matrix4().identity();
     const {
-      omexml: { PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY }
+      physicalSizes: {
+        x: { value: physicalSizeX },
+        y: { value: physicalSizeY },
+        z: { value: physicalSizeZ }
+      }
     } = loader;
-    if (PhysicalSizeZ && PhysicalSizeX && PhysicalSizeY) {
+    if (physicalSizeZ && physicalSizeX && physicalSizeY) {
       const ratio = [
-        PhysicalSizeX / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
-        PhysicalSizeY / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
-        PhysicalSizeZ / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY)
+        physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+        physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+        physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
       ];
       physicalSizeScalingMatrix = new Matrix4().scale(ratio);
     }

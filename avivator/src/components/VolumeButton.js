@@ -76,7 +76,7 @@ function VolumeButton({
               {Array.from({ length: loader.numLevels })
                 .fill(0)
                 .map((v, z) => {
-                  if (loader && loader.type === 'ome-tiff') {
+                  if (loader) {
                     const { height, width, depth } = loader.getRasterSize({
                       z
                     });

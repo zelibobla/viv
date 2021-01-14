@@ -104,6 +104,7 @@ export async function createLoader(
     if (e instanceof UnsupportedBrowserError) {
       handleLoaderError(e.message);
     } else {
+      console.error(e);
       handleLoaderError(null);
     }
     return null;

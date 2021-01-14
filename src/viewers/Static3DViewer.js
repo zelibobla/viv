@@ -29,30 +29,28 @@ const Static3DViewer = props => {
   const initialViewState = useMemo(() => {
     const {
       isPyramid,
-      omexml: {
-        SizeZ,
-        SizeX,
-        SizeY,
-        PhysicalSizeZ,
-        PhysicalSizeX,
-        PhysicalSizeY
+      physicalSizes: {
+        x: { value: physicalSizeX },
+        y: { value: physicalSizeY },
+        z: { value: physicalSizeZ }
       }
     } = loader;
+    const { depth, height, width } = loader.getRasterSize({ z: resolution });
     let ratio = { x: 1, z: 1, y: 1 };
-    if (PhysicalSizeZ && PhysicalSizeX && PhysicalSizeY) {
+    if (physicalSizeZ && physicalSizeX && physicalSizeY) {
       ratio = {
         x:
-          PhysicalSizeX / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
+          physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
         y:
-          PhysicalSizeY / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY),
-        z: PhysicalSizeZ / Math.min(PhysicalSizeZ, PhysicalSizeX, PhysicalSizeY)
+          physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+        z: physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
       };
     }
     return {
       target: [
-        (ratio.x * (isPyramid ? SizeX >> resolution : SizeX)) / 2,
-        (ratio.y * (isPyramid ? SizeY >> resolution : SizeY)) / 2,
-        (ratio.z * (SizeZ >> resolution)) / 2
+        (ratio.x * (isPyramid ? width : width)) / 2,
+        (ratio.y * (isPyramid ? height : height)) / 2,
+        (ratio.z * depth) / 2
       ],
       zoom: -2
     };

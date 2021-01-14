@@ -115,6 +115,20 @@ export async function createBioformatsZarrLoader({
   const omexmlString = new TextDecoder().decode(new Uint8Array(omexmlBuffer));
   const omexml = new OMEXML(omexmlString);
   const dimensions = dimensionsFromOMEXML(omexml);
+  const physicalSizes = {
+    x: {
+      value: omexml.PhysicalSizeX,
+      unit: omexml.PhysicalSizeXUnit
+    },
+    y: {
+      value: omexml.PhysicalSizeY,
+      unit: omexml.PhysicalSizeYUnit
+    },
+    z: {
+      value: omexml.PhysicalSizeZ,
+      unit: omexml.PhysicalSizeZUnit
+    }
+  };
 
   /*
    * Specifying different dimension orders form the METADATA.ome.xml is
@@ -146,10 +160,10 @@ export async function createBioformatsZarrLoader({
       );
     }
     const newDimensions = [...omeZarrDims, ...dimensions.slice(-2)]; // append YX dims
-    return new ZarrLoader({ data, dimensions: newDimensions });
+    return new ZarrLoader({ data, dimensions: newDimensions, physicalSizes });
   }
 
-  return new ZarrLoader({ data, dimensions });
+  return new ZarrLoader({ data, dimensions, physicalSizes });
 }
 
 /**

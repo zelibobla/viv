@@ -14,7 +14,8 @@ export default class ZarrLoader {
     isRgb,
     is3d,
     scale = 1,
-    translate = { x: 0, y: 0 }
+    translate = { x: 0, y: 0 },
+    physicalSizes
   }) {
     let base;
     if (Array.isArray(data)) {
@@ -30,6 +31,7 @@ export default class ZarrLoader {
     this.translate = translate;
     this.isRgb = isRgb || guessRgb(base.shape);
     this.dimensions = dimensions;
+    this.physicalSizes = physicalSizes;
 
     this._data = data;
     this._dimIndices = new Map();
@@ -140,28 +142,41 @@ export default class ZarrLoader {
    * @param {Array} loaderSelection, Array of valid dimension selections
    * @returns {Object} data: TypedArray[], width: number, height: number
    */
-  async getVolume({ loaderSelection = [] }) {
-    const source = this._getSource(
-      this.numLevels === 1 ? 0 : this.numLevels - 1
-    );
+  async getVolume({ loaderSelection = [], resolution = 0 }) {
+    const source = this._getSource(resolution);
     const [xIndex, yIndex, zIndex] = ['x', 'y', 'z'].map(k =>
       this._dimIndices.get(k)
     );
-
+    const { height, width, depth } = this.getRasterSize({ z: resolution });
+    const rasterSize = height * width;
+    const { dtype } = this;
+    const { TypedArray, setMethodString } = DTYPE_VALUES[dtype];
+    const { BYTES_PER_ELEMENT } = TypedArray;
     const dataRequests = loaderSelection.map(async sel => {
       const chunkKey = this._serializeSelection(sel);
       chunkKey[yIndex] = null;
       chunkKey[xIndex] = null;
-      chunkKey[zIndex] = null;
-      const { data } = await source.getRaw(chunkKey);
-      return data;
+      const view = new DataView(
+        new ArrayBuffer(depth * rasterSize * BYTES_PER_ELEMENT)
+      );
+      await Promise.all(
+        new Array(depth).fill(0).map(async (_, z) => {
+          chunkKey[zIndex] = z * 2 ** resolution;
+          const { data } = await source.getRaw(chunkKey);
+          let r = 0;
+          while (r < rasterSize) {
+            view[setMethodString](
+              BYTES_PER_ELEMENT * (depth - z - 1) * rasterSize +
+                BYTES_PER_ELEMENT * r,
+              Math.max(0, data[r])
+            );
+            r += 1;
+          }
+        })
+      );
+      return new TypedArray(view.buffer);
     });
-
     const data = await Promise.all(dataRequests);
-    const { shape } = source;
-    const width = shape[xIndex];
-    const height = shape[yIndex];
-    const depth = shape[zIndex];
     return { data, width, height, depth };
   }
 
@@ -185,8 +200,10 @@ export default class ZarrLoader {
    */
   getRasterSize({ z }) {
     const { shape } = this._getSource(z);
-    const [height, width] = ['y', 'x'].map(k => shape[this._dimIndices.get(k)]);
-    return { height, width };
+    const [height, width, depth] = ['y', 'x', 'z'].map(
+      k => shape[this._dimIndices.get(k)]
+    );
+    return { height, width, depth: depth >> z };
   }
 
   /**
