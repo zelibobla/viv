@@ -6,7 +6,12 @@ import {
   OverviewLayer,
   VolumeLayer
 } from './layers';
-import { VivViewer, PictureInPictureViewer, SideBySideViewer, Static3DViewer } from './viewers';
+import {
+  VivViewer,
+  PictureInPictureViewer,
+  SideBySideViewer,
+  Static3DViewer
+} from './viewers';
 import {
   VivView,
   OverviewView,
@@ -23,10 +28,11 @@ import {
   getChannelStats
 } from './loaders';
 import HTTPStore from './loaders/httpStore';
-import { DTYPE_VALUES, MAX_SLIDERS_AND_CHANNELS } from './constants';
+import { DTYPE_VALUES, MAX_SLIDERS_AND_CHANNELS, COLORMAPS } from './constants';
 
 export {
   DTYPE_VALUES,
+  COLORMAPS,
   MAX_SLIDERS_AND_CHANNELS,
   ScaleBarLayer,
   VolumeLayer,

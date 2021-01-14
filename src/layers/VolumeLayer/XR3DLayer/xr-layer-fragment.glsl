@@ -111,12 +111,12 @@ void main(void) {
 		float canShowYCoordinate = max(p.y - ySlice[0], 0.0) * max(ySlice[1] - p.y , 0.0);
 		float canShowZCoordinate = max(p.z - zSlice[0], 0.0) * max(zSlice[1] - p.z , 0.0);
 		float canShowCoordinate = float(ceil(canShowXCoordinate * canShowYCoordinate * canShowZCoordinate));
-    float intensityValue0 = canShowCoordinate * max((float(texture(volume0, p).r) - sliderValues[0][0]) / sliderValues[0][1], 0.0);
-    float intensityValue1 = canShowCoordinate * max((float(texture(volume1, p).r) - sliderValues[1][0]) / sliderValues[1][1], 0.0);
-		float intensityValue2 = canShowCoordinate * max((float(texture(volume2, p).r) - sliderValues[2][0]) / sliderValues[2][1], 0.0);
-		float intensityValue3 = canShowCoordinate * max((float(texture(volume3, p).r) - sliderValues[3][0]) / sliderValues[3][1], 0.0);
-    float intensityValue4 = canShowCoordinate * max((float(texture(volume4, p).r) - sliderValues[4][0]) / sliderValues[4][1], 0.0);
-		float intensityValue5 = canShowCoordinate * max((float(texture(volume5, p).r) - sliderValues[5][0]) / sliderValues[5][1], 0.0);
+    float intensityValue0 = canShowCoordinate * sample_and_apply_sliders(volume0, p, sliderValues[0]);
+    float intensityValue1 = canShowCoordinate * sample_and_apply_sliders(volume1, p, sliderValues[1]);
+		float intensityValue2 = canShowCoordinate * sample_and_apply_sliders(volume2, p, sliderValues[2]);
+		float intensityValue3 = canShowCoordinate * sample_and_apply_sliders(volume3, p, sliderValues[3]);
+    float intensityValue4 = canShowCoordinate * sample_and_apply_sliders(volume4, p, sliderValues[4]);
+		float intensityValue5 = canShowCoordinate * sample_and_apply_sliders(volume5, p, sliderValues[5]);
 
 		_RENDER
 

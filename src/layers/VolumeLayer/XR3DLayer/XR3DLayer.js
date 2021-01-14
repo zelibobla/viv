@@ -30,7 +30,8 @@ import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
 import vs from './xr-layer-vertex.glsl';
 import fsColormap from './xr-layer-fragment-colormap.glsl';
 import fs from './xr-layer-fragment.glsl';
-import { DTYPE_VALUES } from '../../constants';
+import channels from './channel-intensity-module';
+import { DTYPE_VALUES, COLORMAPS } from '../../../constants';
 
 // prettier-ignore
 const CUBE_STRIP = [
@@ -173,19 +174,37 @@ export default class XR3DLayer extends Layer {
    */
   getShaders() {
     const { colormap, renderingMode } = this.props;
-    const fragmentShaderColormap = colormap
-      ? fsColormap.replace('colormapFunction', colormap)
-      : fs;
+    const fragmentShaderColormap = colormap ? fsColormap : fs;
     const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = RENDERING_MODES[
       renderingMode
     ];
+    // Always include viridis so shaders compile
+    const discardColormaps = COLORMAPS.filter(
+      i => i !== (colormap || 'viridis')
+    ).map(i => i.replace(/-/g, '_'));
+    const discardRegex = new RegExp(
+      `vec4 (${discardColormaps.join(
+        '(_([0-9]*))?|'
+      )})\\(float x_[0-9]+\\){([^}]+)}`,
+      'g'
+    );
+    const channelsModules = {
+      ...channels,
+      fs: channels.fs.replace(discardRegex, ''),
+      defines: {
+        _COLORMAP_FUNCTION: colormap || 'viridis'
+      }
+    };
     return super.getShaders({
       vs,
       fs: fragmentShaderColormap
         .replace('_BEFORE_RENDER', _BEFORE_RENDER)
         .replace('_RENDER', _RENDER)
         .replace('_AFTER_RENDER', _AFTER_RENDER),
-      modules: [project32]
+      defines: {
+        _COLORMAP_FUNCTION: colormap || 'viridis'
+      },
+      modules: [project32, channelsModules]
     });
   }
 
