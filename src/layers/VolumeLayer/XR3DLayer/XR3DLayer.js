@@ -31,7 +31,11 @@ import vs from './xr-layer-vertex.glsl';
 import fsColormap from './xr-layer-fragment-colormap.glsl';
 import fs from './xr-layer-fragment.glsl';
 import channels from './channel-intensity-module';
-import { DTYPE_VALUES, COLORMAPS } from '../../../constants';
+import {
+  DTYPE_VALUES,
+  COLORMAPS,
+  RENDERING_MODES as RENDERING_NAMES
+} from '../../../constants';
 
 // prettier-ignore
 const CUBE_STRIP = [
@@ -51,12 +55,8 @@ const CUBE_STRIP = [
 	0, 0, 0
 ];
 
-const MAX_INTENSITY_PROJECTION = 'maxIntensityProjection';
-const MIN_INTENSITY_PROJECTION = 'minIntensityProjection';
-const ADDITIVE = 'additive';
-
 const RENDERING_MODES = {
-  [MAX_INTENSITY_PROJECTION]: {
+  [RENDERING_NAMES.MAX_INTENSITY_PROJECTION]: {
     _BEFORE_RENDER: `\
       float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
     `,
@@ -80,9 +80,9 @@ const RENDERING_MODES = {
       color = vec4(rgbCombo, 1.0);
     `
   },
-  [MIN_INTENSITY_PROJECTION]: {
+  [RENDERING_NAMES.MIN_INTENSITY_PROJECTION]: {
     _BEFORE_RENDER: `\
-      float minVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+      float minVals[6] = float[6](1. / 0., 1. / 0., 1. / 0., 1. / 0., 1. / 0., 1. / 0.);
     `,
     _RENDER: `\
     
@@ -104,7 +104,7 @@ const RENDERING_MODES = {
       color = vec4(rgbCombo, 1.0);
     `
   },
-  [ADDITIVE]: {
+  [RENDERING_NAMES.ADDITIVE]: {
     _BEFORE_RENDER: ``,
     _RENDER: `\
       vec3 rgbCombo = vec3(0.0);
@@ -145,7 +145,11 @@ const defaultProps = {
   xSlice: { type: 'array', value: [0, 1], compare: true },
   ySlice: { type: 'array', value: [0, 1], compare: true },
   zSlice: { type: 'array', value: [0, 1], compare: true },
-  renderingMode: { type: 'string', value: ADDITIVE, compare: true }
+  renderingMode: {
+    type: 'string',
+    value: RENDERING_NAMES.ADDITIVE,
+    compare: true
+  }
 };
 /**
  * This is the 3D rendering layer.
@@ -225,7 +229,11 @@ export default class XR3DLayer extends Layer {
    */
   updateState({ props, oldProps, changeFlags }) {
     // setup model first
-    if (changeFlags.extensionsChanged || props.colormap !== oldProps.colormap) {
+    if (
+      changeFlags.extensionsChanged ||
+      props.colormap !== oldProps.colormap ||
+      props.renderingMode !== oldProps.renderingMode
+    ) {
       const { gl } = this.context;
       if (this.state.model) {
         this.state.model.delete();

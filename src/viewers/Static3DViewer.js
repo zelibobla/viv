@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import VivViewer from './VivViewer';
 import { Static3DView } from '../views';
 import { getScaleForSize } from '../loaders/utils';
+import { RENDERING_MODES } from '../constants';
 
 /**
  * This component provides a component for viewing a 3D volume.
@@ -24,7 +25,8 @@ const Static3DViewer = props => {
     xSlice,
     ySlice,
     zSlice,
-    resolution
+    resolution,
+    renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
   const initialViewState = useMemo(() => {
     const {
@@ -67,7 +69,8 @@ const Static3DViewer = props => {
     xSlice,
     ySlice,
     zSlice,
-    resolution
+    resolution,
+    renderingMode
   };
   const views = [detailView];
   const layerProps = [layerConfig];

@@ -29,12 +29,18 @@ import {
   getChannelStats
 } from './loaders';
 import HTTPStore from './loaders/httpStore';
-import { DTYPE_VALUES, MAX_SLIDERS_AND_CHANNELS, COLORMAPS } from './constants';
+import {
+  DTYPE_VALUES,
+  MAX_SLIDERS_AND_CHANNELS,
+  COLORMAPS,
+  RENDERING_MODES
+} from './constants';
 
 export {
   DTYPE_VALUES,
   COLORMAPS,
   MAX_SLIDERS_AND_CHANNELS,
+  RENDERING_MODES,
   ScaleBarLayer,
   VolumeLayer,
   MultiscaleImageLayer,

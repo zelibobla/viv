@@ -12,7 +12,8 @@ import {
   SideBySideViewer,
   PictureInPictureViewer,
   Static3DViewer,
-  getChannelStats
+  getChannelStats,
+  RENDERING_MODES
 } from '../../dist';
 import {
   createLoader,
@@ -29,6 +30,7 @@ import ColormapSelect from './components/ColormapSelect';
 import GlobalSelectionSlider from './components/GlobalSelectionSlider';
 import LensSelect from './components/LensSelect';
 import VolumeButton from './components/VolumeButton';
+import RenderingModeSelect from './components/RenderingModeSelect';
 import {
   LoaderError,
   OffsetsWarning,
@@ -70,6 +72,7 @@ export default function Avivator(props) {
   const [lensSelection, setLensSelection] = useState(0);
   const [source, setSource] = useState(initSource);
   const [colormap, setColormap] = useState('');
+  const [renderingMode, setRenderingMode] = useState(RENDERING_MODES.ADDITIVE);
   const [isLoading, setIsLoading] = useState(true);
   const [pixelValues, setPixelValues] = useState([]);
   const [dimensions, setDimensions] = useState([]);
@@ -363,6 +366,7 @@ export default function Avivator(props) {
               ySlice={ySlice}
               zSlice={zSlice}
               resolution={resolution}
+              renderingMode={renderingMode}
             />
           )}
         </DropzoneWrapper>
@@ -380,6 +384,13 @@ export default function Avivator(props) {
             <ColormapSelect
               value={colormap}
               handleChange={setColormap}
+              disabled={isLoading}
+            />
+          )}
+          {use3d && (
+            <RenderingModeSelect
+              value={renderingMode}
+              handleChange={setRenderingMode}
               disabled={isLoading}
             />
           )}

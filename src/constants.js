@@ -42,8 +42,7 @@ export const DTYPE_VALUES = {
     setMethodString: 'setFloat32',
     // Not sure what to do about this one - a good use case for channel stats, I suppose:
     // https://en.wikipedia.org/wiki/Single-precision_floating-point_format.
-    max: 3.4 * 10 ** 38,
-    TypedArray: Float32Array
+    max: 3.4 * 10 ** 38
   }
 };
 
@@ -96,3 +95,9 @@ export const COLORMAPS = [
   'cubehelix'
 ];
 export const GLOBAL_SLIDER_DIMENSION_FIELDS = ['z', 'time'];
+
+export const RENDERING_MODES = {
+  MAX_INTENSITY_PROJECTION: 'Maximum Intensity Projection',
+  MIN_INTENSITY_PROJECTION: 'Minimum Intensity Projection',
+  ADDITIVE: 'Additive'
+};
