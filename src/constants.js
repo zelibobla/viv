@@ -95,3 +95,4 @@ export const COLORMAPS = [
   'velocity-green',
   'cubehelix'
 ];
+export const GLOBAL_SLIDER_DIMENSION_FIELDS = ['z', 'time'];

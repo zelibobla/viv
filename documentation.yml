@@ -1,39 +1,33 @@
 toc:
-- name: Introduction
-  file: README.md
-- name: Getting Started
-  file: docs/SAMPLES.md
-- name: More in Depth
-  file: docs/API_STRUCTURE.md
-- name: Data preparation
-  file: tutorial/README.md
-- name: Viewers (React Components)
-- PictureInPictureViewer
-- SideBySideViewer
-- Static3DViewer
-- VivViewer
-- name: Views
-- VivView
-- OverviewView
-- DetailView
-- Static3DView
-- SideBySideView
-- name: Utility Methods
-- getChannelStats
-- name: Layers
-- MultiscaleImageLayer
-- ImageLayer
-- ScaleBarLayer
-- VolumeLayer
-- name: Loaders
-- createOMETiffLoader
-- OMETiffLoader
-- ZarrLoader
-- name: Internal
-- XRLayer
-- XR3DLayer
-- OverviewLayer
-- MultiscaleImageLayerBase
-- makeBoundingBox
-- Pool
-
+  - name: Introduction
+    file: README.md
+  - name: Getting Started
+    file: docs/SAMPLES.md
+  - name: More in Depth
+    file: docs/API_STRUCTURE.md
+  - name: Data preparation
+    file: tutorial/README.md
+  - name: Viewers (React Components)
+  - PictureInPictureViewer
+  - SideBySideViewer
+  - Static3DViewer
+  - VivViewer
+  - name: Views
+  - VivView
+  - OverviewView
+  - DetailView
+  - Static3DView
+  - SideBySideView
+  - name: Utility Methods
+  - getChannelStats
+  - getDefaultInitialViewState
+  - name: Layers
+  - MultiscaleImageLayer
+  - ImageLayer
+  - ScaleBarLayer
+  - VolumeLayer
+  - XRLayer
+  - name: Loaders
+  - createOMETiffLoader
+  - OMETiffLoader
+  - ZarrLoader

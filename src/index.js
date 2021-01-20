@@ -4,7 +4,8 @@ import {
   ScaleBarLayer,
   XRLayer,
   OverviewLayer,
-  VolumeLayer
+  VolumeLayer,
+  BitmapLayer
 } from './layers';
 import {
   VivViewer,
@@ -39,6 +40,7 @@ export {
   MultiscaleImageLayer,
   XRLayer,
   OverviewLayer,
+  BitmapLayer,
   VivViewer,
   VivView,
   OverviewView,

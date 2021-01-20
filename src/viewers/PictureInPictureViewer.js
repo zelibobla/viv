@@ -7,6 +7,8 @@ import {
   DETAIL_VIEW_ID,
   OVERVIEW_VIEW_ID
 } from '../views';
+import useGlobalSelection from './global-selection-hook';
+import { GLOBAL_SLIDER_DIMENSION_FIELDS } from '../constants';
 
 /**
  * This component provides a component for an overview-detail VivViewer of an image (i.e picture-in-picture).
@@ -15,14 +17,15 @@ import {
  * @param {Array} props.colorValues List of [r, g, b] values for each channel.
  * @param {Array} props.channelIsOn List of boolean values for each channel for whether or not it is visible.
  * @param {string} props.colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
- * @param {Object} props.loader Loader to be used for fetching data.  It must have the properies `dtype`, `numLevels`, `isPyramid`, and `tileSize` and implement `getTile`, `getRaster`, and `getRasterSize`.
+ * @param {Object} props.loader Loader to be used for fetching data.  It must have the properies `dtype`, `numLevels`, `isPyramid`, `isRgb`, `isInterleaved`, and `tileSize` and implement `getTile`, `getRaster`, and `getRasterSize`.
  * @param {Array} props.loaderSelection Selection to be used for fetching data.
  * @param {Object} props.overview Allows you to pass settings into the OverviewView: { scale, margin, position, minimumWidth, maximumWidth,
  * boundingBoxColor, boundingBoxOutlineWidth, viewportOutlineColor, viewportOutlineWidth}.  See http://viv.gehlenborglab.org/#overviewview for defaults.
  * @param {Boolean} props.overviewOn Whether or not to show the OverviewView.
  * @param {Object} props.hoverHooks Object including the allowable hooks - right now only accepting a function with key handleValue like { handleValue: (valueArray) => {} } where valueArray
  * has the pixel values for the image under the hover location.
- * @param {Object} props.initialViewState Object like { target: [x, y, 0], zoom: -zoom } for initializing where the viewer looks (optional - this can be inferred from height/width/loader).
+ * @param {number} props.initialViewState Object like { target: [x, y, 0], zoom: -zoom } for initializing where the viewer looks (optional - this is inferred from height/width/loader
+ * internally by default using getDefaultInitialViewState).
  * @param {number} props.height Current height of the component.
  * @param {number} props.width Current width of the component.
  * @param {boolean} [props.isLensOn] Whether or not to use the lens (deafult false).
@@ -32,7 +35,12 @@ import {
  * @param {number} [props.lensBorderRadius] Percentage of the radius of the lens for a border (default 0.02).
  * @param {number} [props.lensBorderRadius] Percentage of the radius of the lens for a border (default 0.02).
  * @param {Boolean} [props.clickCenter] Click to center the default view. Default is true.
+ * @param {Array} [props.transparentColor] An RGB (0-255 range) color to be considered "transparent" if provided.
+ * In other words, any fragment shader output equal transparentColor (before applying opacity) will have opacity 0.
+ * This parameter only needs to be a truthy value when using colormaps because each colormap has its own transparent color that is calculated on the shader.
+ * Thus setting this to a truthy value (with a colormap set) indicates that the shader should make that color transparent.
  * @param {import('./VivViewer').ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
+ * @param {Array} [transitionFields] A string array indicating which fields require a transition: Default: ['time', 'z'].
  */
 
 const PictureInPictureViewer = props => {
@@ -55,10 +63,18 @@ const PictureInPictureViewer = props => {
     lensBorderColor = [255, 255, 255],
     lensBorderRadius = 0.02,
     clickCenter = true,
-    onViewStateChange
+    transparentColor,
+    onViewStateChange,
+    transitionFields = GLOBAL_SLIDER_DIMENSION_FIELDS
   } = props;
+  const {
+    newLoaderSelection,
+    oldLoaderSelection,
+    onViewportLoad
+  } = useGlobalSelection(loaderSelection, transitionFields);
   const viewState =
-    initialViewState || getDefaultInitialViewState(loader, { height, width });
+    initialViewState ||
+    getDefaultInitialViewState(loader, { height, width }, 0.5);
   const detailViewState = { ...viewState, id: DETAIL_VIEW_ID };
   const detailView = new DetailView({
     initialViewState: detailViewState,
@@ -70,13 +86,17 @@ const PictureInPictureViewer = props => {
     sliderValues,
     colorValues,
     channelIsOn,
-    loaderSelection,
+    loaderSelection: oldLoaderSelection,
+    newLoaderSelection,
+    onViewportLoad,
+    transitionFields,
     colormap,
     isLensOn,
     lensSelection,
     lensRadius,
     lensBorderColor,
-    lensBorderRadius
+    lensBorderRadius,
+    transparentColor
   };
   const views = [detailView];
   const layerProps = [layerConfig];
