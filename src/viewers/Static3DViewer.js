@@ -57,8 +57,11 @@ const Static3DViewer = props => {
       zoom: -2
     };
   }, [loader, resolution]);
-  const detailViewState = { ...initialViewState, id: 'detail' };
-  const detailView = new Static3DView({ initialViewState: detailViewState });
+  const viewStates = [{ ...initialViewState, id: '3d' }];
+  const threeDView = new Static3DView({
+    id: '3d',
+    target: initialViewState.target
+  });
   const layerConfig = {
     loader,
     sliderValues,
@@ -72,9 +75,11 @@ const Static3DViewer = props => {
     resolution,
     renderingMode
   };
-  const views = [detailView];
+  const views = [threeDView];
   const layerProps = [layerConfig];
-  return loader ? <VivViewer layerProps={layerProps} views={views} /> : null;
+  return loader ? (
+    <VivViewer layerProps={layerProps} views={views} viewStates={viewStates} />
+  ) : null;
 };
 
 export default Static3DViewer;
