@@ -86,7 +86,6 @@
     "geotiff": "ilan-gold/geotiff.js#ilan-gold/viv_083",
     "math.gl": "^3.3.0",
     "quickselect": "^2.0.0",
-    "react-router-dom": "^5.2.0",
     "zarr": "^0.3.0"
   },
   "prettier": {

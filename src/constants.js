@@ -46,8 +46,6 @@ export const DTYPE_VALUES = {
   }
 };
 
-export const NO_WEBGL2 = !document.createElement('canvas').getContext('webgl2');
-
 export const COLORMAPS = [
   'jet',
   'hsv',
