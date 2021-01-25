@@ -39,22 +39,31 @@ const defaultProps = {
 export default class VolumeLayer extends CompositeLayer {
   updateState({ changeFlags, oldProps, props }) {
     const { propsChanged } = changeFlags;
-    const loaderSelectionChanged =
-      props.loaderSelection !== oldProps.loaderSelection;
     const loaderChanged =
       typeof propsChanged === 'string' && propsChanged.includes('props.loader');
+    const loaderSelectionChanged =
+      props.loaderSelection !== oldProps.loaderSelection;
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, loaderSelection, resolution } = this.props;
-      loader
-        .getVolume({
-          loaderSelection,
-          resolution,
-          updateProgress: progress => this.setState({ progress })
-        })
-        .then(({ data, width, height, depth }) => {
-          this.setState({ data, width, height, depth });
-        });
+      const { loader, loaderSelection = [], resolution = 0 } = this.props;
+      const getVolume = selection =>
+        loader[resolution].getVolume(
+          { selection },
+          progress => this.setState({ progress }),
+          2 ** resolution
+        );
+      const dataPromises = loaderSelection.map(getVolume);
+
+      Promise.all(dataPromises).then(volumes => {
+        const volume = {
+          data: volumes.map(d => d.data),
+          width: volumes[0].width,
+          height: volumes[0].height,
+          depth: volumes[0].depth
+        };
+
+        this.setState({ ...volume });
+      });
     }
   }
 
@@ -68,14 +77,14 @@ export default class VolumeLayer extends CompositeLayer {
       channelIsOn,
       domain,
       colormap,
-      z,
+      z = 0,
       id,
       xSlice,
       ySlice,
       zSlice,
       renderingMode
     } = this.props;
-    const { dtype } = loader;
+    const { dtype } = loader[z];
     const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
       sliderValues,
       colorValues,
@@ -108,11 +117,11 @@ export default class VolumeLayer extends CompositeLayer {
     let physicalSizeScalingMatrix = new Matrix4().identity();
     const {
       physicalSizes: {
-        x: { value: physicalSizeX },
-        y: { value: physicalSizeY },
-        z: { value: physicalSizeZ }
+        x: { size: physicalSizeX },
+        y: { size: physicalSizeY },
+        z: { size: physicalSizeZ }
       }
-    } = loader;
+    } = loader[z].meta;
     if (physicalSizeZ && physicalSizeX && physicalSizeY) {
       const ratio = [
         physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),

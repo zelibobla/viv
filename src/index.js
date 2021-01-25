@@ -23,15 +23,6 @@ import {
   OVERVIEW_VIEW_ID
 } from './views';
 import {
-  createZarrLoader,
-  createBioformatsZarrLoader,
-  ZarrLoader,
-  createOMETiffLoader,
-  OMETiffLoader,
-  getChannelStats
-} from './loaders';
-import HTTPStore from './loaders/httpStore';
-import {
   DTYPE_VALUES,
   MAX_SLIDERS_AND_CHANNELS,
   COLORMAPS,
@@ -57,15 +48,10 @@ export {
   SideBySideView,
   DETAIL_VIEW_ID,
   OVERVIEW_VIEW_ID,
-  getChannelStats,
   SideBySideViewer,
   Static3DViewer,
   DetailView,
-  ImageLayer,
-  ZarrLoader,
-  OMETiffLoader,
-  createOMETiffLoader,
-  createZarrLoader,
-  createBioformatsZarrLoader,
-  HTTPStore
+  ImageLayer
 };
+
+export * from './loaders';

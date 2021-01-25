@@ -10,7 +10,7 @@ export const DEFAULT_FONT_FAMILY =
   "-apple-system, 'Helvetica Neue', Arial, sans-serif";
 
 export const DTYPE_VALUES = {
-  '<u1': {
+  Uint8: {
     format: GL.R8UI,
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_BYTE,
@@ -18,7 +18,7 @@ export const DTYPE_VALUES = {
     TypedArray: Uint8Array,
     setMethodString: 'setUint8'
   },
-  '<u2': {
+  Uint16: {
     format: GL.R16UI,
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_SHORT,
@@ -26,7 +26,7 @@ export const DTYPE_VALUES = {
     TypedArray: Uint16Array,
     setMethodString: 'setUint16'
   },
-  '<u4': {
+  Uint32: {
     format: GL.R32UI,
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_INT,
@@ -34,7 +34,7 @@ export const DTYPE_VALUES = {
     TypedArray: Uint32Array,
     setMethodString: 'setUint32'
   },
-  '<f4': {
+  Float32: {
     format: GL.R32F,
     dataFormat: GL.RED,
     type: GL.FLOAT,
@@ -44,7 +44,7 @@ export const DTYPE_VALUES = {
     // https://en.wikipedia.org/wiki/Single-precision_floating-point_format.
     max: 3.4 * 10 ** 38
   }
-};
+} as const;
 
 export const COLORMAPS = [
   'jet',
@@ -92,10 +92,10 @@ export const COLORMAPS = [
   'velocity-green',
   'cubehelix'
 ];
-export const GLOBAL_SLIDER_DIMENSION_FIELDS = ['z', 'time'];
 
 export const RENDERING_MODES = {
   MAX_INTENSITY_PROJECTION: 'Maximum Intensity Projection',
   MIN_INTENSITY_PROJECTION: 'Minimum Intensity Projection',
   ADDITIVE: 'Additive'
 };
+export const GLOBAL_SLIDER_DIMENSION_FIELDS = ['z', 't'];

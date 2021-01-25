@@ -9,7 +9,7 @@ import MenuList from '@material-ui/core/MenuList';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { DTYPE_VALUES } from '../../../dist';
+import { getImageSize } from '../../../dist';
 
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
@@ -73,19 +73,21 @@ function VolumeButton({
         <Paper className={classes.paper}>
           <ClickAwayListener onClickAway={toggle}>
             <MenuList id="resolution-options">
-              {Array.from({ length: loader.numLevels })
+              {Array.from({ length: loader.length })
                 .fill(0)
                 .map((v, z) => {
                   if (loader) {
-                    const { height, width, depth } = loader.getRasterSize({
-                      z
-                    });
-                    const { dtype } = loader;
-                    const { TypedArray } = DTYPE_VALUES[dtype];
-                    const { BYTES_PER_ELEMENT } = TypedArray;
+                    const { shape, labels } = loader[z];
+                    const height = shape[labels.indexOf('y')];
+                    const width = shape[labels.indexOf('x')];
+                    const depth = shape[labels.indexOf('z')];
+                    const depthDownsampled = Math.floor(depth / 2 ** z);
+                    const { dtype } = loader[z];
+                    const name = `${dtype}Array`;
+                    const { BYTES_PER_ELEMENT } = globalThis[name];
                     // Check memory allocation limits
                     const totalBytes =
-                      BYTES_PER_ELEMENT * height * width * depth;
+                      BYTES_PER_ELEMENT * height * width * depthDownsampled;
                     const maxHeapSize =
                       window.performance?.memory &&
                       window.performance?.memory?.jsHeapSizeLimit / 2;
@@ -100,11 +102,11 @@ function VolumeButton({
                             toggleUse3d();
                             toggle();
                           }}
-                          key={`(${height}, ${width}, ${depth})`}
+                          key={`(${height}, ${width}, ${depthDownsampled})`}
                         >
                           {`${z}x Downsampled, ~${formatBytes(
                             totalBytes
-                          )} per channel, (${height}, ${width}, ${depth})`}
+                          )} per channel, (${height}, ${width}, ${depthDownsampled})`}
                         </MenuItem>
                       );
                     }

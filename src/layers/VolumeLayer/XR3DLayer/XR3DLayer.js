@@ -329,7 +329,7 @@ export default class XR3DLayer extends Layer {
    * This function creates textures from the data
    */
   dataToTexture(data, width, height, depth) {
-    const { format, dataFormat, type } = DTYPE_VALUES['<f4'];
+    const { format, dataFormat, type } = DTYPE_VALUES.Float32;
     const texture = new Texture3D(this.context.gl, {
       width,
       height,

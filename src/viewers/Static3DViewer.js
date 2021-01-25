@@ -30,14 +30,17 @@ const Static3DViewer = props => {
   } = props;
   const initialViewState = useMemo(() => {
     const {
-      isPyramid,
       physicalSizes: {
-        x: { value: physicalSizeX },
-        y: { value: physicalSizeY },
-        z: { value: physicalSizeZ }
+        x: { size: physicalSizeX },
+        y: { size: physicalSizeY },
+        z: { size: physicalSizeZ }
       }
-    } = loader;
-    const { depth, height, width } = loader.getRasterSize({ z: resolution });
+    } = loader[resolution].meta;
+    const { shape, labels } = loader[resolution];
+    const height = shape[labels.indexOf('y')];
+    const width = shape[labels.indexOf('x')];
+    const depth = shape[labels.indexOf('z')];
+    const depthDownsampled = Math.floor(depth / 2 ** resolution);
     let ratio = { x: 1, z: 1, y: 1 };
     if (physicalSizeZ && physicalSizeX && physicalSizeY) {
       ratio = {
@@ -50,9 +53,9 @@ const Static3DViewer = props => {
     }
     return {
       target: [
-        (ratio.x * (isPyramid ? width : width)) / 2,
-        (ratio.y * (isPyramid ? height : height)) / 2,
-        (ratio.z * depth) / 2
+        (ratio.x * width) / 2,
+        (ratio.y * height) / 2,
+        (ratio.z * depthDownsampled) / 2
       ],
       zoom: -2
     };

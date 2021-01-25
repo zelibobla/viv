@@ -37,7 +37,7 @@ function LensSelect({
         >
           {channelOptions.map((opt, i) => (
             // eslint-disable-next-line react/no-array-index-key
-            <option key={`${opt}-${i}`} value={i}>
+            <option key={opt + i} value={i}>
               {opt}
             </option>
           ))}
