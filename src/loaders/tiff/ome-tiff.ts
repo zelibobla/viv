@@ -23,7 +23,6 @@ export async function load(tiff: GeoTIFF) {
     SubIFDs,
     PhotometricInterpretation: photometricInterpretation
   } = firstImage.fileDirectory;
-  console.log(firstImage);
   const omexml = fromString(ImageDescription);
 
   /*
