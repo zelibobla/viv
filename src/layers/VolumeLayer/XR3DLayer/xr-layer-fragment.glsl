@@ -12,6 +12,8 @@ uniform highp sampler3D volume5;
 
 uniform vec3 scaledDimensions;
 
+uniform mat4 modelMatrix;
+
 // range
 uniform vec2 sliderValues[6];
 
@@ -39,15 +41,6 @@ vec2 intersect_box(vec3 orig, vec3 dir) {
   float t1 = min(tmax.x, min(tmax.y, tmax.z));
   vec2 val = vec2(t0, t1);
 	return val;
-}
-
-float wang_hash(int seed) {
-	seed = (seed ^ 61) ^ (seed >> 16);
-	seed *= 9;
-	seed = seed ^ (seed >> 4);
-	seed *= 0x27d4eb2d;
-	seed = seed ^ (seed >> 15);
-	return float(seed % 2147483647) / float(2147483647);
 }
 
 float linear_to_srgb(float x) {
@@ -92,18 +85,28 @@ vec3 rgb2hsv(vec3 rgb) {
 
 
 void main(void) {
-  vec3 ray_dir = normalize(vray_dir);
-  vec2 t_hit = intersect_box(transformed_eye, ray_dir);
-  if (t_hit.x > t_hit.y) {
-    discard;
-  }
-  t_hit.x = max(t_hit.x, 0.0);
-  vec3 dt_vec = 1.0 / (scaledDimensions * abs(ray_dir));
-	// The dt parameter is too small and needs to be a little bigger to prevent a bulls-eye artifact.
-	float extraDt = 1.1;
-  float dt = extraDt * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
-	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
-	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
+	// Step 1: Normalize the view ray
+	vec3 ray_dir = normalize(vray_dir);
+
+	// Step 2: Intersect the ray with the volume bounds to find the interval
+	// along the ray overlapped by the volume.
+	vec2 t_hit = intersect_box(transformed_eye, ray_dir);
+	if (t_hit.x > t_hit.y) {
+		discard;
+	}
+	// We don't want to sample voxels behind the eye if it's
+	// inside the volume, so keep the starting point at or in front
+	// of the eye
+	t_hit.x = max(t_hit.x, 0.0);
+
+	// Step 3: Compute the step size to march through the volume grid
+	vec3 dt_vec = 1.0 / (scaledDimensions * abs(ray_dir));
+	float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
+
+	// Step 4: Starting from the entry point, march the ray through the volume
+	// and sample it
+	vec3 p = transformed_eye + t_hit.x * ray_dir;
+
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
 	_BEFORE_RENDER
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {

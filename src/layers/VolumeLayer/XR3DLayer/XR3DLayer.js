@@ -284,7 +284,8 @@ export default class XR3DLayer extends Layer {
           xSlice: new Float32Array(xSlice),
           ySlice: new Float32Array(ySlice),
           zSlice: new Float32Array(zSlice),
-          scaledDimensions: new Float32Array(volDims)
+          scaledDimensions: new Float32Array(volDims),
+          modelMatrix: this.props.modelMatrix
         })
         .draw();
     }
