@@ -29,28 +29,39 @@ const Static3DViewer = props => {
     renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
   const initialViewState = useMemo(() => {
-    const {
-      physicalSizes: {
-        x: { size: physicalSizeX },
-        y: { size: physicalSizeY },
-        z: { size: physicalSizeZ }
-      }
-    } = loader[resolution].meta;
     const { shape, labels } = loader[resolution];
     const height = shape[labels.indexOf('y')];
     const width = shape[labels.indexOf('x')];
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / 2 ** resolution);
     let ratio = { x: 1, z: 1, y: 1 };
-    if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-      ratio = {
-        x:
-          physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-        y:
-          physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-        z: physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
-      };
+    if (
+      loader[resolution]?.meta?.physicalSizes?.x &&
+      loader[resolution]?.meta?.physicalSizes?.y &&
+      loader[resolution]?.meta?.physicalSizes?.z
+    ) {
+      const {
+        physicalSizes: {
+          x: { size: physicalSizeX },
+          y: { size: physicalSizeY },
+          z: { size: physicalSizeZ }
+        }
+      } = loader[resolution].meta;
+      if (physicalSizeZ && physicalSizeX && physicalSizeY) {
+        ratio = {
+          x:
+            physicalSizeX /
+            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+          y:
+            physicalSizeY /
+            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+          z:
+            physicalSizeZ /
+            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
+        };
+      }
     }
+
     return {
       target: [
         (ratio.x * width) / 2,

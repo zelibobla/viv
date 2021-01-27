@@ -115,20 +115,26 @@ export default class VolumeLayer extends CompositeLayer {
     }
     // TODO: Figure out how to make this work with the built-in modelMatrix.
     let physicalSizeScalingMatrix = new Matrix4().identity();
-    const {
-      physicalSizes: {
-        x: { size: physicalSizeX },
-        y: { size: physicalSizeY },
-        z: { size: physicalSizeZ }
+    if (
+      loader[z]?.meta?.physicalSizes?.x &&
+      loader[z]?.meta?.physicalSizes?.y &&
+      loader[z]?.meta?.physicalSizes?.z
+    ) {
+      const {
+        physicalSizes: {
+          x: { size: physicalSizeX },
+          y: { size: physicalSizeY },
+          z: { size: physicalSizeZ }
+        }
+      } = loader[z].meta;
+      if (physicalSizeZ && physicalSizeX && physicalSizeY) {
+        const ratio = [
+          physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+          physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
+          physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
+        ];
+        physicalSizeScalingMatrix = new Matrix4().scale(ratio);
       }
-    } = loader[z].meta;
-    if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-      const ratio = [
-        physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-        physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-        physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
-      ];
-      physicalSizeScalingMatrix = new Matrix4().scale(ratio);
     }
     if (!height || !width || !depth) return null;
     return new XR3DLayer({
