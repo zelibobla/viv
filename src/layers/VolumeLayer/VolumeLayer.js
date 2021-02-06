@@ -156,7 +156,7 @@ export default class VolumeLayer extends CompositeLayer {
       modelMatrix: new Matrix4([-.5, 0.0, 1.0, 0.0, 
                   0.0, 1.0, 0.0, 0.0, 
                   6.06, 0.0, 0.0, 0.0, 
-                  0.0, 0.0, 0.0, 1.0]).rotateZ(.5)
+                  0.0, 0.0, 0.0, 1.0]).scale([width, height, depth])
     });
   }
 }
