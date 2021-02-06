@@ -272,7 +272,8 @@ export default class XR3DLayer extends Layer {
    */
   draw({ uniforms }) {
     const { textures, model, volDims } = this.state;
-    const { sliderValues, colorValues, xSlice, ySlice, zSlice } = this.props;
+    const { sliderValues, colorValues, xSlice, ySlice, zSlice, modelMatrix } = this.props;
+    const { viewMatrixUncentered, viewMatrix, viewMatrixInverse, projectionMatrix, viewProjectionMatrix } = this.context.viewport;
     if (textures && model && volDims) {
       model
         .setUniforms({
@@ -285,7 +286,10 @@ export default class XR3DLayer extends Layer {
           ySlice: new Float32Array(ySlice),
           zSlice: new Float32Array(zSlice),
           scaledDimensions: new Float32Array(volDims),
-          modelMatrix: this.props.modelMatrix
+          eye_pos: new Float32Array([viewMatrixInverse[12], viewMatrixInverse[13], viewMatrixInverse[14]]),
+          view: viewMatrixUncentered,
+          proj: projectionMatrix,
+model: modelMatrix
         })
         .draw();
     }

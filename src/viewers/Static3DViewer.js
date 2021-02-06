@@ -64,11 +64,9 @@ const Static3DViewer = props => {
 
     return {
       target: [
-        (ratio.x * width) / 2,
-        (ratio.y * height) / 2,
-        (ratio.z * depthDownsampled) / 2
+       0,0,0
       ],
-      zoom: -2
+      zoom: 0
     };
   }, [loader, resolution]);
   const viewStates = [{ ...initialViewState, id: '3d' }];
