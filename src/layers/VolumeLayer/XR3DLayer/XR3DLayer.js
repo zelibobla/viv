@@ -282,7 +282,8 @@ export default class XR3DLayer extends Layer {
       xSlice,
       ySlice,
       zSlice,
-      modelMatrix
+      modelMatrix,
+      physicalSizeScalingMatrix
     } = this.props;
     const {
       viewMatrixUncentered,
@@ -292,6 +293,7 @@ export default class XR3DLayer extends Layer {
       viewProjectionMatrix
     } = this.context.viewport;
     if (textures && model && volDims) {
+      console.log(volDims);
       const startTime = Math.round(performance.now());
       model
         .setUniforms({
@@ -311,6 +313,7 @@ export default class XR3DLayer extends Layer {
           ]),
           view: viewMatrixUncentered,
           proj: projectionMatrix,
+          world: new Matrix4().scale(volDims),
           model: modelMatrix || new Matrix4()
         })
         .draw();

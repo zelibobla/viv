@@ -47,7 +47,7 @@ const Static3DViewer = props => {
     0.0,
     0.0,
     1.0
-  ]);
+  ]).rotateX(.5);
   // const modelMatrix = new Matrix4()
   //   .scale([4.363636363636363, 4.363636363636363, 1])
   //   .scale([1, 1, 3.775705206311299]);
@@ -87,8 +87,12 @@ const Static3DViewer = props => {
     }
 
     return {
-      target: modelMatrix.transformPoint([.5, .5, .5]),
-      zoom: 2.0
+      target: modelMatrix.transformPoint([
+        (ratio.x * width) / 2,
+        (ratio.y * height) / 2,
+        (ratio.z * depthDownsampled) / 2
+      ]),
+      zoom: -2.0
     };
   }, [loader, resolution]);
   const viewStates = [{ ...initialViewState, id: '3d' }];

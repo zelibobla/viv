@@ -116,6 +116,7 @@ export default class VolumeLayer extends CompositeLayer {
     }
     // TODO: Figure out how to make this work with the built-in modelMatrix.
     let physicalSizeScalingMatrix = new Matrix4().identity();
+    let ratio = [1, 1, 1];
     if (
       loader[z]?.meta?.physicalSizes?.x &&
       loader[z]?.meta?.physicalSizes?.y &&
@@ -129,7 +130,7 @@ export default class VolumeLayer extends CompositeLayer {
         }
       } = loader[z].meta;
       if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-        const ratio = [
+        ratio = [
           physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
           physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
           physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
