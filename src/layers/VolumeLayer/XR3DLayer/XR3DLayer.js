@@ -294,7 +294,6 @@ export default class XR3DLayer extends Layer {
     } = this.context.viewport;
     if (textures && model && volDims) {
       console.log(volDims);
-      const startTime = Math.round(performance.now());
       model
         .setUniforms({
           ...uniforms,
@@ -317,16 +316,6 @@ export default class XR3DLayer extends Layer {
           model: modelMatrix || new Matrix4()
         })
         .draw();
-      this.context.gl.finish();
-      const endTime = Math.round(performance.now());
-      const renderTime = endTime - startTime;
-      const targetSamplingRate = renderTime / 32;
-      const { samplingRate } = this.state.model.uniforms;
-      if (targetSamplingRate > samplingRate) {
-        console.log(targetSamplingRate);
-        const newSamplingRate = 0.8 * samplingRate + 0.2 * targetSamplingRate;
-        model.setUniforms({ samplingRate: newSamplingRate });
-      }
     }
   }
 
