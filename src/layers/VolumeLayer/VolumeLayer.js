@@ -82,7 +82,8 @@ export default class VolumeLayer extends CompositeLayer {
       xSlice,
       ySlice,
       zSlice,
-      renderingMode
+      renderingMode,
+      modelMatrix
     } = this.props;
     const { dtype } = loader[z];
     const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
@@ -153,10 +154,7 @@ export default class VolumeLayer extends CompositeLayer {
       ySlice,
       zSlice,
       renderingMode,
-      modelMatrix: new Matrix4([-.5, 0.0, 1.0, 0.0, 
-                  0.0, 1.0, 0.0, 0.0, 
-                  6.06, 0.0, 0.0, 0.0, 
-                  0.0, 0.0, 0.0, 1.0]).scale([width, height, depth])
+      modelMatrix
     });
   }
 }

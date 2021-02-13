@@ -25,6 +25,8 @@ uniform vec2 xSlice;
 uniform vec2 ySlice;
 uniform vec2 zSlice;
 
+uniform float samplingRate;
+
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
 out vec4 color;
@@ -101,7 +103,7 @@ void main(void) {
 
 	// Step 3: Compute the step size to march through the volume grid
 	vec3 dt_vec = 1.0 / (scaledDimensions * abs(ray_dir));
-	float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
+	float dt = samplingRate * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 
 	// Step 4: Starting from the entry point, march the ray through the volume
 	// and sample it

@@ -36,6 +36,7 @@ import {
   COLORMAPS,
   RENDERING_MODES as RENDERING_NAMES
 } from '../../../constants';
+import { Matrix4 } from 'math.gl';
 
 // prettier-ignore
 const CUBE_STRIP = [
@@ -263,7 +264,10 @@ export default class XR3DLayer extends Layer {
         attributes: {
           positions: new Float32Array(CUBE_STRIP)
         }
-      })
+      }),
+      uniforms: {
+        samplingRate: 1.0
+      }
     });
   }
 
@@ -272,9 +276,23 @@ export default class XR3DLayer extends Layer {
    */
   draw({ uniforms }) {
     const { textures, model, volDims } = this.state;
-    const { sliderValues, colorValues, xSlice, ySlice, zSlice, modelMatrix } = this.props;
-    const { viewMatrixUncentered, viewMatrix, viewMatrixInverse, projectionMatrix, viewProjectionMatrix } = this.context.viewport;
+    const {
+      sliderValues,
+      colorValues,
+      xSlice,
+      ySlice,
+      zSlice,
+      modelMatrix
+    } = this.props;
+    const {
+      viewMatrixUncentered,
+      viewMatrix,
+      viewMatrixInverse,
+      projectionMatrix,
+      viewProjectionMatrix
+    } = this.context.viewport;
     if (textures && model && volDims) {
+      const startTime = Math.round(performance.now());
       model
         .setUniforms({
           ...uniforms,
@@ -286,12 +304,26 @@ export default class XR3DLayer extends Layer {
           ySlice: new Float32Array(ySlice),
           zSlice: new Float32Array(zSlice),
           scaledDimensions: new Float32Array(volDims),
-          eye_pos: new Float32Array([viewMatrixInverse[12], viewMatrixInverse[13], viewMatrixInverse[14]]),
+          eye_pos: new Float32Array([
+            viewMatrixInverse[12],
+            viewMatrixInverse[13],
+            viewMatrixInverse[14]
+          ]),
           view: viewMatrixUncentered,
           proj: projectionMatrix,
-model: modelMatrix
+          model: modelMatrix || new Matrix4()
         })
         .draw();
+      this.context.gl.finish();
+      const endTime = Math.round(performance.now());
+      const renderTime = endTime - startTime;
+      const targetSamplingRate = renderTime / 32;
+      const { samplingRate } = this.state.model.uniforms;
+      if (targetSamplingRate > samplingRate) {
+        console.log(targetSamplingRate);
+        const newSamplingRate = 0.8 * samplingRate + 0.2 * targetSamplingRate;
+        model.setUniforms({ samplingRate: newSamplingRate });
+      }
     }
   }
 

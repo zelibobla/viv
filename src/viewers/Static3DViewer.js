@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { Matrix4 } from 'math.gl';
+
 import VivViewer from './VivViewer';
 import { Static3DView } from '../views';
 import { getScaleForSize } from '../loaders/utils';
@@ -28,6 +30,27 @@ const Static3DViewer = props => {
     resolution,
     renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
+  const modelMatrix = new Matrix4([
+    -0.5,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ]);
+  // const modelMatrix = new Matrix4()
+  //   .scale([4.363636363636363, 4.363636363636363, 1])
+  //   .scale([1, 1, 3.775705206311299]);
   const initialViewState = useMemo(() => {
     const { shape, labels } = loader[resolution];
     const height = shape[labels.indexOf('y')];
@@ -60,12 +83,11 @@ const Static3DViewer = props => {
             Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
         };
       }
+      console.log(ratio);
     }
 
     return {
-      target: [
-       0,0,0
-      ],
+      target: modelMatrix.transformPoint([.5, .5, .5]),
       zoom: 2.0
     };
   }, [loader, resolution]);
@@ -85,7 +107,8 @@ const Static3DViewer = props => {
     ySlice,
     zSlice,
     resolution,
-    renderingMode
+    renderingMode,
+    modelMatrix
   };
   const views = [threeDView];
   const layerProps = [layerConfig];
