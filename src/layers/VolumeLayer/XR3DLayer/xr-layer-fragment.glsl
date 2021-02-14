@@ -12,7 +12,7 @@ uniform highp sampler3D volume5;
 
 uniform vec3 scaledDimensions;
 
-uniform mat4 world;
+uniform mat4 scale;
 
 // range
 uniform vec2 sliderValues[6];
@@ -111,7 +111,7 @@ void main(void) {
 	t_hit.x = max(t_hit.x, 0.0);
 
 	// Step 3: Compute the step size to march through the volume grid
-	vec3 dt_vec = 1.0 / (world * vec4(abs(ray_dir), 1.0)).xyz;
+	vec3 dt_vec = 1.0 / (scale * vec4(abs(ray_dir), 1.0)).xyz;
 	float dt = 1.0 * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 
 	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));

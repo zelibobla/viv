@@ -92,6 +92,7 @@ const VolumeViewer = props => {
     zSlice,
     resolution,
     renderingMode,
+    modelMatrix,
     pickable: false,
   };
   const views = [threeDView];

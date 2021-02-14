@@ -286,7 +286,7 @@ export default class XR3DLayer extends Layer {
       dtype
     } = this.props;
     const {
-      viewMatrixUncentered,
+      viewMatrix,
       viewMatrixInverse,
       projectionMatrix,
     } = this.context.viewport;
@@ -313,9 +313,9 @@ export default class XR3DLayer extends Layer {
             viewMatrixInverse[13],
             viewMatrixInverse[14]
           ]),
-          view: viewMatrixUncentered,
+          view: viewMatrix,
           proj: projectionMatrix,
-          world: new Matrix4().scale(volDims),
+          scale: new Matrix4().scale(volDims),
           model: modelMatrix || new Matrix4()
         })
         .draw();
