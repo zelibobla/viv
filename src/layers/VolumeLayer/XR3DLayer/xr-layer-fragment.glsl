@@ -25,8 +25,6 @@ uniform vec2 xSlice;
 uniform vec2 ySlice;
 uniform vec2 zSlice;
 
-uniform float samplingRate;
-
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
 out vec4 color;
