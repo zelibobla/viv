@@ -11,7 +11,7 @@ import {
   VivViewer,
   PictureInPictureViewer,
   SideBySideViewer,
-  Static3DViewer
+  VolumeViewer
 } from './viewers';
 import {
   VivView,
@@ -49,7 +49,7 @@ export {
   DETAIL_VIEW_ID,
   OVERVIEW_VIEW_ID,
   SideBySideViewer,
-  Static3DViewer,
+  VolumeViewer,
   DetailView,
   ImageLayer
 };

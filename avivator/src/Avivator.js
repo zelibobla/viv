@@ -11,7 +11,7 @@ import AddIcon from '@material-ui/icons/Add';
 import {
   SideBySideViewer,
   PictureInPictureViewer,
-  Static3DViewer,
+  VolumeViewer,
   getChannelStats,
   RENDERING_MODES
 } from '../../dist';
@@ -378,7 +378,7 @@ export default function Avivator(props) {
               />
             ))}
           {use3d && !isLoading && (
-            <Static3DViewer
+            <VolumeViewer
               loader={loader}
               sliderValues={sliders}
               colorValues={colors}

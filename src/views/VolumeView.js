@@ -7,7 +7,7 @@ import VivView from './VivView';
 /**
  * This class generates a VolumeLayer and a view for use in the VivViewer as volumetric rendering.
  * */
-export default class Static3DView extends VivView {
+export default class VolumeView extends VivView {
   constructor({ target, ...args }) {
     super(args);
     this.target = target;

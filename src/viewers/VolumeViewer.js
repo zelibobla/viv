@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Matrix4 } from 'math.gl';
 
 import VivViewer from './VivViewer';
-import { Static3DView } from '../views';
+import { VolumeView } from '../views';
 import { RENDERING_MODES } from '../constants';
 
 /**
@@ -15,7 +15,7 @@ import { RENDERING_MODES } from '../constants';
  * @param {Array} props.loaderSelection Selection to be used for fetching data.
  */
 
-const Static3DViewer = props => {
+const VolumeViewer = props => {
   const {
     loader,
     sliderValues,
@@ -74,7 +74,7 @@ const Static3DViewer = props => {
     };
   }, [loader, resolution]);
   const viewStates = [{ ...initialViewState, id: '3d' }];
-  const threeDView = new Static3DView({
+  const threeDView = new VolumeView({
     id: '3d',
     target: initialViewState.target
   });
@@ -99,4 +99,4 @@ const Static3DViewer = props => {
   ) : null;
 };
 
-export default Static3DViewer;
+export default VolumeViewer;
