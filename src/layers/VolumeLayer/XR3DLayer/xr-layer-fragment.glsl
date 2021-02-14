@@ -84,6 +84,17 @@ vec3 rgb2hsv(vec3 rgb) {
  	}
  	return hsv;
  }
+// Pseudo-random number gen from
+// http://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
+// with some tweaks for the range of values
+float wang_hash(int seed) {
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return float(seed % 2147483647) / float(2147483647);
+}
 
 
 void main(void) {
@@ -103,11 +114,13 @@ void main(void) {
 
 	// Step 3: Compute the step size to march through the volume grid
 	vec3 dt_vec = 1.0 / (scaledDimensions * abs(ray_dir));
-	float dt = samplingRate * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
+	float dt = 1.0 * min(dt_vec.x, min(dt_vec.y, dt_vec.z));
+
+	float offset = wang_hash(int(gl_FragCoord.x + 640.0 * gl_FragCoord.y));
 
 	// Step 4: Starting from the entry point, march the ray through the volume
 	// and sample it
-	vec3 p = transformed_eye + t_hit.x * ray_dir;
+	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
 	_BEFORE_RENDER
@@ -128,6 +141,7 @@ void main(void) {
 		p += ray_dir * dt;
 	}
 	_AFTER_RENDER
+	// color = vec4(1.0, 0.0, 0.0, 1.0);
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);

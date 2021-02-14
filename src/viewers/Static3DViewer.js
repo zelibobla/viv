@@ -30,24 +30,7 @@ const Static3DViewer = props => {
     resolution,
     renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
-  const modelMatrix = new Matrix4([
-    -0.5,
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    1.0
-  ]).rotateX(.5);
+  const modelMatrix = new Matrix4();
   // const modelMatrix = new Matrix4()
   //   .scale([4.363636363636363, 4.363636363636363, 1])
   //   .scale([1, 1, 3.775705206311299]);
@@ -112,7 +95,8 @@ const Static3DViewer = props => {
     zSlice,
     resolution,
     renderingMode,
-    modelMatrix
+    modelMatrix,
+    pickable: false,
   };
   const views = [threeDView];
   const layerProps = [layerConfig];

@@ -293,7 +293,6 @@ export default class XR3DLayer extends Layer {
       viewProjectionMatrix
     } = this.context.viewport;
     if (textures && model && volDims) {
-      console.log(volDims);
       model
         .setUniforms({
           ...uniforms,
