@@ -93,7 +93,7 @@ const VolumeViewer = props => {
       rotationX: 0,
       rotationOrbit: 0
     };
-  }, [loader, resolution]);
+  }, [loader, resolution, modelMatrix]);
   const viewStates = [{ ...initialViewState, id: '3d' }];
   const threeDView = new VolumeView({
     id: '3d',

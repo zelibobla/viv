@@ -25,7 +25,7 @@ So, if we want 3d colormaps, we'll need another shader.
 - We allow for multiple rendering settings (Max/Min Int. Proj., Additive, etc.)
 */
 import GL from '@luma.gl/constants';
-import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
+import { COORDINATE_SYSTEM, Layer } from '@deck.gl/core';
 import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
 import { Matrix4 } from 'math.gl';
 import vs from './xr-layer-vertex.glsl';
