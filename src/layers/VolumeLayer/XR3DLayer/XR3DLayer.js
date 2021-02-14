@@ -210,7 +210,7 @@ export default class XR3DLayer extends Layer {
       defines: {
         _COLORMAP_FUNCTION: colormap || 'viridis'
       },
-      modules: [project32, channelsModules]
+      modules: [channelsModules]
     });
   }
 
