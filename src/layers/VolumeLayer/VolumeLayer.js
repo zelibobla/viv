@@ -2,7 +2,6 @@ import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
 import { Matrix4 } from 'math.gl';
 import XR3DLayer from './XR3DLayer';
-import { padColorsAndSliders } from '../utils';
 
 const defaultProps = {
   pickable: false,
@@ -86,13 +85,6 @@ export default class VolumeLayer extends CompositeLayer {
       modelMatrix
     } = this.props;
     const { dtype } = loader[z];
-    const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      dtype
-    });
     const { data, width, height, depth, progress } = this.state;
     if (!(width && height)) {
       const { viewport } = this.context;
@@ -114,9 +106,7 @@ export default class VolumeLayer extends CompositeLayer {
         sizeScale: 2 ** -viewport.zoom
       });
     }
-    // TODO: Figure out how to make this work with the built-in modelMatrix.
     let physicalSizeScalingMatrix = new Matrix4().identity();
-    let ratio = [1, 1, 1];
     if (
       loader[z]?.meta?.physicalSizes?.x &&
       loader[z]?.meta?.physicalSizes?.y &&
@@ -130,7 +120,7 @@ export default class VolumeLayer extends CompositeLayer {
         }
       } = loader[z].meta;
       if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-        ratio = [
+        const ratio = [
           physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
           physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
           physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
@@ -141,8 +131,10 @@ export default class VolumeLayer extends CompositeLayer {
     if (!height || !width || !depth) return null;
     return new XR3DLayer({
       channelData: { data, width, height, depth },
-      sliderValues: paddedSliderValues,
-      colorValues: paddedColorValues,
+      sliderValues,
+      colorValues,
+      domain,
+      channelIsOn,
       id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${z}-${id}`,
       pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,

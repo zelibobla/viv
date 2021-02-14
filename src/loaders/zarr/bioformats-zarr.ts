@@ -20,12 +20,13 @@ export async function load(
   // Get metadata and multiscale data for _first_ image.
   const imgMeta = fromString(xmlSource)[0];
   const { data } = await loadMultiscales(root, '0');
+  console.log(data);
 
   const labels = guessBioformatsLabels(data[0], imgMeta);
   const pyramid = data.map(arr => new ZarrPixelSource(arr, labels));
 
   return {
-    data: trimPyramid(pyramid),
+    data: (pyramid),
     metadata: imgMeta
   };
 }

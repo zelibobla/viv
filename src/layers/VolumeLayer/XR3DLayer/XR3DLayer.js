@@ -27,16 +27,17 @@ So, if we want 3d colormaps, we'll need another shader.
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer, project32 } from '@deck.gl/core';
 import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
+import { Matrix4 } from 'math.gl';
 import vs from './xr-layer-vertex.glsl';
 import fsColormap from './xr-layer-fragment-colormap.glsl';
 import fs from './xr-layer-fragment.glsl';
 import channels from './channel-intensity-module';
+import { padColorsAndSliders } from '../../utils';
 import {
   DTYPE_VALUES,
   COLORMAPS,
   RENDERING_MODES as RENDERING_NAMES
 } from '../../../constants';
-import { Matrix4 } from 'math.gl';
 
 // prettier-ignore
 const CUBE_STRIP = [
@@ -264,10 +265,7 @@ export default class XR3DLayer extends Layer {
         attributes: {
           positions: new Float32Array(CUBE_STRIP)
         }
-      }),
-      uniforms: {
-        samplingRate: 1.0
-      }
+      })
     });
   }
 
@@ -283,27 +281,33 @@ export default class XR3DLayer extends Layer {
       ySlice,
       zSlice,
       modelMatrix,
-      physicalSizeScalingMatrix
+      channelIsOn,
+      domain,
+      dtype
     } = this.props;
     const {
       viewMatrixUncentered,
-      viewMatrix,
       viewMatrixInverse,
       projectionMatrix,
-      viewProjectionMatrix
     } = this.context.viewport;
     if (textures && model && volDims) {
+
+    const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
+      sliderValues,
+      colorValues,
+      channelIsOn,
+      domain,
+      dtype
+    });
       model
         .setUniforms({
           ...uniforms,
           ...textures,
-          sliderValues,
-          colorValues,
-          dimensions: new Float32Array(volDims),
+          sliderValues: paddedSliderValues,
+          colorValues: paddedColorValues,
           xSlice: new Float32Array(xSlice),
           ySlice: new Float32Array(ySlice),
           zSlice: new Float32Array(zSlice),
-          scaledDimensions: new Float32Array(volDims),
           eye_pos: new Float32Array([
             viewMatrixInverse[12],
             viewMatrixInverse[13],

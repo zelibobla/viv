@@ -1,5 +1,5 @@
 import { BoundsCheckError } from 'zarr';
-import { isInterleaved } from '../utils';
+import { isInterleaved, getImageSize } from '../utils';
 import { getIndexer } from './lib/indexer';
 
 import type { HTTPStore } from './lib/storage';
@@ -102,6 +102,60 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
 
     const [height, width] = shape;
     return { data, width, height } as LayerData;
+  }
+
+  async getVolume(
+    { selection }: RasterSelection<S> | TileSelection<S> | ZarrTileSelection | { selection: number[] },
+    // eslint-disable-next-line no-unused-vars
+    updateProgress = (progress: number) => {},
+    downsampleDepth = 1
+  ) {
+    const { shape, labels, dtype } = this;
+    let progress = 0;
+    const { height, width } = getImageSize(this);
+    const depth = shape[labels.indexOf('z')];
+    const depthDownsampled = Math.floor(depth / downsampleDepth);
+    const rasterSize = height * width;
+    const name = `${dtype}Array`;
+    const { BYTES_PER_ELEMENT } = globalThis[name] as TypedArray;
+    const setMethodString = `set${dtype}` as
+      | 'setUint8'
+      | 'setUint16'
+      | 'setUint32'
+      | 'setFloat32';
+    const view = new DataView(
+      new ArrayBuffer(rasterSize * depthDownsampled * BYTES_PER_ELEMENT)
+    );
+    await Promise.all(
+      new Array(depthDownsampled).fill(0).map(async (_, z) => {
+        const depthSelection = {
+          ...selection,
+          z: z * downsampleDepth
+        };
+        const sel = this._chunkIndex(depthSelection, null, null);
+        const { data } = (await this._data.getRaw(sel)) as RawArray;
+        progress += 0.5;
+        updateProgress(progress / depthDownsampled);
+        let r = 0;
+        while (r < rasterSize) {
+          view[setMethodString](
+            BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
+              BYTES_PER_ELEMENT * r,
+            Math.max(0, data[r]),
+            true // always little endian from geotiff
+          );
+          r += 1;
+        }
+        progress += 0.5;
+        updateProgress(progress / depthDownsampled);
+      })
+    );
+    return {
+      data: new globalThis[name](view.buffer),
+      height,
+      width,
+      depth: depthDownsampled
+    } as LayerData;
   }
 
   onTileError(err: Error) {

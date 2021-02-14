@@ -53,6 +53,7 @@ function VolumeButton({
   const [open, toggle] = useReducer(v => !v, false);
   const anchorRef = useRef(null);
   const classes = useStyles();
+  // console.log(loader);
   return (
     <>
       <Button
