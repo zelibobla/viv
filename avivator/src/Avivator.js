@@ -4,7 +4,6 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
-import Slider from '@material-ui/core/Slider';
 
 import AddIcon from '@material-ui/icons/Add';
 
@@ -33,6 +32,7 @@ import GlobalSelectionSlider from './components/GlobalSelectionSlider';
 import LensSelect from './components/LensSelect';
 import VolumeButton from './components/VolumeButton';
 import RenderingModeSelect from './components/RenderingModeSelect';
+import Slicer from './components/Slicer';
 import {
   LoaderError,
   OffsetsWarning,
@@ -104,12 +104,13 @@ export default function Avivator(props) {
     async function changeLoader() {
       setIsLoading(true);
       const { urlOrFile } = source;
-      const { data: nextLoader, metadata: nextMeta } = await createLoader(
-        urlOrFile,
-        toggleOffsetsSnackbar,
-        message => setLoaderErrorSnackbar({ on: true, message })
+      const {
+        data: nextLoader,
+        metadata: nextMeta
+      } = await createLoader(urlOrFile, toggleOffsetsSnackbar, message =>
+        setLoaderErrorSnackbar({ on: true, message })
       );
-      
+
       if (nextLoader) {
         const selections = buildDefaultSelection(nextLoader[0]);
         const { Channels } = nextMeta.Pixels;
@@ -130,15 +131,15 @@ export default function Avivator(props) {
           [0, 255, 0],
           [0, 0, 255]
         ];
-
-        const source = nextLoader[nextLoader.length - 1];
+        const lowResSource = nextLoader[nextLoader.length - 1];
         const isRgb = guessRgb(nextMeta);
         if (!isRgb) {
-          
-          const stats = await Promise.all(selections.map(async selection => {
-            const raster = await source.getRaster({ selection });
-            return getChannelStats(raster.data);
-          }));
+          const stats = await Promise.all(
+            selections.map(async selection => {
+              const raster = await lowResSource.getRaster({ selection });
+              return getChannelStats(raster.data);
+            })
+          );
 
           domains = stats.map(stat => stat.domain);
           sliders = stats.map(stat => stat.autoSliders);
@@ -152,13 +153,13 @@ export default function Avivator(props) {
           isLensOn && toggleIsLensOn(); // eslint-disable-line no-unused-expressions
         }
 
-        const { labels, shape } = source;
+        const { labels, shape } = lowResSource;
         const newDimensions = labels.map((l, i) => {
           return {
-            field: l, 
-            values: l === 'c' ? channelOptions : range(shape[i]),
-          }
-        })
+            field: l,
+            values: l === 'c' ? channelOptions : range(shape[i])
+          };
+        });
         setDimensions(newDimensions);
         dispatch({
           type: 'RESET_CHANNELS',
@@ -184,6 +185,103 @@ export default function Avivator(props) {
     changeLoader();
   }, [source, history]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    async function updateStatsFor3D() {
+      if (!use3d) {
+        const { selections } = channels;
+        const lowResSource = loader[loader.length - 1];
+        const stats = await Promise.all(
+          selections.map(async selection => {
+            const raster = await lowResSource.getRaster({ selection });
+            return getChannelStats(raster.data);
+          })
+        );
+        const domains = stats.map(stat => stat.domain);
+        const sliders = stats.map(stat => stat.autoSliders);
+
+        domains.forEach((domain, index) =>
+          dispatch({
+            type: 'CHANGE_DOMAIN',
+            value: domain,
+            index
+          })
+        );
+        sliders.forEach((slider, index) =>
+          dispatch({
+            type: 'CHANGE_SLIDER',
+            value: slider,
+            index
+          })
+        );
+      } else {
+        const { selections } = channels;
+        const lowResSource = loader[loader.length - 1];
+        const { labels, shape } = lowResSource;
+        const sizeZ = shape[labels.indexOf('z')] >> (loader.length - 1);
+        const stats = await Promise.all(
+          selections.map(async selection => {
+            const raster0 = await lowResSource.getRaster({
+              selection: { ...selection, z: 0 }
+            });
+            const rasterMid = await lowResSource.getRaster({
+              selection: { ...selection, z: Math.floor(sizeZ / 2) }
+            });
+            const rasterTop = await lowResSource.getRaster({
+              selection: { ...selection, z: sizeZ - 1 }
+            });
+            const stats0 = getChannelStats(raster0.data);
+            const statsMid = getChannelStats(rasterMid.data);
+            const statsTop = getChannelStats(rasterTop.data);
+            return {
+              domain: [
+                Math.min(
+                  stats0.domain[0],
+                  statsMid.domain[0],
+                  statsTop.domain[0]
+                ),
+                Math.max(
+                  stats0.domain[1],
+                  statsMid.domain[1],
+                  statsTop.domain[1]
+                )
+              ],
+              autoSliders: [
+                Math.min(
+                  stats0.autoSliders[0],
+                  statsMid.autoSliders[0],
+                  statsTop.autoSliders[0]
+                ),
+                Math.max(
+                  stats0.autoSliders[1],
+                  statsMid.autoSliders[1],
+                  statsTop.autoSliders[1]
+                )
+              ]
+            };
+          })
+        );
+        const domains = stats.map(stat => stat.domain);
+        const sliders = stats.map(stat => stat.autoSliders);
+
+        domains.forEach((domain, index) =>
+          dispatch({
+            type: 'CHANGE_DOMAIN',
+            value: domain,
+            index
+          })
+        );
+        sliders.forEach((slider, index) =>
+          dispatch({
+            type: 'CHANGE_SLIDER',
+            value: slider,
+            index
+          })
+        );
+      }
+    }
+    updateStatsFor3D();
+  }, [use3d, source]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleSubmitNewUrl = (event, url) => {
     event.preventDefault();
     const newSource = {
@@ -206,7 +304,9 @@ export default function Avivator(props) {
     // Only update image on screen on a mouseup event for the same reason as above.
     if (mouseUp) {
       const stats = await Promise.all(
-        loaderSelection.map(selection => getSingleSelectionStats({ loader, selection }))
+        loaderSelection.map(selection =>
+          getSingleSelectionStats({ loader, selection })
+        )
       );
       const domains = stats.map(stat => stat.domain);
       const sliders = stats.map(stat => stat.slider);
@@ -293,13 +393,11 @@ export default function Avivator(props) {
   const isRgb = metadata && guessRgb(metadata);
   const dtype = loader[0];
 
-
   const { colors, sliders, isOn, ids, selections, domains } = channels;
   const globalControlDimensions = dimensions?.filter(dimension =>
     GLOBAL_SLIDER_DIMENSION_FIELDS.includes(dimension.field)
   );
-  const channelOptions = dimensions.filter(j => j.field === 'c')[0]
-    ?.values;
+  const channelOptions = dimensions.filter(j => j.field === 'c')[0]?.values;
   const channelControllers = ids.map((id, i) => {
     const name = channelOptions[selections[i].c];
     return (
@@ -422,9 +520,7 @@ export default function Avivator(props) {
               handleToggle={toggleIsLensOn}
               handleSelection={setLensSelection}
               isOn={isLensOn}
-              channelOptions={selections.map(
-                sel => channelOptions[sel.c]
-              )}
+              channelOptions={selections.map(sel => channelOptions[sel.c])}
               lensSelection={lensSelection}
             />
           )}
@@ -498,59 +594,14 @@ export default function Avivator(props) {
             </>
           )}
           {use3d && (
-            <>
-              <div key="x">
-                {'x: '}
-                <Slider
-                  value={xSlice}
-                  // See https://github.com/hms-dbmi/viv/issues/176 for why
-                  // we have the two handlers.
-                  onChange={(e, v) => {
-                    setXSlice(v);
-                  }}
-                  valueLabelDisplay="auto"
-                  getAriaLabel={() => `x slider`}
-                  min={0}
-                  max={1}
-                  step={0.005}
-                  orientation="horizontal"
-                />
-              </div>
-              <div key="y">
-                {'y: '}
-                <Slider
-                  value={ySlice}
-                  // See https://github.com/hms-dbmi/viv/issues/176 for why
-                  // we have the two handlers.
-                  onChange={(e, v) => {
-                    setYSlice(v);
-                  }}
-                  valueLabelDisplay="auto"
-                  getAriaLabel={() => `y slider`}
-                  min={0}
-                  max={1}
-                  step={0.005}
-                  orientation="horizontal"
-                />
-              </div>
-              <div key="z">
-                {'z: '}
-                <Slider
-                  value={zSlice}
-                  // See https://github.com/hms-dbmi/viv/issues/176 for why
-                  // we have the two handlers.
-                  onChange={(e, v) => {
-                    setZSlice(v);
-                  }}
-                  valueLabelDisplay="auto"
-                  getAriaLabel={() => `z slider`}
-                  min={0}
-                  max={1}
-                  step={0.005}
-                  orientation="horizontal"
-                />
-              </div>
-            </>
+            <Slicer
+              xSlice={xSlice}
+              setXSlice={setXSlice}
+              ySlice={ySlice}
+              setYSlice={setYSlice}
+              zSlice={zSlice}
+              setZSlice={setZSlice}
+            />
           )}
         </Menu>
       }

@@ -27,26 +27,27 @@ const VolumeViewer = props => {
     ySlice,
     zSlice,
     resolution,
-    modelMatrix = new Matrix4([
-      1,
-      0,
-      2.1,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1
-    ])
-      .rotateZ(0.5)
-      .rotateX(0.5),
+    modelMatrix,
+    // modelMatrix = new Matrix4([
+    //   1,
+    //   0,
+    //   2.1,
+    //   0,
+    //   0,
+    //   1,
+    //   0,
+    //   0,
+    //   0,
+    //   0,
+    //   1,
+    //   0,
+    //   0,
+    //   0,
+    //   0,
+    //   1
+    // ])
+    //   .rotateZ(0.5)
+    //   .rotateX(0.5),
     renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
   const initialViewState = useMemo(() => {
