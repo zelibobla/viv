@@ -1,5 +1,3 @@
-/* eslint-disable prefer-destructuring */
-
 /* This is largely an adaptation of Will Usher's excellent blog post/code:
 https://github.com/Twinklebear/webgl-volume-raycaster
 Without his app, this would have been exponentially more difficult to do, so we thank him dearly.
