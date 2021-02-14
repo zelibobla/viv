@@ -1,10 +1,9 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
-import { isWebGL2 } from '@luma.gl/core';
 import GL from '@luma.gl/constants';
 
 import XRLayer from './XRLayer';
 import BitmapLayer from './BitmapLayer';
-import { to32BitFloat, onPointer } from './utils';
+import { onPointer } from './utils';
 import { isInterleaved } from '../loaders/utils';
 
 const defaultProps = {
@@ -31,7 +30,8 @@ const defaultProps = {
   lensBorderColor: { type: 'array', value: [255, 255, 255], compare: true },
   lensBorderRadius: { type: 'number', value: 0.02, compare: true },
   onClick: { type: 'function', value: null, compare: true },
-  transparentColor: { type: 'array', value: null, compare: true }
+  transparentColor: { type: 'array', value: null, compare: true },
+  onViewportLoad: { type: 'function', value: null, compare: true }
 };
 
 /**
@@ -44,7 +44,7 @@ const defaultProps = {
  * @param {string} props.colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
  * @param {string} props.viewportId Id for the current view.  This needs to match the viewState id in deck.gl and is necessary for the lens.
- * @param {Object} props.loader PixelSource
+ * @param {Object} props.loader PixelSource. Represents an N-dimensional image.
  * @param {function} props.onHover Hook function from deck.gl to handle hover objects.
  * @param {boolean} props.isLensOn Whether or not to use the lens.
  * @param {number} props.lensSelection Numeric index of the channel to be focused on by the lens.
@@ -57,6 +57,7 @@ const defaultProps = {
  * In other words, any fragment shader output equal transparentColor (before applying opacity) will have opacity 0.
  * This parameter only needs to be a truthy value when using colormaps because each colormap has its own transparent color that is calculated on the shader.
  * Thus setting this to a truthy value (with a colormap set) indicates that the shader should make that color transparent.
+ * @param {function} props.onViewportLoad Function that gets called when the data in the viewport loads.
  */
 export default class ImageLayer extends CompositeLayer {
   initializeState() {
@@ -84,7 +85,7 @@ export default class ImageLayer extends CompositeLayer {
 
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, loaderSelection = [] } = this.props;
+      const { loader, loaderSelection = [], onViewportLoad } = this.props;
       const getRaster = selection => loader.getRaster({ selection });
       const dataPromises = loaderSelection.map(getRaster);
 
@@ -104,10 +105,10 @@ export default class ImageLayer extends CompositeLayer {
             raster.format = GL.RGB;
             raster.dataFormat = GL.RGB;
           }
-        } else if (!isWebGL2(this.context.gl)) {
-          // data is for XLRLayer in non-WebGL2 evironment
-          // we need to convert data to compatible textures
-          raster.data = to32BitFloat(raster.data);
+        }
+
+        if (onViewportLoad) {
+          onViewportLoad(raster);
         }
 
         this.setState({ ...raster });

@@ -48,7 +48,6 @@ declare module 'geotiff' {
       cache: any,
       source: any
     );
-    littleEndian: boolean;
     fileDirectory: FileDirectory;
     getBoundingBox(): number[];
     getFileDirectory(): FileDirectory;

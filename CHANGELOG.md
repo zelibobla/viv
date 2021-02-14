@@ -5,6 +5,25 @@
 ### Added
 
 ### Changed
+- Export `defaults` from `tiff/pixel-source.ts` and `zarr/pixel-source.ts` as `TiffPixelSource` and `ZarrPixelSource`.
+- Copy array-like selection for `ZarrPixelSource` rather than mutating.
+
+## 0.9.0
+
+### Added
+
+- `onViewportLoad` prop for `ImageLayer` for handling when the data for the viewport has loaded.
+
+### Changed
+
+- Fix z-slider broken by transition fields.
+- Upgrade deck.gl to 8.4.0-beta.1 to handle aborting tiles after selection better.
+- Rewrite data loaders as `PixelSource` | `PixelSource[]`. Introduce `ZarrPixelSource` and `TiffPixelSource`
+to support other types of images. Migrate `src/loaders` to TypeScript.
+- Add `loadBioforamtsZarr`, `loadOmeZarr`, and `loadOmeTiff` utilities.
+- Add predictive, fully typed OME-XML response from `fast-xml-parser`.
+- Upgrade Zarr.js to v0.4.
+- Remove casting of Int8Array, Int16Array, and Int32Array to Uint. Support texture on shader.
 
 ## 0.8.3
 

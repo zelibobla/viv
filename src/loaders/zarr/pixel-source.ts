@@ -2,17 +2,15 @@ import { BoundsCheckError } from 'zarr';
 import { isInterleaved, getImageSize } from '../utils';
 import { getIndexer } from './lib/indexer';
 
-import type { HTTPStore } from './lib/storage';
 import type { ZarrArray } from 'zarr';
-import type { RawArray } from 'zarr/dist/types/rawArray';
-import type { AsyncStore } from 'zarr/dist/types/storage/types';
+import type { RawArray } from 'zarr/types/rawArray';
 
 import type {
   PixelSource,
   Labels,
   RasterSelection,
   PixelSourceSelection,
-  LayerData,
+  PixelData,
   TileSelection
 } from '../../types';
 
@@ -20,7 +18,10 @@ const DTYPE_LOOKUP = {
   u1: 'Uint8',
   u2: 'Uint16',
   u4: 'Uint32',
-  f4: 'Float32'
+  f4: 'Float32',
+  i1: 'Int8',
+  i2: 'Int16',
+  i4: 'Int32'
 } as const;
 
 type ZarrIndexer<S extends string[]> = (
@@ -79,7 +80,7 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
     const sel = this._chunkIndex(selection, null, null);
     const { data, shape } = (await this._data.getRaw(sel)) as RawArray;
     const [height, width] = shape;
-    return { data, width, height } as LayerData;
+    return { data, width, height } as PixelData;
   }
 
   async getTile(props: TileSelection<S> | ZarrTileSelection) {
@@ -93,15 +94,12 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
       store.__vivAddSignal(signal);
     }
 
-    const { data, shape } = (await this._data.getRawChunk(sel)) as RawArray;
-
-    // Clear signal from HTTPStore
-    if ('__vivClearSignal' in store) {
-      store.__vivClearSignal();
-    }
+    const { data, shape } = (await this._data.getRawChunk(sel, {
+      storeOptions: { signal }
+    })) as RawArray;
 
     const [height, width] = shape;
-    return { data, width, height } as LayerData;
+    return { data, width, height } as PixelData;
   }
 
   async getVolume(

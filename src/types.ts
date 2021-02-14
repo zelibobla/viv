@@ -1,13 +1,14 @@
-export type SupportedDtype = 'Uint8' | 'Uint16' | 'Uint32' | 'Float32';
+import type { DTYPE_VALUES } from './constants';
+
+export type SupportedDtype = keyof typeof DTYPE_VALUES;
 export type SupportedTypedArray = InstanceType<
   typeof globalThis[`${SupportedDtype}Array`]
 >;
 
-export interface LayerData {
+export interface PixelData {
   data: SupportedTypedArray;
   width: number;
   height: number;
-  depth?: number;
 }
 
 export type PixelSourceSelection<S extends string[]> = {
@@ -40,13 +41,8 @@ export type Labels<S extends string[]> =
   | [...S, 'y', 'x', '_c'];
 
 export interface PixelSource<S extends string[]> {
-  getRaster(sel: RasterSelection<S>): Promise<LayerData>;
-  getVolume(
-    sel: RasterSelection<S>,
-    updateProgress: () => void,
-    downsampleDepth: number
-  ): Promise<LayerData>;
-  getTile(sel: TileSelection<S>): Promise<LayerData>;
+  getRaster(sel: RasterSelection<S>): Promise<PixelData>;
+  getTile(sel: TileSelection<S>): Promise<PixelData>;
   onTileError(err: Error): void;
   shape: number[];
   dtype: SupportedDtype;

@@ -4,7 +4,7 @@ import { fromFile } from 'geotiff';
 import { load } from '../../src/loaders/tiff/ome-tiff';
 
 test('Creates correct TiffPixelSource for OME-TIFF.', async t => {
-  t.plan(6);
+  t.plan(5);
   try {
     const tiff = await fromFile('tests/loaders/fixtures/multi-channel.ome.tif');
     const { data } = await load(tiff);
@@ -26,7 +26,6 @@ test('Creates correct TiffPixelSource for OME-TIFF.', async t => {
       'Photometric interpretation is 1.'
     );
     t.equal(base.meta.physicalSizes, undefined, 'No physical sizes.');
-    t.equal(base.dtype, 'Uint8', 'Data should be cast from int8 to uint8');
   } catch (e) {
     t.fail(e);
   }
@@ -41,11 +40,11 @@ test('Get raster data.', async t => {
 
     for (let c = 0; c < 3; c += 1) {
       const selection = { c, z: 0, t: 0 };
-      const layerData = await base.getRaster({ selection }); // eslint-disable-line no-await-in-loop
-      t.equal(layerData.width, 439);
-      t.equal(layerData.height, 167);
-      t.equal(layerData.data.length, 439 * 167);
-      t.equal(layerData.data.constructor.name, 'Uint8Array');
+      const pixelData = await base.getRaster({ selection }); // eslint-disable-line no-await-in-loop
+      t.equal(pixelData.width, 439);
+      t.equal(pixelData.height, 167);
+      t.equal(pixelData.data.length, 439 * 167);
+      t.equal(pixelData.data.constructor.name, 'Int8Array');
     }
 
     try {

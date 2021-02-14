@@ -1,11 +1,10 @@
 import { CompositeLayer } from '@deck.gl/core';
-import { isWebGL2 } from '@luma.gl/core';
 import { Matrix4 } from 'math.gl';
 import GL from '@luma.gl/constants';
 
 import MultiscaleImageLayerBase from './MultiscaleImageLayerBase';
 import ImageLayer from '../ImageLayer';
-import { to32BitFloat, onPointer } from '../utils';
+import { onPointer } from '../utils';
 import {
   getImageSize,
   isInterleaved,
@@ -47,7 +46,7 @@ const defaultProps = {
  * @param {string} props.colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
  * @param {string} props.viewportId Id for the current view.  This needs to match the viewState id in deck.gl and is necessary for the lens.
- * @param {Object} props.loader image pyramid: PixelSource[].
+ * @param {Array} props.loader Image pyramid. PixelSource[], where each PixelSource is decreasing in shape.
  * @param {Array} props.loaderSelection Selection to be used for fetching data.
  * @param {String} props.id Unique identifier for this layer.
  * @param {function} props.onTileError Custom override for handle tile fetching errors.
@@ -119,7 +118,6 @@ export default class MultiscaleImageLayer extends CompositeLayer {
     // The z level can be wrong for showing the correct scales because of the calculation deck.gl does
     // so we need to invert it for fetching tiles and minZoom/maxZoom.
     const zoomOffset = Math.log2(DECK_GL_TILE_SIZE / tileSize);
-    const noWebGl2 = !isWebGL2(this.context.gl);
     const getTileData = async ({ x, y, z, signal }) => {
       // Early return if no loaderSelection
       if (!loaderSelection || loaderSelection.length === 0) {
@@ -164,10 +162,6 @@ export default class MultiscaleImageLayer extends CompositeLayer {
           }
           // can just return early, no need  to check for webgl2
           return tile;
-        }
-
-        if (noWebGl2) {
-          tile.data = to32BitFloat(tile.data);
         }
 
         return tile;

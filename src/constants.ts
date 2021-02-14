@@ -9,6 +9,13 @@ export const MAX_SLIDERS_AND_CHANNELS = 6;
 export const DEFAULT_FONT_FAMILY =
   "-apple-system, 'Helvetica Neue', Arial, sans-serif";
 
+/**
+ * @deprecated We plan to remove `DTYPE_VALUES` as a part of Viv's public API as it
+ * leaks internal implementation details. If this is something your project relies
+ * on, please open an issue for further discussion.
+ *
+ * More info can be found here: https://github.com/hms-dbmi/viv/pull/372#discussion_r571707517
+ */
 export const DTYPE_VALUES = {
   Uint8: {
     format: GL.R8UI,
@@ -16,7 +23,8 @@ export const DTYPE_VALUES = {
     type: GL.UNSIGNED_BYTE,
     max: 2 ** 8 - 1,
     TypedArray: Uint8Array,
-    setMethodString: 'setUint8'
+    setMethodString: 'setUint8',
+    sampler: 'usampler2D'
   },
   Uint16: {
     format: GL.R16UI,
@@ -24,7 +32,8 @@ export const DTYPE_VALUES = {
     type: GL.UNSIGNED_SHORT,
     max: 2 ** 16 - 1,
     TypedArray: Uint16Array,
-    setMethodString: 'setUint16'
+    setMethodString: 'setUint16',
+    sampler: 'usampler2D'
   },
   Uint32: {
     format: GL.R32UI,
@@ -32,7 +41,8 @@ export const DTYPE_VALUES = {
     type: GL.UNSIGNED_INT,
     max: 2 ** 32 - 1,
     TypedArray: Uint32Array,
-    setMethodString: 'setUint32'
+    setMethodString: 'setUint32',
+    sampler: 'usampler2D'
   },
   Float32: {
     format: GL.R32F,
@@ -42,7 +52,29 @@ export const DTYPE_VALUES = {
     setMethodString: 'setFloat32',
     // Not sure what to do about this one - a good use case for channel stats, I suppose:
     // https://en.wikipedia.org/wiki/Single-precision_floating-point_format.
-    max: 3.4 * 10 ** 38
+    max: 3.4 * 10 ** 38,
+    sampler: 'sampler2D'
+  },
+  Int8: {
+    format: GL.R8I,
+    dataFormat: GL.RED_INTEGER,
+    type: GL.BYTE,
+    max: 2 ** (8 - 1) - 1,
+    sampler: 'isampler2D'
+  },
+  Int16: {
+    format: GL.R16I,
+    dataFormat: GL.RED_INTEGER,
+    type: GL.SHORT,
+    max: 2 ** (16 - 1) - 1,
+    sampler: 'isampler2D'
+  },
+  Int32: {
+    format: GL.R32I,
+    dataFormat: GL.RED_INTEGER,
+    type: GL.INT,
+    max: 2 ** (32 - 1) - 1,
+    sampler: 'isampler2D'
   }
 } as const;
 
@@ -98,4 +130,5 @@ export const RENDERING_MODES = {
   MIN_INTENSITY_PROJECTION: 'Minimum Intensity Projection',
   ADDITIVE: 'Additive'
 };
+
 export const GLOBAL_SLIDER_DIMENSION_FIELDS = ['z', 't'];
