@@ -27,7 +27,26 @@ const VolumeViewer = props => {
     ySlice,
     zSlice,
     resolution,
-    modelMatrix,
+    modelMatrix = new Matrix4([
+      1,
+      0,
+      2.1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ])
+      .rotateZ(0.5)
+      .rotateX(0.5),
     renderingMode = RENDERING_MODES.ADDITIVE
   } = props;
   const initialViewState = useMemo(() => {
@@ -93,12 +112,18 @@ const VolumeViewer = props => {
     resolution,
     renderingMode,
     modelMatrix,
-    pickable: false,
+    pickable: false
   };
   const views = [threeDView];
   const layerProps = [layerConfig];
+  // useDevicePixels false to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
   return loader ? (
-    <VivViewer layerProps={layerProps} views={views} viewStates={viewStates} />
+    <VivViewer
+      layerProps={layerProps}
+      views={views}
+      viewStates={viewStates}
+      useDevicePixels={false}
+    />
   ) : null;
 };
 

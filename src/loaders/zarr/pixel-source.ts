@@ -96,7 +96,13 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
   }
 
   async getVolume(
-    { selection }: RasterSelection<S> | TileSelection<S> | ZarrTileSelection | { selection: number[] },
+    {
+      selection
+    }:
+      | RasterSelection<S>
+      | TileSelection<S>
+      | ZarrTileSelection
+      | { selection: number[] },
     // eslint-disable-next-line no-unused-vars
     updateProgress = (progress: number) => {},
     downsampleDepth = 1

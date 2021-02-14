@@ -234,7 +234,7 @@ export default class VivViewer extends PureComponent {
 
   render() {
     /* eslint-disable react/destructuring-assignment */
-    const { views, randomize } = this.props;
+    const { views, randomize, useDevicePixels = true } = this.props;
     const { viewStates } = this.state;
     const deckGLViews = views.map(view => view.getDeckGlView());
     // DeckGL seems to use the first view more than the second for updates
@@ -262,7 +262,7 @@ export default class VivViewer extends PureComponent {
         onViewStateChange={this._onViewStateChange}
         views={deckGLViews}
         viewState={viewStates}
-        useDevicePixels={false}
+        useDevicePixels={useDevicePixels}
         getCursor={({ isDragging }) => {
           return isDragging ? 'grabbing' : 'crosshair';
         }}

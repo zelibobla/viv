@@ -288,17 +288,16 @@ export default class XR3DLayer extends Layer {
     const {
       viewMatrix,
       viewMatrixInverse,
-      projectionMatrix,
+      projectionMatrix
     } = this.context.viewport;
     if (textures && model && volDims) {
-
-    const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      dtype
-    });
+      const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
+        sliderValues,
+        colorValues,
+        channelIsOn,
+        domain,
+        dtype
+      });
       model
         .setUniforms({
           ...uniforms,

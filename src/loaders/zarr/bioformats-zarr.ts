@@ -25,7 +25,7 @@ export async function load(
   const pyramid = data.map(arr => new ZarrPixelSource(arr, labels));
 
   return {
-    data: (pyramid),
+    data: pyramid,
     metadata: imgMeta
   };
 }
