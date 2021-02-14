@@ -87,13 +87,6 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
     const { x, y, selection, signal } = props;
     const sel = this._chunkIndex(selection, x, y);
 
-    const store = this._data.store as HTTPStore | AsyncStore<ArrayBuffer>;
-
-    // Injects `signal` prior to zarr.js calling `store.getItem`
-    if (signal && '__vivAddSignal' in store) {
-      store.__vivAddSignal(signal);
-    }
-
     const { data, shape } = (await this._data.getRawChunk(sel, {
       storeOptions: { signal }
     })) as RawArray;

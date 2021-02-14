@@ -70,7 +70,9 @@ const VolumeViewer = props => {
         (ratio.y * height) / 2,
         (ratio.z * depthDownsampled) / 2
       ]),
-      zoom: -2.0
+      zoom: -2.0,
+      rotationX: 0,
+      rotationOrbit: 0
     };
   }, [loader, resolution]);
   const viewStates = [{ ...initialViewState, id: '3d' }];
