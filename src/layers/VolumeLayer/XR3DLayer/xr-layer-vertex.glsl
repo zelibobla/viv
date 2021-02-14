@@ -51,7 +51,8 @@ void main() {
        |
        #
 
-  Finally, we apply the inverse model matrix transformation to the eye as well to bring it too into world space.  Notice that the ray here matches the "voxels" through which the first ray also passes, as desired.
+  Finally, we apply the inverse model matrix transformation to the eye as well to bring it too into world space.
+  Notice that the ray here matches the "voxels" through which the first ray also passes, as desired.
          ^
     ____/__
     |  /  |

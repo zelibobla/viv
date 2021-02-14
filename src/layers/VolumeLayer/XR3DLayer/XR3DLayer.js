@@ -2,27 +2,30 @@
 
 /* This is largely an adaptation of Will Usher's excellent blog post/code:
 https://github.com/Twinklebear/webgl-volume-raycaster
+Without his app, this would have been exponentially more difficult to do, so we thank him dearly.
 
 The major changes are:
 
 - Code has been adapted to the luma.gl/deck.gl framework instead of more-or-less pure WebGL.
 
-- We use a coordinate system that will allow overlays/other figures on our vertex shader/javascript.  
-Will implements everything in a unit cube (I think?) centered at the origin.  Our center is at the midpoint of
-the dimensions of the volume which will allow for pixel-space overlays (i.e the top left back corner is the origin).
+- We use a coordinate system that will allow overlays/other figures on our vertex shader/javascript via the `uniform mat4 scale` that matches raw pixel size multiplied by
+the ratio of physical sizes (if present) to the world space, just like our 2D layers.  Will implements everything in a unit cube (I think?) centered at the origin.
 
 - We use an OrbitView which is a similar camera to what Will has, but stops gimbal lock from happening
-by stopping full rotations whereas Will implements a camera that allows for full rotations without gimbal lock.
-We could probably implement a similar camera in deck.gl but that is for another time.
+by stopping full rotations whereas Will implements a camera that allows for full rotations without gimbal lock via quaternions.
+We have an open issue for implementing this deck.gl: https://github.com/visgl/deck.gl/issues/5364
 
 - We have a multi-channel use case and have a few tweaks in the fragment shader to handle that.
 
-- We need to handle different texture datatypes (Will uses R8 data?).
+- We convert all of our data to Float32Array so we can use LINEAR sampling while also maintaing the dynamic range and integrity of the data.
 
-- Will uses a colormap via a sampled texture, which is not a bad idea, but is not the direction we have gone in so far.
-So, if we want 3d colormaps, we'll need another shader.
+- Will uses a colormap via a sampled texture, which is a very good idea, but not something we are geared up for in 2D, so not something we will do in 3D either: 
+https://github.com/visgl/luma.gl/issues/1415
 
 - We allow for multiple rendering settings (Max/Min Int. Proj., Additive, etc.)
+
+- We allow for arbtirary affine transformations via deck.gl's modelMatrix prop and have updated the vertex shader accordingly.
+More information about that is detailed in the comments there.
 */
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer } from '@deck.gl/core';
@@ -366,16 +369,16 @@ export default class XR3DLayer extends Layer {
       height,
       depth,
       data: new Float32Array(data),
-      // ? Seems to be a luma.gl bug.  Looks like Texture2D is wrong but these are flipped somewhere.
+      // ? Seems to be a luma.gl bug.  Looks like Texture2D is wrong or this is but these are flipped somewhere.
       format: dataFormat,
       dataFormat: format,
       type,
       mipmaps: false,
       parameters: {
-        // NEAREST for integer data
+        // LINEAR results in the best results visually - otherwise everything looks pixelated.
+        // The above cast to Float32Array is needed forthis setting to work (it does not work with integer data).
         [GL.TEXTURE_MIN_FILTER]: GL.LINEAR,
         [GL.TEXTURE_MAG_FILTER]: GL.LINEAR,
-        // CLAMP_TO_EDGE to remove tile artifacts
         [GL.TEXTURE_WRAP_S]: GL.CLAMP_TO_EDGE,
         [GL.TEXTURE_WRAP_T]: GL.CLAMP_TO_EDGE,
         [GL.TEXTURE_WRAP_R]: GL.CLAMP_TO_EDGE
