@@ -104,11 +104,10 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
       | ZarrTileSelection
       | { selection: number[] },
     // eslint-disable-next-line no-unused-vars
-    updateProgress = (progress: number) => {},
+    updateProgress = () => {},
     downsampleDepth = 1
   ) {
     const { shape, labels, dtype } = this;
-    let progress = 0;
     const { height, width } = getImageSize(this);
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / downsampleDepth);
@@ -131,9 +130,8 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
         };
         const sel = this._chunkIndex(depthSelection, null, null);
         const { data } = (await this._data.getRaw(sel)) as RawArray;
-        progress += 0.5;
-        updateProgress(progress / depthDownsampled);
         let r = 0;
+        updateProgress();
         while (r < rasterSize) {
           view[setMethodString](
             BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
@@ -143,8 +141,7 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
           );
           r += 1;
         }
-        progress += 0.5;
-        updateProgress(progress / depthDownsampled);
+        updateProgress();
       })
     );
     return {

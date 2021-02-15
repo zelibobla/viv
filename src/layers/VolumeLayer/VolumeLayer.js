@@ -45,12 +45,21 @@ export default class VolumeLayer extends CompositeLayer {
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
       const { loader, loaderSelection = [], resolution = 0 } = this.props;
+      let progress = 0;
+      const totalRequests =
+        (loader[0].shape[loader[0].labels.indexOf('z')] >> resolution) *
+        loaderSelection.length;
+      console.log(
+        loader[0].shape,
+        loader[0].shape[loader[0].labels.indexOf('z')],
+        1.0 / totalRequests
+      );
+      const onUpdate = () => {
+        progress += 0.5 / totalRequests;
+        this.setState({ progress });
+      };
       const getVolume = selection =>
-        loader[resolution].getVolume(
-          { selection },
-          progress => this.setState({ progress }),
-          2 ** resolution
-        );
+        loader[resolution].getVolume({ selection }, onUpdate, 2 ** resolution);
       const dataPromises = loaderSelection.map(getVolume);
 
       Promise.all(dataPromises).then(volumes => {

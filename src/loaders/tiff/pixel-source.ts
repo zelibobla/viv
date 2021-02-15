@@ -35,11 +35,10 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
   async getVolume(
     { selection }: RasterSelection<S> | TileSelection<S>,
     // eslint-disable-next-line no-unused-vars
-    updateProgress = (progress: number) => {},
+    updateProgress = () => {},
     downsampleDepth = 1
   ) {
     const { shape, labels, dtype } = this;
-    let progress = 0;
     const { height, width } = getImageSize(this);
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / downsampleDepth);
@@ -62,9 +61,8 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
         };
         const image = await this._indexer(depthSelection);
         const { data } = await this._readRasters(image);
-        progress += 0.5;
-        updateProgress(progress / depthDownsampled);
         let r = 0;
+        updateProgress();
         while (r < rasterSize) {
           view[setMethodString](
             BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
@@ -74,8 +72,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
           );
           r += 1;
         }
-        progress += 0.5;
-        updateProgress(progress / depthDownsampled);
+        updateProgress();
       })
     );
     return {
