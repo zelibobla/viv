@@ -30,12 +30,12 @@ const ColorPalette = ({ handleChange }) => {
   const classes = useStyles();
   return (
     <div className={classes.container} aria-label="color-swatch">
-      {COLOR_PALLETE.map((color, i) => {
+      {COLOR_PALLETE.map(color => {
         return (
           <IconButton
             className={classes.button}
             // eslint-disable-next-line react/no-array-index-key
-            key={`${color}-${i}`}
+            key={color}
             onClick={() => handleChange(color)}
           >
             <LensIcon
