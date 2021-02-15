@@ -25,7 +25,8 @@ const areViewStatesEqual = (viewState, otherViewState) => {
  * @param {VivView} props.views Various VivViews to render.
  * @param {Array} props.viewStates List of objects like [{ target: [x, y, 0], zoom: -zoom, id: 'left' }, { target: [x, y, 0], zoom: -zoom, id: 'right' }]
  * @param {ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
- * */
+ * @param {ViewStateChange} [props.useDevicePixels] useDevicePixels false (default) to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
+ */
 export default class VivViewer extends PureComponent {
   constructor(props) {
     super(props);

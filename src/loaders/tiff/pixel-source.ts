@@ -71,7 +71,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
           view[setMethodString](
             BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
               BYTES_PER_ELEMENT * r,
-            Math.max(0, data[r]),
+            data[r],
             true
           );
           r += 1;
