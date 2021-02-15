@@ -43,20 +43,13 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-function VolumeButton({
-  toggleUse3d,
-  loader,
-  isLoading,
-  use3d,
-  on3DResolutionSelect
-}) {
+function VolumeButton({ toggleUse3d, loader, use3d, on3DResolutionSelect }) {
   const [open, toggle] = useReducer(v => !v, false);
   const anchorRef = useRef(null);
   const classes = useStyles();
   return (
     <>
       <Button
-        disabled={loader.omexml?.SizeZ === 1 || isLoading}
         variant="outlined"
         size="small"
         ref={anchorRef}

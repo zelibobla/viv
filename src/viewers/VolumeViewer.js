@@ -6,13 +6,21 @@ import { VolumeView } from '../views';
 import { RENDERING_MODES } from '../constants';
 
 /**
- * This component provides a component for viewing a 3D volume.
+ * This component provides a volumetric viewer that provides provides volume-ray-casting.
  * @param {Object} props
  * @param {Array} props.sliderValues List of [begin, end] values to control each channel's ramp function.
  * @param {Array} props.colorValues List of [r, g, b] values for each channel.
  * @param {Array} props.channelIsOn List of boolean values for each channel for whether or not it is visible.
- * @param {Object} props.loader Loader to be used for fetching data.  It must have the properies `dtype`, `numLevels`, and `tileSize` and implement `getTile` and `getRaster`.
- * @param {Array} props.loaderSelection Selection to be used for fetching data.
+ * @param {string} [props.colormap] String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
+ * @param {Array} props.loader This data source for the viewer. PixelSource[]. If loader.length > 1, data is assumed to be multiscale.
+ * @param {Array} props.loaderSelection Selection to be used for fetching data
+ * @param {Array} [props.resolution] Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
+ * @param {import('./VivViewer').ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
+ * @param {Array} [props.renderingMode] One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
+ * @param {Matrix4} [props.modelMatrix] A column major affine transformation to be applied to the volume.
+ * @param {Array} [props.xSlice] 0-1 interval on which to slice the volume.
+ * @param {Array} [props.ySlice] 0-1 interval on which to slice the volume.
+ * @param {Array} [props.zSlice] 0-1 interval on which to slice the volume.
  */
 
 const VolumeViewer = props => {
@@ -23,32 +31,13 @@ const VolumeViewer = props => {
     channelIsOn,
     loaderSelection,
     colormap,
-    xSlice,
-    ySlice,
-    zSlice,
-    resolution,
+    resolution = loader.length - 1,
     modelMatrix,
-    // modelMatrix = new Matrix4([
-    //   1,
-    //   0,
-    //   2.1,
-    //   0,
-    //   0,
-    //   1,
-    //   0,
-    //   0,
-    //   0,
-    //   0,
-    //   1,
-    //   0,
-    //   0,
-    //   0,
-    //   0,
-    //   1
-    // ])
-    //   .rotateZ(0.5)
-    //   .rotateX(0.5),
-    renderingMode = RENDERING_MODES.ADDITIVE
+    onViewStateChange,
+    renderingMode = RENDERING_MODES.ADDITIVE,
+    xSlice = [0, 1],
+    ySlice = [0, 1],
+    zSlice = [0, 1]
   } = props;
   const initialViewState = useMemo(() => {
     const { shape, labels } = loader[resolution];
@@ -123,6 +112,7 @@ const VolumeViewer = props => {
       layerProps={layerProps}
       views={views}
       viewStates={viewStates}
+      onViewStateChange={onViewStateChange}
       useDevicePixels={false}
     />
   ) : null;

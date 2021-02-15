@@ -2,6 +2,7 @@ import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
 import { Matrix4 } from 'math.gl';
 import XR3DLayer from './XR3DLayer';
+import { RENDERING_MODES } from '../../constants';
 
 const defaultProps = {
   pickable: false,
@@ -10,30 +11,42 @@ const defaultProps = {
   channelIsOn: { type: 'array', value: [], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
   colormap: { type: 'string', value: '', compare: true },
-  loaderSelection: { type: 'array', value: undefined, compare: true },
+  loaderSelection: { type: 'array', value: [], compare: true },
+  resolution: { type: 'number', value: 0, compare: true },
   domain: { type: 'array', value: [], compare: true },
   loader: {
     type: 'object',
     value: {
       getRaster: async () => ({ data: [], height: 0, width: 0 }),
-      dtype: '<u2'
+      dtype: 'Uint16'
     },
     compare: true
   },
   xSlice: { type: 'array', value: [0, 1], compare: true },
   ySlice: { type: 'array', value: [0, 1], compare: true },
-  zSlice: { type: 'array', value: [0, 1], compare: true }
+  zSlice: { type: 'array', value: [0, 1], compare: true },
+  renderingMode: {
+    type: RENDERING_MODES.MAX_INTENSITY_PROJECTION,
+    value: [0, 1],
+    compare: true
+  }
 };
 
 /**
- * This layer wraps XR3DLayer and generates a volumetric rendering.
+ * This component provides a volumetric viewer that provides provides volume-ray-casting.
  * @param {Object} props
  * @param {Array} props.sliderValues List of [begin, end] values to control each channel's ramp function.
  * @param {Array} props.colorValues List of [r, g, b] values for each channel.
  * @param {Array} props.channelIsOn List of boolean values for each channel for whether or not it is visible.
- * @param {number} props.opacity Opacity of the layer.
- * @param {Array} props.domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
- * @param {Object} props.loader Loader to be used for fetching data.  It must implement/return `getRaster` and `dtype`.
+ * @param {string} [props.colormap] String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
+ * @param {Array} props.loader This data source for the viewer. PixelSource[]. If loader.length > 1, data is assumed to be multiscale.
+ * @param {Array} props.loaderSelection Selection to be used for fetching data
+ * @param {Array} [props.resolution] Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
+ * @param {Array} [props.renderingMode] One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
+ * @param {Matrix4} [props.modelMatrix] A column major affine transformation to be applied to the volume.
+ * @param {Array} [props.xSlice] 0-1 interval on which to slice the volume.
+ * @param {Array} [props.ySlice] 0-1 interval on which to slice the volume.
+ * @param {Array} [props.zSlice] 0-1 interval on which to slice the volume.
  */
 export default class VolumeLayer extends CompositeLayer {
   updateState({ changeFlags, oldProps, props }) {
@@ -44,16 +57,12 @@ export default class VolumeLayer extends CompositeLayer {
       props.loaderSelection !== oldProps.loaderSelection;
     if (loaderChanged || loaderSelectionChanged) {
       // Only fetch new data to render if loader has changed
-      const { loader, loaderSelection = [], resolution = 0 } = this.props;
+      const { loader, loaderSelection = [], resolution } = this.props;
       let progress = 0;
       const totalRequests =
+        // eslint-disable-next-line no-bitwise
         (loader[0].shape[loader[0].labels.indexOf('z')] >> resolution) *
         loaderSelection.length;
-      console.log(
-        loader[0].shape,
-        loader[0].shape[loader[0].labels.indexOf('z')],
-        1.0 / totalRequests
-      );
       const onUpdate = () => {
         progress += 0.5 / totalRequests;
         this.setState({ progress });
@@ -85,15 +94,15 @@ export default class VolumeLayer extends CompositeLayer {
       channelIsOn,
       domain,
       colormap,
-      z = 0,
       id,
       xSlice,
       ySlice,
       zSlice,
+      resolution,
       renderingMode,
       modelMatrix
     } = this.props;
-    const { dtype } = loader[z];
+    const { dtype } = loader[resolution];
     const { data, width, height, depth, progress } = this.state;
     if (!(width && height)) {
       const { viewport } = this.context;
@@ -117,9 +126,9 @@ export default class VolumeLayer extends CompositeLayer {
     }
     let physicalSizeScalingMatrix = new Matrix4().identity();
     if (
-      loader[z]?.meta?.physicalSizes?.x &&
-      loader[z]?.meta?.physicalSizes?.y &&
-      loader[z]?.meta?.physicalSizes?.z
+      loader[resolution]?.meta?.physicalSizes?.x &&
+      loader[resolution]?.meta?.physicalSizes?.y &&
+      loader[resolution]?.meta?.physicalSizes?.z
     ) {
       const {
         physicalSizes: {
@@ -127,7 +136,7 @@ export default class VolumeLayer extends CompositeLayer {
           y: { size: physicalSizeY },
           z: { size: physicalSizeZ }
         }
-      } = loader[z].meta;
+      } = loader[resolution].meta;
       if (physicalSizeZ && physicalSizeX && physicalSizeY) {
         const ratio = [
           physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),

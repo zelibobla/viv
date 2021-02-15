@@ -550,7 +550,6 @@ export default function Avivator(props) {
                 toggleUse3d={toggleUse3d}
                 fullWidth
                 loader={loader}
-                isLoading={isLoading}
                 use3d={use3d}
                 on3DResolutionSelect={on3DResolutionSelect}
               />
