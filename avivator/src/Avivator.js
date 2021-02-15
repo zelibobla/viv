@@ -525,7 +525,9 @@ export default function Avivator(props) {
           )}
           {globalControllers}
           {!isLoading && !isRgb ? (
-            <Grid container>{channelControllers}</Grid>
+            <Grid container style={{ paddingTop: 16 }}>
+              {channelControllers}
+            </Grid>
           ) : (
             <Grid container justify="center">
               {!isRgb && <CircularProgress />}
@@ -537,7 +539,7 @@ export default function Avivator(props) {
               onClick={handleChannelAdd}
               fullWidth
               variant="outlined"
-              style={{ borderStyle: 'dashed' }}
+              style={{ borderStyle: 'dashed', marginBottom: 8 }}
               startIcon={<AddIcon />}
               size="small"
             >

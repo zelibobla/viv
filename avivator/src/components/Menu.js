@@ -58,7 +58,7 @@ function Header(props) {
   useEffect(() => setText(url), [url]);
 
   return (
-    <Grid container direction="column">
+    <Grid container direction="column" spacing={0}>
       <Grid item xs={12}>
         <MenuTitle menuToggle={menuToggle} />
       </Grid>
@@ -136,13 +136,7 @@ function Menu({ children, ...props }) {
           menuToggle={toggle}
           handleSubmitFile={handleSubmitFile}
         />
-        <Grid
-          container
-          direction="column"
-          spacing={1}
-          justify="center"
-          alignItems="center"
-        >
+        <Grid container direction="column" justify="center" alignItems="center">
           {children.map((child, i) => {
             return (
               // eslint-disable-next-line react/no-array-index-key
