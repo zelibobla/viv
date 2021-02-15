@@ -77,6 +77,7 @@ function VolumeButton({ toggleUse3d, loader, use3d, on3DResolutionSelect }) {
                       depth / 2 ** resolution
                     );
                     const name = `${dtype}Array`;
+                    // eslint-disable-next-line no-undef
                     const { BYTES_PER_ELEMENT } = globalThis[name];
                     // Check memory allocation limits
                     const totalBytes =

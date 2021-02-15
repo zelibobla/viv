@@ -8,10 +8,9 @@ const store = new FileSystemStore(`${FIXTURE}/data.zarr`);
 const meta = fs.readFile(`${FIXTURE}/METADATA.ome.xml`).then(b => b.toString());
 
 test('Creates correct ZarrPixelSource.', async t => {
-  t.plan(4);
+  t.plan(3);
   try {
     const { data } = await load(store, await meta);
-    t.equal(data.length, 1, 'Image should not be pyramidal.');
     const [base] = data;
     t.deepEqual(
       base.labels,

@@ -16,10 +16,14 @@ const defaultProps = {
   domain: { type: 'array', value: [], compare: true },
   loader: {
     type: 'object',
-    value: {
-      getRaster: async () => ({ data: [], height: 0, width: 0 }),
-      dtype: 'Uint16'
-    },
+    value: [
+      {
+        getRaster: async () => ({ data: [], height: 0, width: 0 }),
+        dtype: 'Uint16',
+        shape: [1],
+        labels: ['z']
+      }
+    ],
     compare: true
   },
   xSlice: { type: 'array', value: [0, 1], compare: true },
