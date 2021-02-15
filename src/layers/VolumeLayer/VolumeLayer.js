@@ -26,8 +26,8 @@ const defaultProps = {
   ySlice: { type: 'array', value: [0, 1], compare: true },
   zSlice: { type: 'array', value: [0, 1], compare: true },
   renderingMode: {
-    type: RENDERING_MODES.MAX_INTENSITY_PROJECTION,
-    value: [0, 1],
+    type: 'string',
+    value: RENDERING_MODES.MAX_INTENSITY_PROJECTION,
     compare: true
   }
 };

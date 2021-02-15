@@ -30,7 +30,6 @@ import { COORDINATE_SYSTEM, Layer } from '@deck.gl/core';
 import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
 import { Matrix4 } from 'math.gl';
 import vs from './xr-layer-vertex.glsl';
-import fsColormap from './xr-layer-fragment-colormap.glsl';
 import fs from './xr-layer-fragment.glsl';
 import channels from './channel-intensity-module';
 import { padColorsAndSliders } from '../../utils';
@@ -58,7 +57,7 @@ const CUBE_STRIP = [
 	0, 0, 0
 ];
 
-const RENDERING_MODES = {
+const RENDERING_MODES_BLEND = {
   [RENDERING_NAMES.MAX_INTENSITY_PROJECTION]: {
     _BEFORE_RENDER: `\
       float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
@@ -136,6 +135,82 @@ const RENDERING_MODES = {
   }
 };
 
+const RENDERING_MODES_COLORMAP = {
+  [RENDERING_NAMES.MAX_INTENSITY_PROJECTION]: {
+    _BEFORE_RENDER: `\
+      float maxVals[6] = float[6](-1.0, -1.0, -1.0, -1.0, -1.0, -1.0);
+    `,
+    _RENDER: `\
+    
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+
+      for(int i = 0; i < 6; i++) {
+        if(intensityArray[i] > maxVals[i]) {
+          maxVals[i] = intensityArray[i];
+        }
+      }
+    `,
+    _AFTER_RENDER: `\
+      float total = 0.0;
+      for(int i = 0; i < 6; i++) {
+        total += maxVals[i];
+      }
+      // Do not go past 1 in opacity/colormap value.
+      total = min(total, 1.0);
+      color = colormap(total, total);
+    `
+  },
+  [RENDERING_NAMES.MIN_INTENSITY_PROJECTION]: {
+    _BEFORE_RENDER: `\
+      float minVals[6] = float[6](1. / 0., 1. / 0., 1. / 0., 1. / 0., 1. / 0., 1. / 0.);
+    `,
+    _RENDER: `\
+    
+      float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+
+      for(int i = 0; i < 6; i++) {
+        if(intensityArray[i] < minVals[i]) {
+          minVals[i] = intensityArray[i];
+        }
+      }
+    `,
+    _AFTER_RENDER: `\
+      float total = 0.0;
+      for(int i = 0; i < 6; i++) {
+        total += minVals[i];
+      }
+      // Do not go past 1 in opacity/colormap value.
+      total = min(total, 1.0);
+      color = colormap(total, total);
+    `
+  },
+  [RENDERING_NAMES.ADDITIVE]: {
+    _BEFORE_RENDER: ``,
+    _RENDER: `\
+    float intensityArray[6] = float[6](intensityValue0, intensityValue1, intensityValue2, intensityValue3, intensityValue4, intensityValue5);
+		float total = 0.0;
+
+		for(int i = 0; i < 6; i++) {
+			total += intensityArray[i];
+		}
+		// Do not go past 1 in opacity/colormap value.
+		total = min(total, 1.0);
+
+		vec4 val_color = colormap(total, total);
+
+		// Opacity correction
+		val_color.a = 1.0 - pow(1.0 - val_color.a, 1.0);
+		color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
+		color.a += (1.0 - color.a) * val_color.a;
+		if (color.a >= 0.95) {
+			break;
+		}
+    p += ray_dir * dt;
+    `,
+    _AFTER_RENDER: ``
+  }
+};
+
 const defaultProps = {
   pickable: false,
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
@@ -181,11 +256,13 @@ export default class XR3DLayer extends Layer {
    */
   getShaders() {
     const { colormap, renderingMode } = this.props;
-    const fragmentShaderColormap = colormap ? fsColormap : fs;
-    const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = RENDERING_MODES[
-      renderingMode
-    ];
-    // Always include viridis so shaders compile
+    const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = colormap
+      ? RENDERING_MODES_COLORMAP[renderingMode]
+      : RENDERING_MODES_BLEND[renderingMode];
+    // Always include viridis so shaders compile,
+    // but otherwise we discard all other colormaps via a regex.
+    // With all the colormaps, the shaders were too large
+    // and crashed our computers when we loaded volumes too large.
     const discardColormaps = COLORMAPS.filter(
       i => i !== (colormap || 'viridis')
     ).map(i => i.replace(/-/g, '_'));
@@ -202,9 +279,18 @@ export default class XR3DLayer extends Layer {
         _COLORMAP_FUNCTION: colormap || 'viridis'
       }
     };
+    console.log(
+      _BEFORE_RENDER,
+      _RENDER,
+      _AFTER_RENDER,
+      fs
+        .replace('_BEFORE_RENDER', _BEFORE_RENDER)
+        .replace('_RENDER', _RENDER)
+        .replace('_AFTER_RENDER', _AFTER_RENDER)
+    );
     return super.getShaders({
       vs,
-      fs: fragmentShaderColormap
+      fs: fs
         .replace('_BEFORE_RENDER', _BEFORE_RENDER)
         .replace('_RENDER', _RENDER)
         .replace('_AFTER_RENDER', _AFTER_RENDER),

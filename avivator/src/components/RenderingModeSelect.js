@@ -8,7 +8,7 @@ import { RENDERING_MODES } from '../../../dist';
 function RenderingModeSelect({ value, handleChange, disabled }) {
   return (
     <FormControl fullWidth>
-      <InputLabel htmlFor="colormap-select">Rendering Mode</InputLabel>
+      <InputLabel htmlFor="rendering-mode-select">Rendering Mode</InputLabel>
       <Select
         native
         onChange={e => handleChange(e.target.value)}

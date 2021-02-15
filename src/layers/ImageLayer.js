@@ -110,7 +110,6 @@ export default class ImageLayer extends CompositeLayer {
         if (onViewportLoad) {
           onViewportLoad(raster);
         }
-
         this.setState({ ...raster });
       });
     }

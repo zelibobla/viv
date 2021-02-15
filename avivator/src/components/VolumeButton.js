@@ -9,14 +9,12 @@ import MenuList from '@material-ui/core/MenuList';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { getImageSize } from '../../../dist';
-
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
@@ -68,14 +66,16 @@ function VolumeButton({ toggleUse3d, loader, use3d, on3DResolutionSelect }) {
             <MenuList id="resolution-options">
               {Array.from({ length: loader.length })
                 .fill(0)
-                .map((v, z) => {
+                // eslint-disable-next-line no-unused-vars
+                .map((_, resolution) => {
                   if (loader) {
-                    const { shape, labels } = loader[z];
+                    const { shape, labels, dtype } = loader[resolution];
                     const height = shape[labels.indexOf('y')];
                     const width = shape[labels.indexOf('x')];
                     const depth = shape[labels.indexOf('z')];
-                    const depthDownsampled = Math.floor(depth / 2 ** z);
-                    const { dtype } = loader[z];
+                    const depthDownsampled = Math.floor(
+                      depth / 2 ** resolution
+                    );
                     const name = `${dtype}Array`;
                     const { BYTES_PER_ELEMENT } = globalThis[name];
                     // Check memory allocation limits
@@ -91,13 +91,13 @@ function VolumeButton({ toggleUse3d, loader, use3d, on3DResolutionSelect }) {
                           dense
                           disableGutters
                           onClick={() => {
-                            on3DResolutionSelect(z);
+                            on3DResolutionSelect(resolution);
                             toggleUse3d();
                             toggle();
                           }}
                           key={`(${height}, ${width}, ${depthDownsampled})`}
                         >
-                          {`${z}x Downsampled, ~${formatBytes(
+                          {`${resolution}x Downsampled, ~${formatBytes(
                             totalBytes
                           )} per channel, (${height}, ${width}, ${depthDownsampled})`}
                         </MenuItem>

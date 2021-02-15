@@ -80,7 +80,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
       })
     );
     return {
-      data: new globalThis[arrayTypeName](view.buffer) as SupportedTypedArray,
+      data: new globalThis[name](view.buffer) as SupportedTypedArray,
       height,
       width,
       depth: depthDownsampled
