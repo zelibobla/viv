@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from 'react'; // eslint-disable-line import/no-unresolved
 import { Matrix4 } from 'math.gl';
 
 import VivViewer from './VivViewer';
