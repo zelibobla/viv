@@ -176,6 +176,7 @@ export default function Avivator(props) {
         setPixelValues(new Array(selections.length).fill(FILL_PIXEL_VALUE));
         // Set the global selections (needed for the UI). All selections have the same global selection.
         setGlobalSelections(selections[0]);
+        if (use3d) toggleUse3d();
         // eslint-disable-next-line no-unused-expressions
         history?.push(
           typeof urlOrFile === 'string' ? `?image_url=${urlOrFile}` : ''
