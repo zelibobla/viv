@@ -85,7 +85,7 @@ const VolumeViewer = props => {
     };
   }, [loader, resolution, modelMatrix]);
   const viewStates = [{ ...initialViewState, id: '3d' }];
-  const threeDView = new VolumeView({
+  const volumeView = new VolumeView({
     id: '3d',
     target: initialViewState.target
   });
@@ -104,7 +104,7 @@ const VolumeViewer = props => {
     modelMatrix,
     pickable: false
   };
-  const views = [threeDView];
+  const views = [volumeView];
   const layerProps = [layerConfig];
   // useDevicePixels false to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
   return loader ? (

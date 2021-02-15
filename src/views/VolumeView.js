@@ -1,4 +1,3 @@
-// eslint-disable-next-line max-classes-per-file
 import { OrbitView } from '@deck.gl/core';
 import { VolumeLayer } from '../layers';
 import { getVivId } from './utils';
