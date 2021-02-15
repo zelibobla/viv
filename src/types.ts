@@ -9,6 +9,7 @@ export interface PixelData {
   data: SupportedTypedArray;
   width: number;
   height: number;
+  depth?: number;
 }
 
 export type PixelSourceSelection<S extends string[]> = {

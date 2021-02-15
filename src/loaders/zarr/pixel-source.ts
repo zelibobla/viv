@@ -1,8 +1,7 @@
 import { BoundsCheckError } from 'zarr';
 import { isInterleaved, getImageSize } from '../utils';
 import { getIndexer } from './lib/indexer';
-
-import type { ZarrArray } from 'zarr';
+import type { ZarrArray, TypedArray } from 'zarr';
 import type { RawArray } from 'zarr/types/rawArray';
 
 import type {
@@ -11,7 +10,8 @@ import type {
   RasterSelection,
   PixelSourceSelection,
   PixelData,
-  TileSelection
+  TileSelection,
+  SupportedTypedArray
 } from '../../types';
 
 const DTYPE_LOOKUP = {
@@ -108,12 +108,13 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
     downsampleDepth = 1
   ) {
     const { shape, labels, dtype } = this;
-    const { height, width } = getImageSize(this);
+    const { height, width } = getImageSize(this as PixelSource<S>);
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / downsampleDepth);
     const rasterSize = height * width;
-    const name = `${dtype}Array`;
-    const { BYTES_PER_ELEMENT } = globalThis[name] as TypedArray;
+    const arrayTypeName = `${dtype}Array`;
+    const ArrayType = window[arrayTypeName] as SupportedTypedArray;
+    const { BYTES_PER_ELEMENT } = ArrayType;
     const setMethodString = `set${dtype}` as
       | 'setUint8'
       | 'setUint16'
@@ -145,11 +146,11 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
       })
     );
     return {
-      data: new globalThis[name](view.buffer),
+      data: new globalThis[arrayTypeName](view.buffer) as SupportedTypedArray,
       height,
       width,
       depth: depthDownsampled
-    } as LayerData;
+    } as PixelData;
   }
 
   onTileError(err: Error) {

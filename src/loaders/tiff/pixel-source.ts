@@ -10,7 +10,8 @@ import type {
   Labels,
   RasterSelection,
   TileSelection,
-  PixelData
+  PixelData,
+  SupportedTypedArray
 } from '../../types';
 
 class TiffPixelSource<S extends string[]> implements PixelSource<S> {
@@ -39,7 +40,10 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
     downsampleDepth = 1
   ) {
     const { shape, labels, dtype } = this;
-    const { height, width } = getImageSize(this);
+    const { height, width } = getImageSize(this as PixelSource<S>) as {
+      height: number;
+      width: number;
+    };
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / downsampleDepth);
     const rasterSize = height * width;
@@ -76,7 +80,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
       })
     );
     return {
-      data: new globalThis[name](view.buffer),
+      data: new globalThis[arrayTypeName](view.buffer) as SupportedTypedArray,
       height,
       width,
       depth: depthDownsampled
@@ -117,7 +121,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
     }
 
     return {
-      data: data,
+      data,
       width: raster.width,
       height: raster.height
     } as PixelData;
