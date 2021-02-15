@@ -14,9 +14,7 @@ const Slicer = props => {
         <Grid item xs={11}>
           <Slider
             value={xSlice}
-            onChange={(e, v) => {
-              setXSlice(v);
-            }}
+            onChange={v => setXSlice(v)}
             valueLabelDisplay="auto"
             getAriaLabel={() => `x slider`}
             min={0}
@@ -33,9 +31,7 @@ const Slicer = props => {
         <Grid item xs={11}>
           <Slider
             value={ySlice}
-            onChange={(e, v) => {
-              setYSlice(v);
-            }}
+            onChange={v => setYSlice(v)}
             valueLabelDisplay="auto"
             getAriaLabel={() => `y slider`}
             min={0}
@@ -52,9 +48,7 @@ const Slicer = props => {
         <Grid item xs={11}>
           <Slider
             value={zSlice}
-            onChange={(e, v) => {
-              setZSlice(v);
-            }}
+            onChange={v => setZSlice(v)}
             valueLabelDisplay="auto"
             getAriaLabel={() => `z slider`}
             min={0}

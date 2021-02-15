@@ -59,8 +59,8 @@ export default class VolumeLayer extends CompositeLayer {
       typeof propsChanged === 'string' && propsChanged.includes('props.loader');
     const loaderSelectionChanged =
       props.loaderSelection !== oldProps.loaderSelection;
+    // Only fetch new data to render if loader has changed
     if (loaderChanged || loaderSelectionChanged) {
-      // Only fetch new data to render if loader has changed
       const { loader, loaderSelection = [], resolution } = this.props;
       let progress = 0;
       const totalRequests =
