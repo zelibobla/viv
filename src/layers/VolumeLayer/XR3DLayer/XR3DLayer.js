@@ -129,15 +129,6 @@ export default class XR3DLayer extends Layer {
         _COLORMAP_FUNCTION: colormap || 'viridis'
       }
     };
-    console.log(
-      _BEFORE_RENDER,
-      _RENDER,
-      _AFTER_RENDER,
-      fs
-        .replace('_BEFORE_RENDER', _BEFORE_RENDER)
-        .replace('_RENDER', _RENDER)
-        .replace('_AFTER_RENDER', _AFTER_RENDER)
-    );
     return super.getShaders({
       vs,
       fs: fs
