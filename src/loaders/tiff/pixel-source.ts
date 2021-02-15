@@ -70,7 +70,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
             BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
               BYTES_PER_ELEMENT * r,
             Math.max(0, data[r]),
-            true // always little endian from geotiff
+            true
           );
           r += 1;
         }

@@ -22,8 +22,6 @@ export const DTYPE_VALUES = {
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_BYTE,
     max: 2 ** 8 - 1,
-    TypedArray: Uint8Array,
-    setMethodString: 'setUint8',
     sampler: 'usampler2D'
   },
   Uint16: {
@@ -31,8 +29,6 @@ export const DTYPE_VALUES = {
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_SHORT,
     max: 2 ** 16 - 1,
-    TypedArray: Uint16Array,
-    setMethodString: 'setUint16',
     sampler: 'usampler2D'
   },
   Uint32: {
@@ -40,16 +36,12 @@ export const DTYPE_VALUES = {
     dataFormat: GL.RED_INTEGER,
     type: GL.UNSIGNED_INT,
     max: 2 ** 32 - 1,
-    TypedArray: Uint32Array,
-    setMethodString: 'setUint32',
     sampler: 'usampler2D'
   },
   Float32: {
     format: GL.R32F,
     dataFormat: GL.RED,
     type: GL.FLOAT,
-    TypedArray: Float32Array,
-    setMethodString: 'setFloat32',
     // Not sure what to do about this one - a good use case for channel stats, I suppose:
     // https://en.wikipedia.org/wiki/Single-precision_floating-point_format.
     max: 3.4 * 10 ** 38,
