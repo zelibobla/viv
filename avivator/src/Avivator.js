@@ -514,7 +514,7 @@ export default function Avivator(props) {
               disabled={isLoading}
             />
           )}
-          {!isRgb && channelOptions?.length > 1 && !colormap && (
+          {!isRgb && channelOptions?.length > 1 && !colormap && !use3d && (
             <LensSelect
               handleToggle={toggleIsLensOn}
               handleSelection={setLensSelection}
