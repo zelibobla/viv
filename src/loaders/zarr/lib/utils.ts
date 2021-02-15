@@ -1,8 +1,7 @@
 import { openGroup } from 'zarr';
 import type { ZarrArray } from 'zarr';
 import type { OMEXML } from '../../omexml';
-import { getLabels } from '../../utils';
-
+import { getLabels, getImageSize } from '../../utils';
 import type { RootAttrs } from '../ome-zarr';
 import type { PixelSource } from '../../../types';
 
@@ -95,5 +94,10 @@ export async function loadMultiscales(store: ZarrArray['store'], path = '') {
  *
  */
 export function trimPyramid<S extends string[]>(pyramid: PixelSource<S>[]) {
-  return pyramid.filter(level => pyramid[0].tileSize === level.tileSize);
+  const { width: level0Width, height: level0Height } = getImageSize(pyramid[0]);
+  return pyramid.filter((level, index) => {
+    const { height, width } = getImageSize(level);
+    // eslint-disable-next-line no-bitwise
+    return height === level0Height >> index && width === level0Width >> index;
+  });
 }

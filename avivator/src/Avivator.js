@@ -392,7 +392,6 @@ export default function Avivator(props) {
   const isPyramid = loader.length > 0;
   const isRgb = metadata && guessRgb(metadata);
   const dtype = loader[0];
-
   const { colors, sliders, isOn, ids, selections, domains } = channels;
   const globalControlDimensions = dimensions?.filter(dimension =>
     GLOBAL_SLIDER_DIMENSION_FIELDS.includes(dimension.field)
@@ -545,14 +544,17 @@ export default function Avivator(props) {
               Add Channel
             </Button>
           )}
-          <VolumeButton
-            toggleUse3d={toggleUse3d}
-            fullWidth
-            loader={loader}
-            isLoading={isLoading}
-            use3d={use3d}
-            on3DResolutionSelect={on3DResolutionSelect}
-          />
+          {loader.length > 0 &&
+            loader[0].shape[loader[0].labels.indexOf('z')] > 1 && (
+              <VolumeButton
+                toggleUse3d={toggleUse3d}
+                fullWidth
+                loader={loader}
+                isLoading={isLoading}
+                use3d={use3d}
+                on3DResolutionSelect={on3DResolutionSelect}
+              />
+            )}
           <Button
             disabled={!isPyramid || isLoading || useLinkedView}
             onClick={() => setOverviewOn(prev => !prev)}
