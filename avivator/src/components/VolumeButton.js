@@ -69,19 +69,15 @@ function VolumeButton({ toggleUse3d, loader, use3d, on3DResolutionSelect }) {
                 // eslint-disable-next-line no-unused-vars
                 .map((_, resolution) => {
                   if (loader) {
-                    const { shape, labels, dtype } = loader[resolution];
+                    const { shape, labels } = loader[resolution];
                     const height = shape[labels.indexOf('y')];
                     const width = shape[labels.indexOf('x')];
                     const depth = shape[labels.indexOf('z')];
                     const depthDownsampled = Math.floor(
                       depth / 2 ** resolution
                     );
-                    const name = `${dtype}Array`;
-                    // eslint-disable-next-line no-undef
-                    const { BYTES_PER_ELEMENT } = globalThis[name];
-                    // Check memory allocation limits
-                    const totalBytes =
-                      BYTES_PER_ELEMENT * height * width * depthDownsampled;
+                    // Check memory allocation limits for Float32Array (used in XR3DLayer for rendering)
+                    const totalBytes = 4 * height * width * depthDownsampled;
                     const maxHeapSize =
                       window.performance?.memory &&
                       window.performance?.memory?.jsHeapSizeLimit / 2;
