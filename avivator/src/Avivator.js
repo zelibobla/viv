@@ -557,24 +557,28 @@ export default function Avivator(props) {
                 on3DResolutionSelect={on3DResolutionSelect}
               />
             )}
-          <Button
-            disabled={!isPyramid || isLoading || useLinkedView}
-            onClick={() => setOverviewOn(prev => !prev)}
-            variant="outlined"
-            size="small"
-            fullWidth
-          >
-            {overviewOn ? 'Hide' : 'Show'} Picture-In-Picture
-          </Button>
-          <Button
-            disabled={!isPyramid || isLoading || overviewOn}
-            onClick={toggleLinkedView}
-            variant="outlined"
-            size="small"
-            fullWidth
-          >
-            {useLinkedView ? 'Hide' : 'Show'} Side-by-Side
-          </Button>
+          {!use3d && (
+            <Button
+              disabled={!isPyramid || isLoading || useLinkedView}
+              onClick={() => setOverviewOn(prev => !prev)}
+              variant="outlined"
+              size="small"
+              fullWidth
+            >
+              {overviewOn ? 'Hide' : 'Show'} Picture-In-Picture
+            </Button>
+          )}
+          {!use3d && (
+            <Button
+              disabled={!isPyramid || isLoading || overviewOn}
+              onClick={toggleLinkedView}
+              variant="outlined"
+              size="small"
+              fullWidth
+            >
+              {useLinkedView ? 'Hide' : 'Show'} Side-by-Side
+            </Button>
+          )}
           {useLinkedView && (
             <>
               <Button
