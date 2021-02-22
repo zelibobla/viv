@@ -11,6 +11,7 @@ test('Creates correct ZarrPixelSource.', async t => {
   t.plan(3);
   try {
     const { data } = await load(store, await meta);
+    t.equal(data.length, 2, 'Image should have two levels.');
     const [base] = data;
     t.deepEqual(
       base.labels,

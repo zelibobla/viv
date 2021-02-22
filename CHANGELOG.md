@@ -5,8 +5,17 @@
 ### Added
 
 - Support for volume ray casting via `VolumeViewer` component, `VolumeView` view, `VolumeLayer` layer, `XR3DLayer` layer, as well as a new `getVolume` method for loaders.
+- Support OME `double` (and in general, double-precision floating point) datatype
 
 ### Changed
+
+## 0.9.2
+
+### Added
+
+### Changed
+
+- Remove `trimPyramid` and require declaration of `tileSize` in `ZarrPixelSource`.
 
 ## 0.9.1
 

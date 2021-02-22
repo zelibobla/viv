@@ -109,17 +109,7 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
      * geotiff.js returns objects with different structure
      * depending on `interleave`. It's weird, but this seems to work.
      */
-    let data = (interleave ? raster : raster[0]) as TypedArray;
-
-    /*
-     * GeoTiff.js returns Uint32Array when the tiff has 32 significant bits,
-     * even if the image is Float32. The underlying ArrayBuffer is correct, but
-     * we need to take a different TypeArray view of the buffer.
-     */
-    if (this.dtype === 'Float32') {
-      data = new Float32Array(data.buffer);
-    }
-
+    const data = (interleave ? raster : raster[0]) as TypedArray;
     return {
       data,
       width: raster.width,
