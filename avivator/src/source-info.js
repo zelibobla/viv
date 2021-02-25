@@ -19,11 +19,6 @@ const sources = [
     // Generated using bioformats2raw and raw2ometiff.
     path: 'LuCa-7color_3x3component_data.ome.tif',
     description: 'Perkin Elmer LuCa-7color_3x3component_data.qptiff'
-  },
-  {
-    // Generated using bioformats2raw and raw2ometiff.
-    path: 'HandEuncompressed_Scan1.ome.tif',
-    description: 'Perkin Elmer H&E Stain HandEuncompressed_Scan1.qptiff'
   }
 ];
 

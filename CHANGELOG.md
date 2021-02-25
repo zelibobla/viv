@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Remove `HandEuncompressed_Scan1.ome.tif` from Avivator demos.
+
 ## 0.9.2
 
 ### Added
