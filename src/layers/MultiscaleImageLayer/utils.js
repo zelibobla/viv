@@ -1,10 +1,8 @@
+import GL from '@luma.gl/constants';
 import XRLayer from '../XRLayer';
 import BitmapLayer from '../BitmapLayer';
 import { getImageSize, isInterleaved } from '../../loaders/utils';
-
-export function range(len) {
-  return [...Array(len).keys()];
-}
+import { range } from '../utils';
 
 export function renderSubLayers(props) {
   const {
@@ -63,29 +61,49 @@ export function renderSubLayers(props) {
       visible
     });
   }
-  return new XRLayer(props, {
-    channelData: data,
-    // Uncomment to help debugging - shades the tile being hovered over.
-    // autoHighlight: true,
-    // highlightColor: [80, 80, 80, 50],
-    data: null,
-    sliderValues,
-    colorValues,
-    channelIsOn,
-    dtype,
-    colormap,
-    unprojectLensBounds,
-    isLensOn,
-    lensSelection,
-    // Shared props with BitmapLayer:
-    bounds,
-    id: `tile-sub-layer-${bounds}-${id}`,
-    tileId: { x, y, z },
-    onHover,
-    pickable,
-    onClick,
-    modelMatrix,
-    opacity,
-    visible
+  const { maxChannels: maxChannelsPerXRLayer } = XRLayer;
+  const numLayers = Math.ceil(data.data.length / maxChannelsPerXRLayer);
+  const shouldRenderOnlyOneLayer = numLayers > 1 && colormap;
+  if (shouldRenderOnlyOneLayer) {
+    console.warn(
+      'Colormapping is not supported when used with more than six layers. All Layers after the sixth will not be rendered.'
+    );
+  }
+  const sliceForLayer = (arr, i) =>
+    arr.slice(i * maxChannelsPerXRLayer, (i + 1) * maxChannelsPerXRLayer);
+  const layers = range(shouldRenderOnlyOneLayer ? 1 : numLayers).map(i => {
+    return new XRLayer(props, {
+      channelData: {
+        ...data,
+        data: sliceForLayer(data.data, i)
+      },
+      // Uncomment to help debugging - shades the tile being hovered over.
+      // autoHighlight: true,
+      // highlightColor: [80, 80, 80, 50],
+      data: null,
+      sliderValues: sliceForLayer(sliderValues, i),
+      colorValues: sliceForLayer(colorValues, i),
+      channelIsOn: sliceForLayer(channelIsOn, i),
+      dtype,
+      colormap,
+      unprojectLensBounds,
+      isLensOn,
+      lensSelection,
+      // Shared props with BitmapLayer:
+      bounds,
+      id: `tile-sub-layer-${bounds}-${id}-${i}`,
+      tileId: { x, y, z },
+      onHover,
+      pickable,
+      onClick,
+      modelMatrix,
+      opacity,
+      visible,
+      parameters: i > 0 && {
+        blendFunc: [GL.ONE, GL.ONE, GL.ONE, GL.ONE],
+        blendEquation: GL.FUNC_ADD
+      }
+    });
   });
+  return layers;
 }

@@ -133,7 +133,9 @@ export default class XRLayer extends Layer {
     }
     if (
       props.channelData !== oldProps.channelData &&
-      props.channelData?.data !== oldProps.channelData?.data
+      !props.channelData?.data.every(
+        (channel, index) => channel === oldProps.channelData?.data[index]
+      )
     ) {
       this.loadChannelTextures(props.channelData);
     }
@@ -334,3 +336,4 @@ export default class XRLayer extends Layer {
 
 XRLayer.layerName = 'XRLayer';
 XRLayer.defaultProps = defaultProps;
+XRLayer.maxChannels = 6;

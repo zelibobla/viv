@@ -3,7 +3,7 @@ import GL from '@luma.gl/constants';
 
 import XRLayer from './XRLayer';
 import BitmapLayer from './BitmapLayer';
-import { onPointer } from './utils';
+import { onPointer, range } from './utils';
 import { isInterleaved } from '../loaders/utils';
 
 const defaultProps = {
@@ -165,29 +165,45 @@ export default class ImageLayer extends CompositeLayer {
         visible
       });
     }
-    return new XRLayer(this.props, {
-      channelData: { data, height, width },
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      dtype,
-      colormap,
-      unprojectLensBounds,
-      isLensOn,
-      lensSelection,
-      lensBorderColor,
-      lensRadius,
-      // Shared props with BitmapLayer:
-      bounds,
-      id: `image-sub-layer-${bounds}-${id}`,
-      onHover,
-      pickable,
-      onClick,
-      modelMatrix,
-      opacity,
-      visible,
-      transparentColor
+    const { maxChannels: maxChannelsPerXRLayer } = XRLayer;
+    const numLayers = Math.ceil(data.length / maxChannelsPerXRLayer);
+    const sliceForLayer = (arr, i) =>
+      arr.slice(i * maxChannelsPerXRLayer, (i + 1) * maxChannelsPerXRLayer);
+    const shouldRenderOnlyOneLayer = numLayers > 1 && colormap;
+    if (shouldRenderOnlyOneLayer) {
+      console.warn(
+        'Colormapping is not supported when used with more than six layers. All Layers after the sixth will not be rendered.'
+      );
+    }
+    return range(shouldRenderOnlyOneLayer ? 1 : numLayers).map(i => {
+      return new XRLayer(this.props, {
+        channelData: { data: sliceForLayer(data, i), height, width },
+        sliderValues: sliceForLayer(sliderValues, i),
+        colorValues: sliceForLayer(colorValues, i),
+        channelIsOn: sliceForLayer(channelIsOn, i),
+        domain,
+        dtype,
+        colormap,
+        unprojectLensBounds,
+        isLensOn,
+        lensSelection,
+        lensBorderColor,
+        lensRadius,
+        // Shared props with BitmapLayer:
+        bounds,
+        id: `image-sub-layer-${bounds}-${id}-${i}`,
+        onHover,
+        pickable,
+        onClick,
+        modelMatrix,
+        opacity,
+        visible,
+        transparentColor,
+        parameters: i > 0 && {
+          blendFunc: [GL.ONE, GL.ONE, GL.ONE, GL.ONE],
+          blendEquation: GL.FUNC_ADD
+        }
+      });
     });
   }
 }

@@ -1,9 +1,9 @@
 import {
   MAX_COLOR_INTENSITY,
   DEFAULT_COLOR_OFF,
-  MAX_SLIDERS_AND_CHANNELS,
   DTYPE_VALUES
 } from '../constants';
+import XRLayer from './XRLayer';
 
 export function range(len) {
   return [...Array(len).keys()];
@@ -49,7 +49,7 @@ export function padColorsAndSliders({
     channelIsOn[i] ? slider : [maxSliderValue, maxSliderValue]
   );
   // Need to pad sliders and colors with default values (required by shader)
-  const padSize = MAX_SLIDERS_AND_CHANNELS - colors.length;
+  const padSize = XRLayer.maxChannels - colors.length;
   if (padSize < 0) {
     throw Error(`${lengths} channels passed in, but only 6 are allowed.`);
   }
