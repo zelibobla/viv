@@ -22,8 +22,8 @@ import { GLOBAL_SLIDER_DIMENSION_FIELDS } from '../constants';
  * @param {Object} props.overview Allows you to pass settings into the OverviewView: { scale, margin, position, minimumWidth, maximumWidth,
  * boundingBoxColor, boundingBoxOutlineWidth, viewportOutlineColor, viewportOutlineWidth}.  See http://viv.gehlenborglab.org/#overviewview for defaults.
  * @param {Boolean} props.overviewOn Whether or not to show the OverviewView.
- * @param {Object} props.hoverHooks Object including the allowable hooks - right now only accepting a function with key handleValue like { handleValue: (valueArray) => {} } where valueArray
- * has the pixel values for the image under the hover location.
+ * @param {Object} [props.hoverHooks] Object including utility hooks - an object with key handleValue like { handleValue: (valueArray) => {}, handleCoordinate: (coordinate) => {} } where valueArray
+ * has the pixel values for the image under the hover location and coordinate is the coordinate in the image from which the values are picked.
  * @param {Array} [props.viewStates] Array of objects like [{ target: [x, y, 0], zoom: -zoom, id: DETAIL_VIEW_ID }] for setting where the viewer looks (optional - this is inferred from height/width/loader
  * internally by default using getDefaultInitialViewState).
  * @param {number} props.height Current height of the component.
@@ -33,13 +33,14 @@ import { GLOBAL_SLIDER_DIMENSION_FIELDS } from '../constants';
  * @param {number} [props.lensRadius] Pixel radius of the lens (default: 100).
  * @param {Array} [props.lensBorderColor] RGB color of the border of the lens (default [255, 255, 255]).
  * @param {number} [props.lensBorderRadius] Percentage of the radius of the lens for a border (default 0.02).
- * @param {number} [props.lensBorderRadius] Percentage of the radius of the lens for a border (default 0.02).
  * @param {Boolean} [props.clickCenter] Click to center the default view. Default is true.
  * @param {Array} [props.transparentColor] An RGB (0-255 range) color to be considered "transparent" if provided.
  * In other words, any fragment shader output equal transparentColor (before applying opacity) will have opacity 0.
  * This parameter only needs to be a truthy value when using colormaps because each colormap has its own transparent color that is calculated on the shader.
  * Thus setting this to a truthy value (with a colormap set) indicates that the shader should make that color transparent.
  * @param {import('./VivViewer').ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
+ * @param {import('./VivViewer').Hover} [props.onHover] Callback that returns the picking info and the event (https://deck.gl/docs/api-reference/core/layer#onhover
+ *     https://deck.gl/docs/developer-guide/interactivity#the-picking-info-object)
  * @param {Array} [props.transitionFields] A string array indicating which fields require a transition: Default: ['t', 'z'].
  */
 
@@ -54,7 +55,7 @@ const PictureInPictureViewer = props => {
     overview,
     overviewOn,
     loaderSelection,
-    hoverHooks,
+    hoverHooks = {},
     height,
     width,
     isLensOn = false,
@@ -65,6 +66,7 @@ const PictureInPictureViewer = props => {
     clickCenter = true,
     transparentColor,
     onViewStateChange,
+    onHover,
     transitionFields = GLOBAL_SLIDER_DIMENSION_FIELDS
   } = props;
   const {
@@ -131,6 +133,7 @@ const PictureInPictureViewer = props => {
       viewStates={viewStates}
       hoverHooks={hoverHooks}
       onViewStateChange={onViewStateChange}
+      onHover={onHover}
     />
   );
 };

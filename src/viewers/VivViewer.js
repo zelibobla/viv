@@ -18,6 +18,12 @@ const areViewStatesEqual = (viewState, otherViewState) => {
  */
 
 /**
+ * @callback Hover
+ * @param {Object} info
+ * @param {Object} event
+ */
+
+/**
  * This component handles rendering the various views within the DeckGL contenxt.
  * @param {Object} props
  * @param {Array} props.layerProps  Props for the layers in each view.
@@ -26,6 +32,8 @@ const areViewStatesEqual = (viewState, otherViewState) => {
  * @param {Array} props.viewStates List of objects like [{ target: [x, y, 0], zoom: -zoom, id: 'left' }, { target: [x, y, 0], zoom: -zoom, id: 'right' }]
  * @param {ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
  * @param {ViewStateChange} [props.useDevicePixels] useDevicePixels false (default) to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
+ * @param {Hover} [props.onHover] Callback that returns the picking info and the event (https://deck.gl/docs/api-reference/core/layer#onhover
+ *     https://deck.gl/docs/developer-guide/interactivity#the-picking-info-object)
  */
 export default class VivViewer extends PureComponent {
   constructor(props) {
@@ -165,16 +173,16 @@ export default class VivViewer extends PureComponent {
   }
 
   // eslint-disable-next-line consistent-return
-  onHover({ sourceLayer, coordinate, layer }) {
-    if (!coordinate) {
-      return null;
+  onHover(info, event) {
+    const { sourceLayer, coordinate, layer } = info;
+    const { onHover, hoverHooks } = this.props;
+    if (onHover) {
+      onHover(info, event);
     }
-    const { hoverHooks } = this.props;
     if (!hoverHooks) {
       return null;
     }
-    const { handleValue } = hoverHooks;
-    if (!handleValue) {
+    if (!coordinate) {
       return null;
     }
     const { channelData, bounds } = sourceLayer.props;
@@ -185,7 +193,7 @@ export default class VivViewer extends PureComponent {
     if (!data) {
       return null;
     }
-
+    const { handleValue = () => {}, handleCoordnate = () => {} } = hoverHooks;
     let dataCoords;
     // Tiled layer needs a custom layerZoomScale.
     if (sourceLayer.id.includes('Tiled')) {
@@ -213,6 +221,7 @@ export default class VivViewer extends PureComponent {
     const coords = dataCoords[1] * width + dataCoords[0];
     const hoverData = data.map(d => d[coords]);
     handleValue(hoverData);
+    handleCoordnate(coordinate);
   }
 
   /**

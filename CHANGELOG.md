@@ -5,9 +5,23 @@
 ### Added
 
 - Support for volume ray casting via `VolumeViewer` component, `VolumeView` view, `VolumeLayer` layer, `XR3DLayer` layer, as well as a new `getVolume` method for loaders.
-- Support OME `double` (and in general, double-precision floating point) datatype
 
 ### Changed
+
+- Refactor JSDoc comments to properly annotate Layer classes with constructor signatures.
+- `getChannelStats` in snippet to show how to use it.
+
+## 0.9.3
+
+### Added
+
+- Support `Float64` (OME `double`) datatype by casting array data to `Float32`.
+- `onHover` prop for `VivViewer`, `PictureInPictureViewer`, `SideBySideViewer` for deck.gl callback.
+- Add `handleCoordnate` `hoverHook` for PIP.
+
+### Changed
+
+- Make deck.gl a peer dependency (similar to React).
 
 ## 0.9.2
 
