@@ -146,12 +146,17 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
     downsampleDepth = 1
   ) {
     const { shape, labels, dtype } = this;
-    const { height, width } = getImageSize(this as PixelSource<S>);
+    const { height, width } = getImageSize(this as PixelSource<S>) as {
+      height: number;
+      width: number;
+    };
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / downsampleDepth);
     const rasterSize = height * width;
     const name = `${dtype}Array`;
-    const ArrayType = window[name] as SupportedTypedArray;
+    const ArrayType = (globalThis as { [key: string]: any })[
+      name
+    ] as SupportedTypedArray;
     const { BYTES_PER_ELEMENT } = ArrayType;
     const setMethodString = `set${dtype}` as
       | 'setUint8'
@@ -184,7 +189,9 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
       })
     );
     return {
-      data: new globalThis[name](view.buffer) as SupportedTypedArray,
+      data: new (globalThis as { [key: string]: any })[name](
+        view.buffer
+      ) as SupportedTypedArray,
       height,
       width,
       depth: depthDownsampled

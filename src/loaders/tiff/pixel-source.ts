@@ -48,7 +48,9 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
     const depthDownsampled = Math.floor(depth / downsampleDepth);
     const rasterSize = height * width;
     const name = `${dtype}Array`;
-    const { BYTES_PER_ELEMENT } = globalThis[name] as TypedArray;
+    const { BYTES_PER_ELEMENT } = (globalThis as { [key: string]: any })[
+      name
+    ] as TypedArray;
     const setMethodString = `set${dtype}` as
       | 'setUint8'
       | 'setUint16'
@@ -80,7 +82,9 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
       })
     );
     return {
-      data: new globalThis[name](view.buffer) as SupportedTypedArray,
+      data: new (globalThis as { [key: string]: any })[name](
+        view.buffer
+      ) as SupportedTypedArray,
       height,
       width,
       depth: depthDownsampled
