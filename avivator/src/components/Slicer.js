@@ -5,61 +5,30 @@ import Slider from '@material-ui/core/Slider';
 
 const Slicer = props => {
   const { xSlice, ySlice, zSlice, setXSlice, setYSlice, setZSlice } = props;
-  return (
-    <>
-      <Grid container direction="row" justify="flex-start" alignItems="center">
-        <Grid item xs={1} style={{ marginBottom: 8 }}>
-          x:
-        </Grid>
-        <Grid item xs={11}>
-          <Slider
-            value={xSlice}
-            onChange={(e, v) => setXSlice(v)}
-            valueLabelDisplay="auto"
-            getAriaLabel={() => `x slider`}
-            min={0}
-            max={1}
-            step={0.005}
-            orientation="horizontal"
-          />
-        </Grid>
+  const sliceValuesAndSetSliceFunctions = [
+    [xSlice, setXSlice, 'x'],
+    [ySlice, setYSlice, 'y'],
+    [zSlice, setZSlice, 'z']
+  ];
+  return sliceValuesAndSetSliceFunctions.map(([slice, setSlice, label]) => (
+    <Grid container direction="row" justify="flex-start" alignItems="center">
+      <Grid item xs={1} style={{ marginBottom: 8 }}>
+        {label}:
       </Grid>
-      <Grid container direction="row" justify="flex-start" alignItems="center">
-        <Grid item xs={1} style={{ marginBottom: 8 }}>
-          y:
-        </Grid>
-        <Grid item xs={11}>
-          <Slider
-            value={ySlice}
-            onChange={(e, v) => setYSlice(v)}
-            valueLabelDisplay="auto"
-            getAriaLabel={() => `y slider`}
-            min={0}
-            max={1}
-            step={0.005}
-            orientation="horizontal"
-          />
-        </Grid>
+      <Grid item xs={11}>
+        <Slider
+          value={slice}
+          onChange={(e, v) => setSlice(v)}
+          valueLabelDisplay="auto"
+          getAriaLabel={() => `${label} slider`}
+          min={0}
+          max={1}
+          step={0.005}
+          orientation="horizontal"
+        />
       </Grid>
-      <Grid container direction="row" justify="flex-start" alignItems="center">
-        <Grid item xs={1} style={{ marginBottom: 8 }}>
-          z:
-        </Grid>
-        <Grid item xs={11}>
-          <Slider
-            value={zSlice}
-            onChange={(e, v) => setZSlice(v)}
-            valueLabelDisplay="auto"
-            getAriaLabel={() => `z slider`}
-            min={0}
-            max={1}
-            step={0.005}
-            orientation="horizontal"
-          />
-        </Grid>
-      </Grid>
-    </>
-  );
+    </Grid>
+  ));
 };
 
 export default Slicer;
