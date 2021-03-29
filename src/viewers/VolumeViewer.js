@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'; // eslint-disable-line import/no-unresolved
 import { Matrix4 } from 'math.gl';
 
+import { getPhysicalSizeScalingMatrix } from '../layers/utils';
 import VivViewer from './VivViewer';
 import { VolumeView } from '../views';
 import { RENDERING_MODES } from '../constants';
@@ -14,13 +15,14 @@ import { RENDERING_MODES } from '../constants';
  * @param {string} [props.colormap] String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @param {Array} props.loader This data source for the viewer. PixelSource[]. If loader.length > 1, data is assumed to be multiscale.
  * @param {Array} props.loaderSelection Selection to be used for fetching data
- * @param {Array} [props.resolution] Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
+ * @param {Array} [props.resolution] Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length - 1 the lowest with default loader.length - 1)
  * @param {import('./VivViewer').ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
  * @param {Array} [props.renderingMode] One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
  * @param {Matrix4} [props.modelMatrix] A column major affine transformation to be applied to the volume.
  * @param {Array} [props.xSlice] 0-1 interval on which to slice the volume.
  * @param {Array} [props.ySlice] 0-1 interval on which to slice the volume.
  * @param {Array} [props.zSlice] 0-1 interval on which to slice the volume.
+ * @param {function} [props.onViewportLoad] Function that gets called when the data in the viewport loads.
  */
 
 const VolumeViewer = props => {
@@ -37,7 +39,8 @@ const VolumeViewer = props => {
     renderingMode = RENDERING_MODES.ADDITIVE,
     xSlice = [0, 1],
     ySlice = [0, 1],
-    zSlice = [0, 1]
+    zSlice = [0, 1],
+    onViewportLoad
   } = props;
   const initialViewState = useMemo(() => {
     const { shape, labels } = loader[resolution];
@@ -45,40 +48,17 @@ const VolumeViewer = props => {
     const width = shape[labels.indexOf('x')];
     const depth = shape[labels.indexOf('z')];
     const depthDownsampled = Math.floor(depth / 2 ** resolution);
-    let ratio = { x: 1, z: 1, y: 1 };
-    if (
-      loader[resolution]?.meta?.physicalSizes?.x &&
-      loader[resolution]?.meta?.physicalSizes?.y &&
-      loader[resolution]?.meta?.physicalSizes?.z
-    ) {
-      const {
-        physicalSizes: {
-          x: { size: physicalSizeX },
-          y: { size: physicalSizeY },
-          z: { size: physicalSizeZ }
-        }
-      } = loader[resolution].meta;
-      if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-        ratio = {
-          x:
-            physicalSizeX /
-            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-          y:
-            physicalSizeY /
-            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-          z:
-            physicalSizeZ /
-            Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
-        };
-      }
-    }
-
+    const physicalSizeScalingMatrix = getPhysicalSizeScalingMatrix(
+      loader[resolution]
+    );
     return {
-      target: (modelMatrix || new Matrix4()).transformPoint([
-        (ratio.x * width) / 2,
-        (ratio.y * height) / 2,
-        (ratio.z * depthDownsampled) / 2
-      ]),
+      target: (modelMatrix || new Matrix4()).transformPoint(
+        physicalSizeScalingMatrix.transformPoint([
+          width / 2,
+          height / 2,
+          depthDownsampled / 2
+        ])
+      ),
       zoom: -2.0,
       rotationX: 0,
       rotationOrbit: 0
@@ -102,7 +82,8 @@ const VolumeViewer = props => {
     resolution,
     renderingMode,
     modelMatrix,
-    pickable: false
+    pickable: false,
+    onViewportLoad
   };
   const views = [volumeView];
   const layerProps = [layerConfig];

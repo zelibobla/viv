@@ -2,6 +2,7 @@ import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
 import { Matrix4 } from 'math.gl';
 import XR3DLayer from './XR3DLayer';
+import { getPhysicalSizeScalingMatrix } from '../utils';
 import { RENDERING_MODES } from '../../constants';
 
 const defaultProps = {
@@ -139,28 +140,9 @@ export default class VolumeLayer extends CompositeLayer {
         sizeScale: 2 ** -viewport.zoom
       });
     }
-    let physicalSizeScalingMatrix = new Matrix4().identity();
-    if (
-      loader[resolution]?.meta?.physicalSizes?.x &&
-      loader[resolution]?.meta?.physicalSizes?.y &&
-      loader[resolution]?.meta?.physicalSizes?.z
-    ) {
-      const {
-        physicalSizes: {
-          x: { size: physicalSizeX },
-          y: { size: physicalSizeY },
-          z: { size: physicalSizeZ }
-        }
-      } = loader[resolution].meta;
-      if (physicalSizeZ && physicalSizeX && physicalSizeY) {
-        const ratio = [
-          physicalSizeX / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-          physicalSizeY / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY),
-          physicalSizeZ / Math.min(physicalSizeZ, physicalSizeX, physicalSizeY)
-        ];
-        physicalSizeScalingMatrix = new Matrix4().scale(ratio);
-      }
-    }
+    const physicalSizeScalingMatrix = getPhysicalSizeScalingMatrix(
+      loader[resolution]
+    );
     if (!height || !width || !depth) return null;
     return new XR3DLayer({
       channelData: { data, width, height, depth },
