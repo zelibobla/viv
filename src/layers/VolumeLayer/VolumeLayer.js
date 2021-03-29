@@ -37,20 +37,23 @@ const defaultProps = {
 };
 
 /**
- * This component provides a volumetric viewer that provides provides volume-ray-casting.
- * @param {Object} props
- * @param {Array} props.sliderValues List of [begin, end] values to control each channel's ramp function.
- * @param {Array} props.colorValues List of [r, g, b] values for each channel.
- * @param {Array} props.channelIsOn List of boolean values for each channel for whether or not it is visible.
- * @param {string} [props.colormap] String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
- * @param {Array} props.loader This data source for the viewer. PixelSource[]. If loader.length > 1, data is assumed to be multiscale.
- * @param {Array} props.loaderSelection Selection to be used for fetching data
- * @param {Array} [props.resolution] Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
- * @param {Array} [props.renderingMode] One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
- * @param {Matrix4} [props.modelMatrix] A column major affine transformation to be applied to the volume.
- * @param {Array} [props.xSlice] 0-1 interval on which to slice the volume.
- * @param {Array} [props.ySlice] 0-1 interval on which to slice the volume.
- * @param {Array} [props.zSlice] 0-1 interval on which to slice the volume.
+ * @typedef LayerProps
+ * @type {Object}
+ * @property {Array.<Array.<number>>} sliderValues List of [begin, end] values to control each channel's ramp function.
+ * @property {Array.<Array.<number>>} colorValues List of [r, g, b] values for each channel.
+ * @property {Array.<Array.<boolean>>} channelIsOn List of boolean values for each channel for whether or not it is visible.
+ * @property {Array} loader PixelSource. Represents an N-dimensional image.
+ * @property {Array} loaderSelection Selection to be used for fetching data.
+ * @property {number=} opacity Opacity of the layer.
+ * @property {string=} colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
+ * @property {Array.<Array.<number>>=} domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
+ * @param {number=} resolution Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
+ * @param {string=} renderingMode One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
+ * @param {Object=} modelMatrix A column major affine transformation to be applied to the volume.
+ * @param {Array.<number>=} xSlice 0-1 interval on which to slice the volume.
+ * @param {Array.<number>=} ySlice 0-1 interval on which to slice the volume.
+ * @param {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
+ * @property {function=} onViewportLoad Function that gets called when the data in the viewport loads.
  */
 export default class VolumeLayer extends CompositeLayer {
   updateState({ changeFlags, oldProps, props }) {
