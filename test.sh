@@ -25,9 +25,9 @@ start test
 npm run test
 end test
 
-# start build
-# npm run build
-# npm run build:avivator
-# end build
+start build
+npm run build
+npm run build:avivator
+end build
 
 echo 'ALL TESTS PASSED'
