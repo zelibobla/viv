@@ -162,6 +162,9 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
       | 'setUint8'
       | 'setUint16'
       | 'setUint32'
+      | 'setInt8'
+      | 'setInt16'
+      | 'setInt32'
       | 'setFloat32';
     const view = new DataView(
       new ArrayBuffer(rasterSize * depthDownsampled * BYTES_PER_ELEMENT)
