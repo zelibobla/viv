@@ -173,9 +173,9 @@ class ZarrPixelSource<S extends string[]> implements PixelSource<S> {
         updateProgress();
         while (r < rasterSize) {
           view[setMethodString](
-            BYTES_PER_ELEMENT * (depthDownsampled - z - 1) * rasterSize +
-              BYTES_PER_ELEMENT * r,
-            data[r],
+            BYTES_PER_ELEMENT * z * rasterSize +
+              BYTES_PER_ELEMENT * (rasterSize - r - 1),
+            data[((width - r - 1) % width) + width * Math.floor(r / width)],
             true
           );
           r += 1;
