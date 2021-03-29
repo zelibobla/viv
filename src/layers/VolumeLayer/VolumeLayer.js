@@ -61,7 +61,12 @@ export default class VolumeLayer extends CompositeLayer {
       props.loaderSelection !== oldProps.loaderSelection;
     // Only fetch new data to render if loader has changed
     if (loaderChanged || loaderSelectionChanged) {
-      const { loader, loaderSelection = [], resolution } = this.props;
+      const {
+        loader,
+        loaderSelection = [],
+        resolution,
+        onViewportLoad
+      } = this.props;
       let progress = 0;
       const totalRequests =
         // eslint-disable-next-line no-bitwise
@@ -76,6 +81,9 @@ export default class VolumeLayer extends CompositeLayer {
       const dataPromises = loaderSelection.map(getVolume);
 
       Promise.all(dataPromises).then(volumes => {
+        if (onViewportLoad) {
+          onViewportLoad(volumes);
+        }
         const volume = {
           data: volumes.map(d => d.data),
           width: volumes[0].width,
