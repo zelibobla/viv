@@ -26,11 +26,11 @@ export default class VolumeView extends VivView {
   }
 
   filterViewState({ viewState }) {
-    // Scale the view as the overviewScale changes with screen resizing - basically, do not react to any view state changes.
     const { id, target } = this;
     return viewState.id === id
       ? {
           ...viewState,
+          // fix the center of the camera
           target
         }
       : null;
