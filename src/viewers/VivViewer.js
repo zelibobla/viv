@@ -31,7 +31,7 @@ const areViewStatesEqual = (viewState, otherViewState) => {
  * @param {VivView} props.views Various VivViews to render.
  * @param {Array} props.viewStates List of objects like [{ target: [x, y, 0], zoom: -zoom, id: 'left' }, { target: [x, y, 0], zoom: -zoom, id: 'right' }]
  * @param {ViewStateChange} [props.onViewStateChange] Callback that returns the deck.gl view state (https://deck.gl/docs/api-reference/core/deck#onviewstatechange).
- * @param {ViewStateChange} [props.useDevicePixels] useDevicePixels false (default) to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
+ * @param {boolean} [props.useDevicePixels] useDevicePixels false (default) to improve performance: https://deck.gl/docs/developer-guide/performance#common-issues
  * @param {Hover} [props.onHover] Callback that returns the picking info and the event (https://deck.gl/docs/api-reference/core/layer#onhover
  *     https://deck.gl/docs/developer-guide/interactivity#the-picking-info-object)
  */

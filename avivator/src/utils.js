@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { fromBlob, fromFile, fromUrl } from 'geotiff';
 
-import { loadOmeTiff, loadBioformatsZarr, getChannelStats } from '../../dist';
+import {
+  loadOmeTiff,
+  loadBioformatsZarr,
+  getChannelStats,
+} from '../../dist';
 
 import { GLOBAL_SLIDER_DIMENSION_FIELDS, COLOR_PALLETE } from './constants';
 
@@ -9,7 +13,7 @@ const MAX_CHANNELS_FOR_SNACKBAR_WARNING = 40;
 
 /**
  * Guesses whether string URL or File is for an OME-TIFF image.
- * @param {string | File} urlOrFile
+ * @param {string | File} urlOrFile 
  */
 function isOMETIFF(urlOrFile) {
   if (Array.isArray(urlOrFile)) return false; // local Zarr is array of File Objects
@@ -24,31 +28,31 @@ class UnsupportedBrowserError extends Error {
   }
 }
 
+
 /**
- *
- * @param {string | File} src
- * @param {import('../../src/loaders/omexml').OMEXML[0]} imgMeta
+ * 
+ * @param {string | File} src 
+ * @param {import('../../src/loaders/omexml').OMEXML[0]} imgMeta 
  * @param {number} levels
  */
 async function getTotalImageCount(src, imgMeta, levels) {
   const from = typeof src === 'string' ? fromUrl : fromBlob;
   const tiff = await from(src);
-  const {
-    Pixels: { SizeC, SizeT, SizeZ }
-  } = imgMeta;
-  const numImagesPerResolution = SizeC * SizeT * SizeZ;
+  const { Pixels: { SizeC, SizeT, SizeZ } } = imgMeta;
+  const numImagesPerResolution = SizeC * SizeT * SizeZ  
 
   const firstImage = await tiff.getImage(0);
   const hasSubIFDs = Boolean(firstImage?.fileDirectory?.SubIFDs);
   return numImagesPerResolution * (hasSubIFDs ? 1 : levels);
 }
 
+
 /**
  * Given an image source, creates a PixelSource[] and returns XML-meta
- *
- * @param {string | File | File[]} urlOrFile
- * @param {} handleOffsetsNotFound
- * @param {*} handleLoaderError
+ * 
+ * @param {string | File | File[]} urlOrFile 
+ * @param {} handleOffsetsNotFound 
+ * @param {*} handleLoaderError 
  */
 export async function createLoader(
   urlOrFile,
@@ -73,11 +77,7 @@ export async function createLoader(
       // Show a warning if the total number of channels/images exceeds a fixed amount.
       // Non-Bioformats6 pyramids use Image tags for pyramid levels and do not have offsets
       // built in to the format for them, hence the ternary.
-      const totalImageCount = await getTotalImageCount(
-        urlOrFile,
-        source.metadata,
-        source.data.length
-      );
+      const totalImageCount = await getTotalImageCount(urlOrFile, source.metadata, source.data.length);
       if (isOffsets404 && totalImageCount > MAX_CHANNELS_FOR_SNACKBAR_WARNING) {
         handleOffsetsNotFound(true);
       }
@@ -95,26 +95,31 @@ export async function createLoader(
 
     const source = await loadBioformatsZarr(urlOrFile);
     return source;
+
   } catch (e) {
+
     if (e instanceof UnsupportedBrowserError) {
       handleLoaderError(e.message);
     } else {
       handleLoaderError(null);
     }
-    return { data: null };
+    return { data: null }
   }
 }
 
 // Get the last part of a url (minus query parameters) to be used
 // as a display name for avivator.
 export function getNameFromUrl(url) {
-  return url.split('?')[0].split('/').slice(-1)[0];
+  return url
+    .split('?')[0]
+    .split('/')
+    .slice(-1)[0];
 }
 
 /**
  * Return the midpoint of the global dimensions as a default selection.
- *
- * @param { import('../../src/types').PixelSource<['t', 'z', 'c']> } pixelSource
+ * 
+ * @param { import('../../src/types').PixelSource<['t', 'z', 'c']> } pixelSource 
  */
 function getDefaultGlobalSelection({ labels, shape }) {
   const dims = labels
@@ -135,8 +140,8 @@ function getDefaultGlobalSelection({ labels, shape }) {
 // Create a default selection using the midpoint of the available global dimensions,
 // and then the first four available selections from the first selectable channel.
 /**
- *
- * @param { import('../../src/types').PixelSource<['t', 'z', 'c']> } pixelSource
+ * 
+ * @param { import('../../src/types').PixelSource<['t', 'z', 'c']> } pixelSource 
  */
 export function buildDefaultSelection(pixelSource) {
   const selection = [];
@@ -145,9 +150,13 @@ export function buildDefaultSelection(pixelSource) {
 
   const firstNonGlobalDimension = pixelSource.labels
     .map((name, i) => ({ name, size: pixelSource.shape[i] }))
-    .find(d => !GLOBAL_SLIDER_DIMENSION_FIELDS.includes(d.name) && d.size);
+    .find(d => !GLOBAL_SLIDER_DIMENSION_FIELDS.includes(d.name) && d.size)
 
-  for (let i = 0; i < Math.min(4, firstNonGlobalDimension.size); i += 1) {
+  for (
+    let i = 0;
+    i < Math.min(4, firstNonGlobalDimension.size);
+    i += 1
+  ) {
     selection.push({
       [firstNonGlobalDimension.name]: i,
       ...globalSelection
@@ -271,12 +280,14 @@ export async function getSingleSelectionStats({ loader, selection }) {
   return { domain, slider };
 }
 
+
+
 /* eslint-disable no-useless-escape */
 // https://stackoverflow.com/a/11381730
 export function isMobileOrTablet() {
   let check = false;
   // eslint-disable-next-line func-names
-  (function (a) {
+  (function(a) {
     if (
       /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(
         a
@@ -291,6 +302,7 @@ export function isMobileOrTablet() {
 }
 /* eslint-disable no-useless-escape */
 
+
 /**
  * @param { import('../../src/loaders/omexml').OMEXML[0] } imgMeta
  */
@@ -299,8 +311,7 @@ export function guessRgb({ Pixels }) {
   const { SamplesPerPixel } = Pixels.Channels[0];
 
   const is3Channel8Bit = numChannels === 3 && Pixels.Type === 'uint8';
-  const interleavedRgb =
-    Pixels.SizeC === 3 && numChannels === 1 && Pixels.Interleaved;
+  const interleavedRgb = Pixels.SizeC === 3 && numChannels === 1 && Pixels.Interleaved;
 
   return SamplesPerPixel === 3 || is3Channel8Bit || interleavedRgb;
 }

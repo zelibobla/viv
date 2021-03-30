@@ -34,7 +34,6 @@ const ColorPalette = ({ handleChange }) => {
         return (
           <IconButton
             className={classes.button}
-            // eslint-disable-next-line react/no-array-index-key
             key={color}
             onClick={() => handleChange(color)}
           >

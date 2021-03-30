@@ -56,6 +56,10 @@ const defaultProps = {
  * @param {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
  * @property {function=} onViewportLoad Function that gets called when the data in the viewport loads.
  */
+
+/**
+ * @type {{ new(...props: LayerProps[]) }}
+ */
 export default class VolumeLayer extends CompositeLayer {
   updateState({ changeFlags, oldProps, props }) {
     const { propsChanged } = changeFlags;
