@@ -97,7 +97,7 @@ const defaultProps = {
 /**
  * @type {{ new(...props: LayerProps[]) }}
  */
-export default class XR3DLayer extends Layer {
+const XR3DLayer = class extends Layer {
   initializeState() {
     const { gl } = this.context;
     this.setState({
@@ -325,7 +325,8 @@ export default class XR3DLayer extends Layer {
     });
     return texture;
   }
-}
+};
 
 XR3DLayer.layerName = 'XR3DLayer';
 XR3DLayer.defaultProps = defaultProps;
+export default XR3DLayer;
