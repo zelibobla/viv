@@ -1,6 +1,5 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
-import { Matrix4 } from 'math.gl';
 import XR3DLayer from './XR3DLayer';
 import { getPhysicalSizeScalingMatrix } from '../utils';
 import { RENDERING_MODES } from '../../constants';
@@ -48,19 +47,19 @@ const defaultProps = {
  * @property {number=} opacity Opacity of the layer.
  * @property {string=} colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @property {Array.<Array.<number>>=} domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
- * @param {number=} resolution Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
- * @param {string=} renderingMode One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
- * @param {Object=} modelMatrix A column major affine transformation to be applied to the volume.
- * @param {Array.<number>=} xSlice 0-1 interval on which to slice the volume.
- * @param {Array.<number>=} ySlice 0-1 interval on which to slice the volume.
- * @param {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
+ * @property {number=} resolution Resolution at which you would like to see the volume and load it into memory (0 highest, loader.length -1 the lowest default 0)
+ * @property {string=} renderingMode One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
+ * @property {Object=} modelMatrix A column major affine transformation to be applied to the volume.
+ * @property {Array.<number>=} xSlice 0-1 interval on which to slice the volume.
+ * @property {Array.<number>=} ySlice 0-1 interval on which to slice the volume.
+ * @property {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
  * @property {function=} onViewportLoad Function that gets called when the data in the viewport loads.
  */
 
 /**
  * @type {{ new(...props: LayerProps[]) }}
  */
-export default class VolumeLayer extends CompositeLayer {
+const VolumeLayer = class extends CompositeLayer {
   updateState({ changeFlags, oldProps, props }) {
     const { propsChanged } = changeFlags;
     const loaderChanged =
@@ -169,7 +168,8 @@ export default class VolumeLayer extends CompositeLayer {
       modelMatrix
     });
   }
-}
+};
 
 VolumeLayer.layerName = 'VolumeLayer';
 VolumeLayer.defaultProps = defaultProps;
+export default VolumeLayer;
