@@ -8,7 +8,7 @@ const store = new FileSystemStore(`${FIXTURE}/data.zarr`);
 const meta = fs.readFile(`${FIXTURE}/METADATA.ome.xml`).then(b => b.toString());
 
 test('Creates correct ZarrPixelSource.', async t => {
-  t.plan(3);
+  t.plan(4);
   try {
     const { data } = await load(store, await meta);
     t.equal(data.length, 2, 'Image should have two levels.');
