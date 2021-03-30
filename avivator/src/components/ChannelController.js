@@ -6,8 +6,6 @@ import Slider from '@material-ui/core/Slider';
 import Select from '@material-ui/core/Select';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import { makeStyles } from '@material-ui/core/styles';
-
 import ChannelOptions from './ChannelOptions';
 import { FILL_PIXEL_VALUE } from '../constants';
 
