@@ -2,8 +2,8 @@ import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
 import XR3DLayer from './XR3DLayer';
 import { getPhysicalSizeScalingMatrix } from '../utils';
-import { getImageSize } from '../../loaders/utils';
 import { RENDERING_MODES } from '../../constants';
+import { getVolume } from './utils';
 
 const defaultProps = {
   pickable: false,
@@ -36,51 +36,6 @@ const defaultProps = {
     compare: true
   }
 };
-
-async function getVolume({
-  source,
-  selection,
-  onUpdate = () => {},
-  downsampleDepth = 1
-}) {
-  const { shape, labels, dtype } = source;
-  const { height, width } = getImageSize(source);
-  const depth = shape[labels.indexOf('z')];
-  const depthDownsampled = Math.floor(depth / downsampleDepth);
-  const rasterSize = height * width;
-  const name = `${dtype}Array`;
-  const TypedArray = globalThis[name];
-  const volumeData = new TypedArray(rasterSize * depthDownsampled);
-  await Promise.all(
-    new Array(depthDownsampled).fill(0).map(async (_, z) => {
-      const depthSelection = {
-        ...selection,
-        z: z * downsampleDepth
-      };
-      const { data: rasterData } = await source.getRaster({
-        selection: depthSelection
-      });
-      let r = 0;
-      onUpdate();
-      // For now this process fills in each raster plane anti-diagonally transposed.
-      // This is to ensure that the image looks right in three dimensional space.
-      while (r < rasterSize) {
-        const volIndex = z * rasterSize + (rasterSize - r - 1);
-        const rasterIndex =
-          ((width - r - 1) % width) + width * Math.floor(r / width);
-        volumeData[volIndex] = rasterData[rasterIndex];
-        r += 1;
-      }
-      onUpdate();
-    })
-  );
-  return {
-    data: volumeData,
-    height,
-    width,
-    depth: depthDownsampled
-  };
-}
 
 /**
  * @typedef LayerProps
@@ -120,10 +75,11 @@ const VolumeLayer = class extends CompositeLayer {
         resolution,
         onViewportLoad
       } = this.props;
+      const source = loader[resolution];
       let progress = 0;
       const totalRequests =
         // eslint-disable-next-line no-bitwise
-        (loader[0].shape[loader[0].labels.indexOf('z')] >> resolution) *
+        (source.shape[source.labels.indexOf('z')] >> resolution) *
         loaderSelection.length;
       const onUpdate = () => {
         progress += 0.5 / totalRequests;
@@ -132,7 +88,7 @@ const VolumeLayer = class extends CompositeLayer {
       const dataPromises = loaderSelection.map(selection =>
         getVolume({
           selection,
-          source: loader[resolution],
+          source,
           onUpdate,
           downsampleDepth: 2 ** resolution
         })
