@@ -10,8 +10,7 @@ import type {
   Labels,
   RasterSelection,
   TileSelection,
-  PixelData,
-  SupportedTypedArray
+  PixelData
 } from '../../types';
 
 class TiffPixelSource<S extends string[]> implements PixelSource<S> {
@@ -31,67 +30,6 @@ class TiffPixelSource<S extends string[]> implements PixelSource<S> {
   async getRaster({ selection }: RasterSelection<S>) {
     const image = await this._indexer(selection);
     return this._readRasters(image);
-  }
-
-  async getVolume(
-    { selection }: RasterSelection<S> | TileSelection<S>,
-    // eslint-disable-next-line no-unused-vars
-    updateProgress = () => {},
-    downsampleDepth = 1
-  ) {
-    const { shape, labels, dtype } = this;
-    const { height, width } = getImageSize(this as PixelSource<S>) as {
-      height: number;
-      width: number;
-    };
-    const depth = shape[labels.indexOf('z')];
-    const depthDownsampled = Math.floor(depth / downsampleDepth);
-    const rasterSize = height * width;
-    const name = `${dtype}Array`;
-    const { BYTES_PER_ELEMENT } = (globalThis as { [key: string]: any })[
-      name
-    ] as TypedArray;
-    const setMethodString = `set${dtype}` as
-      | 'setUint8'
-      | 'setUint16'
-      | 'setUint32'
-      | 'setInt8'
-      | 'setInt16'
-      | 'setInt32'
-      | 'setFloat32';
-    const view = new DataView(
-      new ArrayBuffer(rasterSize * depthDownsampled * BYTES_PER_ELEMENT)
-    );
-    await Promise.all(
-      new Array(depthDownsampled).fill(0).map(async (_, z) => {
-        const depthSelection = {
-          ...selection,
-          z: z * downsampleDepth
-        };
-        const image = await this._indexer(depthSelection);
-        const { data } = await this._readRasters(image);
-        let r = 0;
-        updateProgress();
-        while (r < rasterSize) {
-          view[setMethodString](
-            BYTES_PER_ELEMENT * z * rasterSize +
-              BYTES_PER_ELEMENT * (rasterSize - r - 1),
-            data[((width - r - 1) % width) + width * Math.floor(r / width)],
-            true
-          );
-          r += 1;
-        }
-        updateProgress();
-      })
-    );
-    return {
-      data: new (globalThis as { [key: string]: any })[name](
-        view.buffer
-      ) as SupportedTypedArray,
-      height,
-      width,
-      depth: depthDownsampled
-    } as PixelData;
   }
 
   async getTile({ x, y, selection, signal }: TileSelection<S>) {
