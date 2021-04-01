@@ -28,7 +28,7 @@ test('VolumeLayer', t => {
       channelIsOn: [true, false],
       loader: [
         {
-          getVolume: async () => ({
+          getRaster: async () => ({
             data: new Uint32Array([0, 2, 1, 2]),
             width: 2,
             height: 2
@@ -38,7 +38,7 @@ test('VolumeLayer', t => {
           dtype: 'Uint32'
         },
         {
-          getVolume: async () => ({
+          getRaster: async () => ({
             data: new Uint32Array([0, 2, 1, 2]),
             width: 2,
             height: 2
@@ -89,7 +89,7 @@ test('VolumeLayer', t => {
         channelIsOn: [true, false],
         loader: [
           {
-            getVolume: async () => {
+            getRaster: async () => {
               state.data.push(new Uint32Array([0, 2, 1, 2]));
               state.width = 2;
               state.width = 2;
@@ -99,7 +99,7 @@ test('VolumeLayer', t => {
             dtype: 'Uint32'
           },
           {
-            getVolume: async () => {
+            getRaster: async () => {
               state.data.push(new Uint32Array([0, 2, 1, 2]));
               state.width = 2;
               state.width = 2;
