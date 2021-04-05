@@ -66,6 +66,5 @@ void main() {
   transformed_eye = (inverse(scale) * inverse(model) * (vec4(eye_pos, 1.0))).xyz;
 
   // Step 3: Rays are from eye to vertices so that they get interpolated over the fragments.
-	vray_dir = positions - transformed_eye;
-  vec3 mult = project_uCoordinateOrigin.xyz + project_uCenter.xyz;
+  vray_dir = positions - transformed_eye;
 }

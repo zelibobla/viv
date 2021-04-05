@@ -85,7 +85,7 @@ const VolumeLayer = class extends CompositeLayer {
         progress += 0.5 / totalRequests;
         this.setState({ progress });
       };
-      const dataPromises = loaderSelection.map(selection =>
+      const volumePromises = loaderSelection.map(selection =>
         getVolume({
           selection,
           source,
@@ -94,7 +94,7 @@ const VolumeLayer = class extends CompositeLayer {
         })
       );
 
-      Promise.all(dataPromises).then(volumes => {
+      Promise.all(volumePromises).then(volumes => {
         if (onViewportLoad) {
           onViewportLoad(volumes);
         }
@@ -111,29 +111,13 @@ const VolumeLayer = class extends CompositeLayer {
   }
 
   renderLayers() {
-    const {
-      loader,
-      visible,
-      opacity,
-      sliderValues,
-      colorValues,
-      channelIsOn,
-      domain,
-      colormap,
-      id,
-      xSlice,
-      ySlice,
-      zSlice,
-      resolution,
-      renderingMode,
-      modelMatrix
-    } = this.props;
+    const { loader, id, resolution } = this.props;
     const { dtype } = loader[resolution];
     const { data, width, height, depth, progress } = this.state;
     if (!(width && height)) {
       const { viewport } = this.context;
       return new TextLayer({
-        id: `units-label-layer-${id}`,
+        id: `loading-text-layer-${id}`,
         coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
         data: [
           {
@@ -154,25 +138,13 @@ const VolumeLayer = class extends CompositeLayer {
       loader[resolution]
     );
     if (!height || !width || !depth) return null;
-    return new XR3DLayer({
+    return new XR3DLayer(this.props, {
       channelData: { data, width, height, depth },
-      sliderValues,
-      colorValues,
-      domain,
-      channelIsOn,
       id: `XR3DLayer-${0}-${height}-${width}-${0}-${resolution}-${id}`,
       pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
       physicalSizeScalingMatrix,
-      opacity,
-      visible,
-      colormap,
-      dtype,
-      xSlice,
-      ySlice,
-      zSlice,
-      renderingMode,
-      modelMatrix
+      dtype
     });
   }
 };

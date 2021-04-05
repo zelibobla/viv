@@ -139,7 +139,6 @@ void main(void) {
 		p += ray_dir * dt;
 	}
 	_AFTER_RENDER
-	// color = vec4(1.0, 0.0, 0.0, 1.0);
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);

@@ -42,8 +42,7 @@ export default class VolumeView extends VivView {
 
     const layers = [
       new VolumeLayer(props, {
-        id: `${loader.type}${getVivId(id)}`,
-        viewportId: id
+        id: `${loader.type}${getVivId(id)}`
       })
     ];
 

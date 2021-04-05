@@ -82,7 +82,6 @@ const VolumeViewer = props => {
     resolution,
     renderingMode,
     modelMatrix,
-    pickable: false,
     onViewportLoad
   };
   const views = [volumeView];
