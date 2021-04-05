@@ -160,7 +160,7 @@ const VolumeLayer = class extends CompositeLayer {
       colorValues,
       domain,
       channelIsOn,
-      id: `XR-Static-Layer-${0}-${height}-${width}-${0}-${resolution}-${id}`,
+      id: `XR3DLayer-${0}-${height}-${width}-${0}-${resolution}-${id}`,
       pickable: false,
       coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
       physicalSizeScalingMatrix,

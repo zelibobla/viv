@@ -78,6 +78,31 @@ const defaultProps = {
     compare: true
   }
 };
+
+function removeExtraColormapFunctionsFromShader(colormap) {
+  // Always include viridis so shaders compile,
+  // but otherwise we discard all other colormaps via a regex.
+  // With all the colormaps, the shaders were too large
+  // and crashed our computers when we loaded volumes too large.
+  const discardColormaps = COLORMAPS.filter(
+    i => i !== (colormap || 'viridis')
+  ).map(i => i.replace(/-/g, '_'));
+  const discardRegex = new RegExp(
+    `vec4 (${discardColormaps.join(
+      '(_([0-9]*))?|'
+    )})\\(float x_[0-9]+\\){([^}]+)}`,
+    'g'
+  );
+  const channelsModules = {
+    ...channels,
+    fs: channels.fs.replace(discardRegex, ''),
+    defines: {
+      _COLORMAP_FUNCTION: colormap || 'viridis'
+    }
+  };
+  return channelsModules;
+}
+
 /**
  * @typedef LayerProps
  * @type {Object}
@@ -124,26 +149,7 @@ const XR3DLayer = class extends Layer {
     const { _BEFORE_RENDER, _RENDER, _AFTER_RENDER } = colormap
       ? RENDERING_MODES_COLORMAP[renderingMode]
       : RENDERING_MODES_BLEND[renderingMode];
-    // Always include viridis so shaders compile,
-    // but otherwise we discard all other colormaps via a regex.
-    // With all the colormaps, the shaders were too large
-    // and crashed our computers when we loaded volumes too large.
-    const discardColormaps = COLORMAPS.filter(
-      i => i !== (colormap || 'viridis')
-    ).map(i => i.replace(/-/g, '_'));
-    const discardRegex = new RegExp(
-      `vec4 (${discardColormaps.join(
-        '(_([0-9]*))?|'
-      )})\\(float x_[0-9]+\\){([^}]+)}`,
-      'g'
-    );
-    const channelsModules = {
-      ...channels,
-      fs: channels.fs.replace(discardRegex, ''),
-      defines: {
-        _COLORMAP_FUNCTION: colormap || 'viridis'
-      }
-    };
+    const channelsModules = removeExtraColormapFunctionsFromShader(colormap);
     return super.getShaders({
       vs,
       fs: fs
