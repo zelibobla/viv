@@ -4,12 +4,23 @@
 
 ### Added
 
-- Support for volume ray casting via `VolumeViewer` component, `VolumeView` view, `VolumeLayer` layer, `XR3DLayer` layer, as well as a new `getVolume` method for loaders.
-
 ### Changed
+
+- Fix `VivViewer` and `VivView` types.
+- Add `VolumeView`, `VolumeViewer`, `VolumeLayer`, and `XR3DLayer` classes.
+
+## 0.9.4
+
+### Added
 
 - Refactor JSDoc comments to properly annotate Layer classes with constructor signatures.
 - `getChannelStats` in snippet to show how to use it.
+
+### Changed
+
+- Fix interleaved RGB image handling.
+- Add test for interleaved RGB images.
+- Upgrade geotiff.js to fix https://github.com/geotiffjs/geotiff.js/issues/214
 
 ## 0.9.3
 
