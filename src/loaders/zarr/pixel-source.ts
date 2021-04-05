@@ -1,7 +1,8 @@
 import { BoundsCheckError, slice } from 'zarr';
 import { getImageSize, isInterleaved } from '../utils';
 import { getIndexer } from './lib/indexer';
-import type { ZarrArray, TypedArray } from 'zarr';
+
+import type { ZarrArray } from 'zarr';
 import type { RawArray } from 'zarr/types/rawArray';
 
 import type {
@@ -10,8 +11,7 @@ import type {
   RasterSelection,
   PixelSourceSelection,
   PixelData,
-  TileSelection,
-  SupportedTypedArray
+  TileSelection
 } from '../../types';
 
 const DTYPE_LOOKUP = {

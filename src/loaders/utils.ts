@@ -156,9 +156,7 @@ export function getDims<S extends string>(labels: S[]) {
   };
 }
 
-export function getImageSize<T extends string[]>(
-  source: PixelSource<T>
-): { height: number; width: number } {
+export function getImageSize<T extends string[]>(source: PixelSource<T>) {
   const interleaved = isInterleaved(source.shape);
   const [height, width] = source.shape.slice(interleaved ? -3 : -2);
   return { height, width };
