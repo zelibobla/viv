@@ -116,11 +116,15 @@ function removeExtraColormapFunctionsFromShader(colormap) {
  * @property {number=} opacity Opacity of the layer.
  * @property {string=} colormap String indicating a colormap (default: '').  The full list of options is here: https://github.com/glslify/glsl-colormap#glsl-colormap
  * @property {Array.<Array.<number>>=} domain Override for the possible max/min values (i.e something different than 65535 for uint16/'<u2').
- * @param {string=} renderingMode One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
- * @param {Object=} modelMatrix A column major affine transformation to be applied to the volume.
- * @param {Array.<number>=} xSlice 0-1 interval on which to slice the volume.
- * @param {Array.<number>=} ySlice 0-1 interval on which to slice the volume.
- * @param {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
+ * @property {string=} renderingMode One of Maximum Intensity Projection, Minimum Intensity Projection, or Additive
+ * @property {Object=} modelMatrix A column major affine transformation to be applied to the volume.
+ * @property {Array.<number>=} xSlice 0-1 interval on which to slice the volume.
+ * @property {Array.<number>=} ySlice 0-1 interval on which to slice the volume.
+ * @property {Array.<number>=} zSlice 0-1 interval on which to slice the volume.
+ * @property {Array.<Array.<number>>=} normalClippingPlanes List of normal vector for defining the direction of a given clipping plane.
+ * Points render in the direction of the normal vector.
+ * @property {Array.<Array.<number>>=} offsetClippingPlanes List of "offsets" from the origin (i.e `a` in the equation `n•r + a = 0` defining the plane by normal vector `n`) of the plane.
+ * @property {number=} numPlanes Number of planes by which to clip.  Only needs to be set if more than 6.
  */
 
 /**
