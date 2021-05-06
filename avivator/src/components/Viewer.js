@@ -16,6 +16,7 @@ import {
 } from '../state';
 import { useWindowSize, getPhysicalSizeScalingMatrix } from '../utils';
 import { DEFAULT_OVERVIEW } from '../constants';
+import ClippedVolumeViewer from '../ClippedVolumeViewer/ClippedVolumeViewer';
 
 const Viewer = () => {
   const { useLinkedView, setViewerState, use3d, viewState } = useViewerStore();
@@ -50,7 +51,7 @@ const Viewer = () => {
     )
   );
   return use3d ? (
-    <VolumeViewer
+    <ClippedVolumeViewer
       loader={loader}
       sliderValues={sliders}
       colorValues={colors}

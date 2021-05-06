@@ -27,7 +27,8 @@ More information about that is detailed in the comments there.
 */
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer } from '@deck.gl/core';
-import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
+import { Model, Texture3D, setParameters } from '@luma.gl/core';
+import { CubeGeometry } from '@luma.gl/engine';
 import { Matrix4 } from 'math.gl';
 import { Plane } from '@math.gl/culling';
 import vs from './xr-layer-vertex.glsl';
@@ -44,23 +45,6 @@ import {
   RENDERING_MODES_COLORMAP
 } from './rendering-modes';
 
-// prettier-ignore
-const CUBE_STRIP = [
-	1, 1, 0,
-	0, 1, 0,
-	1, 1, 1,
-	0, 1, 1,
-	0, 0, 1,
-	0, 1, 0,
-	0, 0, 0,
-	1, 1, 0,
-	1, 0, 0,
-	1, 1, 1,
-	1, 0, 1,
-	0, 0, 1,
-	1, 0, 0,
-	0, 0, 0
-];
 const _NUM_PLANES_DEFAULT = 1;
 
 const defaultProps = {
@@ -217,11 +201,8 @@ const XR3DLayer = class extends Layer {
     }
     return new Model(gl, {
       ...this.getShaders(),
-      geometry: new Geometry({
-        drawMode: gl.TRIANGLE_STRIP,
-        attributes: {
-          positions: new Float32Array(CUBE_STRIP)
-        }
+      geometry: new CubeGeometry({
+        drawMode: gl.TRIANGLE_STRIP
       })
     });
   }
