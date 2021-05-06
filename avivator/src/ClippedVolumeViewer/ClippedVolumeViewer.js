@@ -69,7 +69,15 @@ const ClippedVolumeViewer = props => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loader, resolution, modelMatrix]);
   const volViewState = volumeViewState || { ...initialViewState, id: '3d' };
-  const viewStates = [{ target: [0, 0, 0], zoom: 0, id: 'clipping-cube' }];
+  const viewStates = [
+    {
+      target: [0, 0, 0],
+      zoom: 5,
+      id: 'clipping-cube',
+      rotationX: 0,
+      rotationOrbit: 0
+    }
+  ];
   const volumeView = new VolumeView({
     id: '3d',
     target: viewStates[0].target,

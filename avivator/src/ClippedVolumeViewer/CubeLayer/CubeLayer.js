@@ -60,18 +60,6 @@ const CubeLayer = class extends Layer {
   initializeState() {
     const { gl } = this.context;
     this.setState({ model: this._getModel(gl) });
-    const attributeManager = this.getAttributeManager();
-    const noAlloc = true;
-    attributeManager.add({
-      positions: {
-        size: 3,
-        noAlloc
-      },
-      texCoords: {
-        size: 2,
-        noAlloc
-      }
-    });
   }
 
   /**
