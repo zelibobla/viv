@@ -2,8 +2,9 @@
 // A lot of this codes inherits paradigms form DeckGL that
 // we live in place for now, hence some of the not-destructuring
 import GL from '@luma.gl/constants';
-import { COORDINATE_SYSTEM, Layer, project32, picking } from '@deck.gl/core';
-import { Model, Geometry, Texture2D, isWebGL2 } from '@luma.gl/core';
+import { COORDINATE_SYSTEM, project32, picking } from '@deck.gl/core';
+import { BitmapLayer } from '@deck.gl/layers';
+import { Texture2D, isWebGL2 } from '@luma.gl/core';
 import fsColormap1 from './xr-layer-fragment-colormap.webgl1.glsl';
 import fsColormap2 from './xr-layer-fragment-colormap.webgl2.glsl';
 import fs1 from './xr-layer-fragment.webgl1.glsl';
@@ -38,11 +39,9 @@ const defaultProps = {
   pickable: { type: 'boolean', value: true, compare: true },
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   channelData: { type: 'object', value: {}, compare: true },
-  bounds: { type: 'array', value: [0, 0, 1, 1], compare: true },
   colorValues: { type: 'array', value: [], compare: true },
   sliderValues: { type: 'array', value: [], compare: true },
   channelIsOn: { type: 'array', value: [], compare: true },
-  opacity: { type: 'number', value: 1, compare: true },
   dtype: { type: 'string', value: 'Uint16', compare: true },
   colormap: { type: 'string', value: '', compare: true },
   isLensOn: { type: 'boolean', value: false, compare: true },
@@ -81,7 +80,7 @@ const defaultProps = {
  * @type {{ new (...props: import('../../types').Viv<LayerProps>[]) }}
  * @ignore
  */
-const XRLayer = class extends Layer {
+const XRLayer = class extends BitmapLayer {
   /**
    * This function chooses a shader (colormapping or not) and
    * replaces `usampler` with `sampler` if the data is not an unsigned integer
@@ -89,7 +88,7 @@ const XRLayer = class extends Layer {
   getShaders() {
     const { colormap, dtype } = this.props;
     const { shaderModule, sampler } = getRenderingAttrs(dtype, this.context.gl);
-    return super.getShaders({
+    return {
       fs: colormap ? shaderModule.fscmap : shaderModule.fs,
       vs: shaderModule.vs,
       defines: {
@@ -97,13 +96,14 @@ const XRLayer = class extends Layer {
         COLORMAP_FUNCTION: colormap || 'viridis'
       },
       modules: [project32, picking, channels, lens]
-    });
+    };
   }
 
   /**
    * This function initializes the internal state.
    */
   initializeState() {
+    super.initializeState();
     const { gl } = this.context;
     // This tells WebGL how to read row data from the texture.  For example, the default here is 4 (i.e for RGBA, one byte per channel) so
     // each row of data is expected to be a multiple of 4.  This setting (i.e 1) allows us to have non-multiple-of-4 row sizes.  For example, for 2 byte (16 bit data),
@@ -111,20 +111,6 @@ const XRLayer = class extends Layer {
     // https://stackoverflow.com/questions/42789896/webgl-error-arraybuffer-not-big-enough-for-request-in-case-of-gl-luminance
     gl.pixelStorei(GL.UNPACK_ALIGNMENT, 1);
     gl.pixelStorei(GL.PACK_ALIGNMENT, 1);
-    const attributeManager = this.getAttributeManager();
-    attributeManager.add({
-      positions: {
-        size: 3,
-        type: GL.DOUBLE,
-        fp64: this.use64bitPositions(),
-        update: this.calculatePositions,
-        noAlloc: true
-      }
-    });
-    this.setState({
-      numInstances: 1,
-      positions: new Float64Array(12)
-    });
   }
 
   /**
@@ -142,9 +128,9 @@ const XRLayer = class extends Layer {
    * This function updates state by retriggering model creation (shader compilation and attribute binding)
    * and loading any textures that need be loading.
    */
-  updateState({ props, oldProps, changeFlags }) {
+  updateState({ props, oldProps, changeFlags, ...args }) {
     // setup model first
-    if (changeFlags.extensionsChanged || props.colormap !== oldProps.colormap) {
+    if (props.colormap !== oldProps.colormap) {
       const { gl } = this.context;
       if (this.state.model) {
         this.state.model.delete();
@@ -153,77 +139,13 @@ const XRLayer = class extends Layer {
 
       this.getAttributeManager().invalidateAll();
     }
+    super.updateState({ props, oldProps, changeFlags, ...args });
     if (
       props.channelData !== oldProps.channelData &&
       props.channelData?.data !== oldProps.channelData?.data
     ) {
       this.loadChannelTextures(props.channelData);
     }
-    const attributeManager = this.getAttributeManager();
-    if (props.bounds !== oldProps.bounds) {
-      attributeManager.invalidate('positions');
-    }
-  }
-
-  /**
-   * This function creates the luma.gl model.
-   */
-  _getModel(gl) {
-    if (!gl) {
-      return null;
-    }
-
-    /*
-       0,0 --- 1,0
-        |       |
-       0,1 --- 1,1
-     */
-    return new Model(gl, {
-      ...this.getShaders(),
-      id: this.props.id,
-      geometry: new Geometry({
-        drawMode: GL.TRIANGLE_FAN,
-        vertexCount: 4,
-        attributes: {
-          texCoords: new Float32Array([0, 1, 0, 0, 1, 0, 1, 1])
-        }
-      }),
-      isInstanced: false
-    });
-  }
-
-  /**
-   * This function generates view positions for use as a vec3 in the shader
-   */
-  calculatePositions(attributes) {
-    const { positions } = this.state;
-    const { bounds } = this.props;
-    // bounds as [minX, minY, maxX, maxY]
-    /*
-      (minX0, maxY3) ---- (maxX2, maxY3)
-             |                  |
-             |                  |
-             |                  |
-      (minX0, minY1) ---- (maxX2, minY1)
-   */
-    positions[0] = bounds[0];
-    positions[1] = bounds[1];
-    positions[2] = 0;
-
-    positions[3] = bounds[0];
-    positions[4] = bounds[3];
-    positions[5] = 0;
-
-    positions[6] = bounds[2];
-    positions[7] = bounds[3];
-    positions[8] = 0;
-
-    positions[9] = bounds[2];
-    positions[10] = bounds[1];
-    positions[11] = 0;
-
-    // eslint-disable-next-line  no-param-reassign
-    attributes.value = positions;
   }
 
   /**
