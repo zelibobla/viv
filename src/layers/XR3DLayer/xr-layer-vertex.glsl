@@ -17,11 +17,13 @@ uniform mat4 view;
 uniform mat4 scale;
 uniform mat4 resolution;
 
-
+flat out mat4 mvp;
 out vec3 vray_dir;
 flat out vec3 transformed_eye;
 
 void main() {
+
+  mvp = proj * view * model * scale * resolution;
 
   // Step 1: Standard MVP transformation (+ the scale matrix) to place the positions on your 2D screen ready for rasterization + fragment processing.
   gl_Position = proj * view * model * scale * resolution * vec4(positions, 1.0);

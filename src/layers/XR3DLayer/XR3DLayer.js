@@ -27,13 +27,13 @@ More information about that is detailed in the comments there.
 */
 import GL from '@luma.gl/constants';
 import { COORDINATE_SYSTEM, Layer } from '@deck.gl/core';
-import { Model, Geometry, Texture3D, setParameters } from '@luma.gl/core';
+import { Model, Geometry, Texture3D } from '@luma.gl/core';
 import { Matrix4 } from 'math.gl';
 import { Plane } from '@math.gl/culling';
 import vs from './xr-layer-vertex.glsl';
 import fs from './xr-layer-fragment.glsl';
 import channels from './channel-intensity-module';
-import { padColorsAndSliders, padWithDefault } from '../utils';
+import { padWithDefault, getDtypeValues } from '../utils';
 import {
   DTYPE_VALUES,
   COLORMAPS,
@@ -135,11 +135,6 @@ const XR3DLayer = class extends Layer {
     this.setState({
       model: this._getModel(gl)
     });
-    // Needed to only render the back polygons.
-    setParameters(gl, {
-      [GL.CULL_FACE]: true,
-      [GL.CULL_FACE_MODE]: GL.FRONT
-    });
     // This tells WebGL how to read row data from the texture.  For example, the default here is 4 (i.e for RGBA, one byte per channel) so
     // each row of data is expected to be a multiple of 4.  This setting (i.e 1) allows us to have non-multiple-of-4 row sizes.  For example, for 2 byte (16 bit data),
     // we could use 2 as the value and it would still work, but 1 also works fine (and is more flexible for 8 bit - 1 byte - textures as well).
@@ -230,7 +225,7 @@ const XR3DLayer = class extends Layer {
    * This function runs the shaders and draws to the canvas
    */
   draw({ uniforms }) {
-    const { textures, model, scaleMatrix } = this.state;
+    const { texture, model, scaleMatrix } = this.state;
     const {
       sliderValues,
       colorValues,
@@ -238,25 +233,19 @@ const XR3DLayer = class extends Layer {
       ySlice,
       zSlice,
       modelMatrix,
-      channelIsOn,
+      clippingPlanes,
+      resolutionMatrix,
       domain,
       dtype,
-      clippingPlanes,
-      resolutionMatrix
+      channelIsOn
     } = this.props;
     const {
       viewMatrix,
       viewMatrixInverse,
       projectionMatrix
     } = this.context.viewport;
-    if (textures && model && scaleMatrix) {
-      const { paddedSliderValues, paddedColorValues } = padColorsAndSliders({
-        sliderValues,
-        colorValues,
-        channelIsOn,
-        domain,
-        dtype
-      });
+    if (texture && model && scaleMatrix) {
+      const maxSliderValue = (domain && domain[1]) || getDtypeValues(dtype).max;
       const invertedScaleMatrix = scaleMatrix.clone().invert();
       const invertedResolutionMatrix = resolutionMatrix.clone().invert();
       const paddedClippingPlanes = padWithDefault(
@@ -275,9 +264,9 @@ const XR3DLayer = class extends Layer {
       model
         .setUniforms({
           ...uniforms,
-          ...textures,
-          sliderValues: paddedSliderValues,
-          colorValues: paddedColorValues,
+          volume: texture,
+          sliderValues: channelIsOn ? sliderValues : [maxSliderValue, maxSliderValue],
+          colorValues,
           xSlice: new Float32Array(
             xSlice
               ? xSlice.map(i => i / scaleMatrix[0] / resolutionMatrix[0])
@@ -314,28 +303,18 @@ const XR3DLayer = class extends Layer {
    * This function loads all textures from incoming resolved promises/data from the loaders by calling `dataToTexture`
    */
   loadTexture(channelData) {
-    const textures = {
-      volume0: null,
-      volume1: null,
-      volume2: null,
-      volume3: null,
-      volume4: null,
-      volume5: null
-    };
-    if (this.state.textures) {
-      Object.values(this.state.textures).forEach(tex => tex && tex.delete());
+    if (this.state.texture) {
+      this.state.texture.delete();
     }
     if (
       channelData &&
       Object.keys(channelData).length > 0 &&
       channelData.data
     ) {
-      const { height, width, depth } = channelData;
-      channelData.data.forEach((d, i) => {
-        textures[`volume${i}`] = this.dataToTexture(d, width, height, depth);
-      }, this);
+      const { height, width, depth, data } = channelData;
+      const texture = this.dataToTexture(data, width, height, depth);
       this.setState({
-        textures,
+        texture,
         scaleMatrix: new Matrix4().scale(
           this.props.physicalSizeScalingMatrix.transformPoint([
             width,

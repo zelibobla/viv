@@ -3,12 +3,7 @@ precision highp int;
 precision highp float;
 precision highp sampler3D;
 
-uniform highp sampler3D volume0;
-uniform highp sampler3D volume1;
-uniform highp sampler3D volume2;
-uniform highp sampler3D volume3;
-uniform highp sampler3D volume4;
-uniform highp sampler3D volume5;
+uniform highp sampler3D volume;
 
 uniform vec3 scaledDimensions;
 
@@ -18,10 +13,10 @@ uniform vec3 normals[_NUM_PLANES];
 uniform float distances[_NUM_PLANES];
 
 // range
-uniform vec2 sliderValues[6];
+uniform vec2 sliderValues;
 
 // color
-uniform vec3 colorValues[6];
+uniform vec3 colorValues;
 
 // slices
 uniform vec2 xSlice;
@@ -31,6 +26,7 @@ uniform vec2 zSlice;
 in vec3 vray_dir;
 flat in vec3 transformed_eye;
 out vec4 color;
+flat in mat4 mvp;
 
 vec2 intersect_box(vec3 orig, vec3 dir) {
 	vec3 box_min = vec3(xSlice[0], ySlice[0], zSlice[0]);
@@ -123,6 +119,9 @@ void main(void) {
 	// and sample it
 	vec3 p = transformed_eye + (t_hit.x + offset * dt) * ray_dir;
 
+	vec3 backFaceCoord = transformed_eye + t_hit.y * 10. * ray_dir;
+	vec3 renderDepthCoord = backFaceCoord;
+
 	// TODO: Probably want to stop this process at some point to improve performance when marching down the edges.
 	_BEFORE_RENDER
 	for (float t = t_hit.x; t < t_hit.y; t += dt) {
@@ -139,18 +138,14 @@ void main(void) {
 		float canShowZCoordinate = max(p.z - 0.0, 0.0) * max(1.0 - p.z , 0.0);
 		float canShowCoordinate = float(ceil(canShowXCoordinate * canShowYCoordinate * canShowZCoordinate));
 		canShow = canShowCoordinate * canShow;
-    float intensityValue0 = canShow * sample_and_apply_sliders(volume0, p, sliderValues[0]);
-    float intensityValue1 = canShow * sample_and_apply_sliders(volume1, p, sliderValues[1]);
-		float intensityValue2 = canShow * sample_and_apply_sliders(volume2, p, sliderValues[2]);
-		float intensityValue3 = canShow * sample_and_apply_sliders(volume3, p, sliderValues[3]);
-    float intensityValue4 = canShow * sample_and_apply_sliders(volume4, p, sliderValues[4]);
-		float intensityValue5 = canShow * sample_and_apply_sliders(volume5, p, sliderValues[5]);
+    float intensityValue = canShow * sample_and_apply_sliders(volume, p, sliderValues);
 
 		_RENDER
 
 		p += ray_dir * dt;
 	}
 	_AFTER_RENDER
+	gl_FragDepth = (mvp * vec4(renderDepthCoord, 1.)).z;
   color.r = linear_to_srgb(color.r);
   color.g = linear_to_srgb(color.g);
   color.b = linear_to_srgb(color.b);

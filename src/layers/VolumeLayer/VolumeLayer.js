@@ -1,5 +1,6 @@
 import { CompositeLayer, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { TextLayer } from '@deck.gl/layers';
+import GL from '@luma.gl/constants';
 import { Matrix4 } from 'math.gl';
 import XR3DLayer from '../XR3DLayer';
 import { getPhysicalSizeScalingMatrix } from '../utils';
@@ -133,7 +134,14 @@ const VolumeLayer = class extends CompositeLayer {
   }
 
   renderLayers() {
-    const { loader, id, resolution } = this.props;
+    const {
+      loader,
+      id,
+      resolution,
+      sliderValues,
+      colorValues,
+      channelIsOn
+    } = this.props;
     const { dtype } = loader[resolution];
     const {
       data,
@@ -164,12 +172,24 @@ const VolumeLayer = class extends CompositeLayer {
         sizeScale: 2 ** -viewport.zoom
       });
     }
-    return new XR3DLayer(this.props, {
-      channelData: { data, width, height, depth },
-      id: `XR3DLayer-${0}-${height}-${width}-${0}-${resolution}-${id}`,
-      physicalSizeScalingMatrix,
-      resolutionMatrix,
-      dtype
+    return data.map((d, j) => {
+      return new XR3DLayer(this.props, {
+        channelData: { data: d, width, height, depth },
+        id: `XR3DLayer-${0}-${height}-${width}-${0}-${resolution}-${id}-${j}`,
+        physicalSizeScalingMatrix,
+        resolutionMatrix,
+        dtype,
+        parameters: {
+          [GL.CULL_FACE]: false,
+          [GL.CULL_FACE_MODE]: GL.FRONT,
+          [GL.DEPTH_TEST]: false,
+          blendFunc: [GL.SRC_ALPHA, GL.ONE],
+          blend: true,
+        },
+        sliderValues: sliderValues[j],
+        colorValues: colorValues[j],
+        channelIsOn: channelIsOn[j]
+      });
     });
   }
 };
