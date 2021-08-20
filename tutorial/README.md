@@ -34,17 +34,15 @@ After the image has finished downloading, there are two options for creating an 
 
 #### Option 1: Create a Bio-Formats "raw" Zarr
 
-The first option is to use `bioformats2raw` with `--file_type=zarr`. The default "raw" file type is currently
-[n5](https://github.com/saalfeldlab/n5), so the flag is required to generate the Zarr-based output. This command will
+The first option is to use `bioformats2raw`. This command will
 create the OME-XML metadata along with a pyramidal Zarr for high-resolution images.
 
 ```bash
-$ bioformats2raw LuCa-7color_Scan1.qptiff LuCa-7color_Scan1/ --file_type=zarr
+$ bioformats2raw LuCa-7color_Scan1.qptiff LuCa-7color_Scan1.zarr/
 ```
 
-`bioformats2raw` creates the file directory `LuCa-7color_Scan1/` which contains the "raw" bioformats output. The root directory
-contains a `METADATA.ome.xml` file along with a `data.zarr/` directory containing the Zarr
-output. This output can be viewed directly with [Avivator] by serving the top-level directory (`LuCa-7color_Scan1/`)
+`bioformats2raw` creates the file directory `LuCa-7color_Scan1.zarr/` which contains the "raw" bioformats output. An `OME` directory
+contains a `METADATA.ome.xml` file. This output can be viewed directly with [Avivator] by serving the top-level directory (`LuCa-7color_Scan1.zarr/`)
 over HTTP ([see below](#viewing-in-avivator)).
 
 > NOTE: Alternate tile dimensions can be specified with the `--tile_width` and `--tile_height` options.
@@ -81,7 +79,7 @@ There is currently [no "auto" feature for inferring the number of pyramid resolu
 Without the compression set, i.e `-compression LZW`, the output image will be uncompressed.
 
 There is a [2GB limit on the total amount of data](https://docs.openmicroscopy.org/bio-formats/6.4.0/about/bug-reporting.html#common-issues-to-check) that may be read into memory for the `bfconvert` cli tool.
-Therefore for larger images, please use `bioformats2raw + raw2ometiff`.
+Therefore for larger images or faster processing (thanks to multithreaded processing), please use `bioformats2raw + raw2ometiff`.
 
 > NOTE: Viv currently uses [`geotiff.js`](https://geotiffjs.github.io/) for accessing data from remote TIFFs
 > over HTTP and support the three lossless compression options supported
@@ -96,7 +94,7 @@ If you have an OME-TIFF or Bio-Formats "raw" Zarr output saved locally, you may 
 the file (or directory) over the canvas or use the "Choose file" button to view your data.
 Note that this action does **NOT** necessarily load the entire dataset into memory. Viv still works as normal and will retrieve data tiles based on the viewport for an image pyramid and/or a specific channel/z/time selection.
 
-If you followed **Option 1** above, you may drag and drop the `LuCa-7color_Scan1/` directory created via `bioformats2raw`
+If you followed **Option 1** above, you may drag and drop the `LuCa-7color_Scan1.zarr/` directory created via `bioformats2raw`
 into Avivator. If you followed **Option 2**, simply select the `LuCa-7color_Scan1.ome.tif` to view in Avivator.
 
 > NOTE: Large Zarr-based image pyramids may take a bit longer to load initially using this method. We recommend using a simple web
@@ -135,11 +133,11 @@ $ http-server --cors='*' --port 8000 .
 ```
 
 This command starts a web-server and makes the content in the current directory readable over HTTP. Once the server is running,
-open [Avivator] and paste `http://localhost:8000/LuCa-7color_Scan1/` (Zarr) or `http://localhost:8000/LuCa-7color_Scan1.ome.tif`
+open [Avivator] and paste `http://localhost:8000/LuCa-7color_Scan1.zarr/` (Zarr) or `http://localhost:8000/LuCa-7color_Scan1.ome.tif`
 (OME-TIFF) into the input dialog to view the respective pyramids generated above. For convenience, you can also create a direct
 link by appending an `image_url` query parameter:
 
-- http://avivator.gehlenborglab.org/?image_url=http://localhost:8000/LuCa-7color_Scan1/ (Zarr)
+- http://avivator.gehlenborglab.org/?image_url=http://localhost:8000/LuCa-7color_Scan1.zarr/ (Zarr)
 - http://avivator.gehlenborglab.org/?image_url=http://localhost:8000/LuCa-7color_Scan1.ome.tif (OME-TIFF)
 
 > Troubleshooting: Viv relies on cross-origin requests to retrieve data from servers. The `--cors='*'` flag is important to ensure
