@@ -12,7 +12,6 @@ import {
 } from '../../loaders/utils';
 
 const defaultProps = {
-  pickable: { type: 'boolean', value: true, compare: true },
   onHover: { type: 'function', value: null, compare: false },
   contrastLimits: { type: 'array', value: [], compare: true },
   colors: { type: 'array', value: [], compare: true },
@@ -220,7 +219,6 @@ const MultiscaleImageLayer = class extends CompositeLayer {
           // since the background image might not have the same color output from the fragment shader
           // as the tiled layer at a higher resolution level.
           !transparentColor,
-        pickable: { type: 'boolean', value: true, compare: true },
         onHover,
         onClick,
         // Background image is nicest when LINEAR in my opinion.

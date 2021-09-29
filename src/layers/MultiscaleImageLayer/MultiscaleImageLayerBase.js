@@ -3,7 +3,6 @@ import { COORDINATE_SYSTEM } from '@deck.gl/core';
 import { renderSubLayers } from './utils';
 
 const defaultProps = {
-  pickable: { type: 'boolean', value: true, compare: true },
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   contrastLimits: { type: 'array', value: [], compare: true },
   colors: { type: 'array', value: [], compare: true },

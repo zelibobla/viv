@@ -63,7 +63,6 @@ function getRenderingAttrs(dtype, gl, interpolation) {
 }
 
 const defaultProps = {
-  pickable: { type: 'boolean', value: true, compare: true },
   coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
   channelData: { type: 'object', value: {}, compare: true },
   bounds: { type: 'array', value: [0, 0, 1, 1], compare: true },
